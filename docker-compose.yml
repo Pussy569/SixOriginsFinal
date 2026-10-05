@@ -1,0 +1,59 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${MARIADB_DATABASE:-shop_db}
+      DB_USER: ${MARIADB_USER:-six_origins_app}
+      DB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in .env}
+      PORT: 80
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      TOPUP_PROOF_DIR: /data/topup_proofs
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_APP_PASSWORD: ${MAIL_APP_PASSWORD:-}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Six Origins}
+      TEXTBEE_API_KEY: ${TEXTBEE_API_KEY:-}
+      TEXTBEE_DEVICE_ID: ${TEXTBEE_DEVICE_ID:-}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/api/chat}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    restart: unless-stopped
+    volumes:
+      - app_data:/data
+      - app_logs:/var/www/html/logs
+
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-shop_db}
+      MARIADB_USER: ${MARIADB_USER:-six_origins_app}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./shop_db.sql:/docker-entrypoint-initdb.d/01-shop_db.sql:ro
+
+volumes:
+  app_data:
+  app_logs:
+  db_data:

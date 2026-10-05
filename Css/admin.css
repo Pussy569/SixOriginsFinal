@@ -1,0 +1,106 @@
+*{
+   font-family: 'Rubik', sans-serif;
+   margin:0; padding:0;
+   box-sizing: border-box;
+   outline: none; border:none;
+   text-decoration: none;
+   transition:all .2s linear;
+}
+
+html{
+   font-size: 62.5%;
+   overflow-x: hidden;
+}
+
+section{
+   padding:3rem 2rem;
+}
+
+.title{
+   text-align: center;
+   margin-bottom: 2rem;
+   text-transform: uppercase;
+   color: black;
+   font-size: 4rem;
+}
+.message{
+   position: sticky;
+   top:0;
+   margin:0 auto;
+   max-width: 1200px;
+   background-color: red;
+   padding:2rem;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   z-index: 10000;
+   gap:1.5rem;
+}
+
+.message span{
+   font-size: 2rem;
+   color:black;
+}
+
+.message i{
+   cursor: pointer;
+   color:red;
+   font-size: 2.5rem;
+}
+.message i:hover{
+   transform: rotate(90deg);
+}
+
+
+.empty{
+   padding:1.5rem;
+   text-align: center;
+   border: 2px solid black;
+   background-color: white;
+   color: red;
+   font-size: 2rem;
+}
+
+.btn,
+.option-btn,
+.delete-btn,
+.white-btn{
+   display: inline-block;
+   margin-top: 1rem;
+   padding:1rem 3rem;
+   cursor: pointer;
+   color: white;
+   font-size: 1.8rem;
+   border-radius: .5rem;
+   text-transform: capitalize;
+}
+
+.btn:hover,
+.option-btn:hover,
+.delete-btn:hover{
+   background-color: black;
+}
+
+.white-btn,
+.btn{
+   background-color: orange;
+}
+
+.option-btn{
+   background-color: black;
+}
+
+.delete-btn{
+   background-color: red;
+}
+
+.white-btn:hover{
+   background-color: white;
+   color: black;
+}
+
+#menu-btn{
+   display: none;
+}
+
+

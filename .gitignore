@@ -1,0 +1,30 @@
+# Local database dumps and database files
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+*.sql.zip
+
+# Local credentials and environment configuration
+/config.php
+/.env
+/.env.*
+!/.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local logs
+/debug.log
+/logs/
+/node_modules/
+/uploads/
+/topup_proofs/
+/images/user_uploads/
+/images/admin_uploads/
+/images/user_*
+/images/victor.jpg
+/verify_*
+/storage/

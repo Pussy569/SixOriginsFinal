@@ -1,0 +1,314 @@
+/**
+ * Six Origins Cafe - shared register script
+ * Used by register.php (customer) and register_admin.php (admin).
+ * The admin page sets <body data-requires-doc="true"> so the verification document is required.
+ */
+const REQUIRES_DOC = document.body.dataset.requiresDoc === 'true';
+const $ = (id) => document.getElementById(id);
+
+/* ---------- PASSWORD STRENGTH ENGINE ---------- */
+function handlePasswordInput() {
+    const pass = $('password').value;
+    const engine = $('pwStrengthEngine');
+    const bar = $('pwMeterBar');
+    const text = $('pwStrengthText');
+
+    engine.style.display = pass.length > 0 ? 'block' : 'none';
+
+    const reqs = {
+        reqLen: pass.length >= 8,
+        reqUp: /[A-Z]/.test(pass),
+        reqNum: /[0-9]/.test(pass),
+        reqSp: /[^A-Za-z0-9]/.test(pass)
+    };
+    let strength = 0;
+    Object.keys(reqs).forEach(id => {
+        if (reqs[id]) strength += 25;
+        $(id).classList.toggle('met', reqs[id]);
+    });
+
+    bar.style.width = strength + '%';
+    let color, label;
+    if (strength <= 25)      { color = 'var(--str-weak)';   label = 'Weak'; }
+    else if (strength <= 50) { color = 'var(--str-fair)';   label = 'Fair'; }
+    else if (strength <= 75) { color = 'var(--str-good)';   label = 'Good'; }
+    else                     { color = 'var(--str-strong)'; label = 'Strong'; }
+    bar.style.backgroundColor = color;
+    text.innerText = 'Strength: ' + label;
+    text.style.color = color;
+
+    checkFormCompletion();
+}
+
+/* ---------- CAPTCHA CONFIG ---------- */
+const CAPTCHA_CONFIG = {
+    challenges: [
+        { type: 'car',  text: 'SELECT ALL IMAGES WITH A CAR' },
+        { type: 'bus',  text: 'SELECT ALL IMAGES WITH A BUS' },
+        { type: 'road', text: 'SELECT ALL IMAGES WITH A ROAD' }
+    ],
+    imageTypes: ['car', 'bus', 'road'],
+    totalTiles: 9
+};
+let currentChallenge = null;
+let selectedTiles = [];
+let tileData = [];
+let actualCorrectCount = 0;
+let captchaModalShown = false;
+
+document.addEventListener('DOMContentLoaded', checkFormCompletion);
+
+/* ---------- FORM COMPLETION -> ENABLE CAPTCHA ---------- */
+function checkFormCompletion() {
+    const name = $('name').value.trim();
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    const cpassword = $('cpassword').value;
+    const checkboxContainer = $('captchaCheckboxContainer');
+    const checkbox = $('captchaCheckbox');
+
+    const nameValid = name.length >= 2;
+    const emailValid = email && /^\S+@\S+\.\S+$/.test(email);
+    const passwordValid = password && password.length >= 8;
+    const passwordMatch = password === cpassword;
+
+    let docOk = true;
+    if (REQUIRES_DOC) {
+        const f = $('verification_image');
+        docOk = !!(f && f.files && f.files.length > 0);
+    }
+
+    if (nameValid && emailValid && passwordValid && passwordMatch && docOk) {
+        checkboxContainer.classList.remove('disabled');
+        checkbox.disabled = false;
+    } else {
+        checkboxContainer.classList.add('disabled');
+        checkbox.disabled = true;
+        checkbox.checked = false;
+        $('captcha_verified').value = '';
+        $('captchaModalOverlay').classList.remove('active');
+    }
+}
+
+function handleCheckboxChange() {
+    const checkbox = $('captchaCheckbox');
+    const modalOverlay = $('captchaModalOverlay');
+    if (checkbox.disabled) return;
+
+    if (checkbox.checked) {
+        modalOverlay.classList.add('active');
+        if (!captchaModalShown) { generateCaptchaGrid(); captchaModalShown = true; }
+    } else {
+        modalOverlay.classList.remove('active');
+        $('captcha_verified').value = '';
+    }
+}
+
+function generateCaptchaGrid() {
+    const grid = $('captchaGrid');
+    grid.innerHTML = '';
+    selectedTiles = [];
+    tileData = [];
+
+    currentChallenge = CAPTCHA_CONFIG.challenges[Math.floor(Math.random() * CAPTCHA_CONFIG.challenges.length)];
+    $('captchaChallenge').textContent = currentChallenge.text;
+
+    // random number of correct images (2 to 5)
+    actualCorrectCount = Math.floor(Math.random() * 4) + 2;
+    const incorrectCount = CAPTCHA_CONFIG.totalTiles - actualCorrectCount;
+
+    let tiles = [];
+    for (let i = 0; i < actualCorrectCount; i++) tiles.push({ type: currentChallenge.type, isCorrect: true });
+    for (let i = 0; i < incorrectCount; i++) {
+        let randomType;
+        do {
+            randomType = CAPTCHA_CONFIG.imageTypes[Math.floor(Math.random() * CAPTCHA_CONFIG.imageTypes.length)];
+        } while (randomType === currentChallenge.type);
+        tiles.push({ type: randomType, isCorrect: false });
+    }
+    tiles = shuffleArray(tiles);
+    tileData = tiles;
+
+    const icons = { car: '🚗', bus: '🚌', road: '🛣️' };
+    tiles.forEach((tile, index) => {
+        const tileElement = document.createElement('div');
+        tileElement.className = 'captcha-tile';
+        tileElement.id = 'tile-' + index;
+
+        const img = document.createElement('img');
+        img.src = 'images/captcha/' + tile.type + '-' + (Math.floor(Math.random() * 3) + 1) + '.jpg';
+        img.alt = tile.type + ' image';
+        img.style.display = 'none';
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'captcha-tile-placeholder';
+        placeholder.textContent = icons[tile.type];
+
+        img.onload = function () { this.style.display = 'block'; placeholder.style.display = 'none'; };
+
+        tileElement.appendChild(img);
+        tileElement.appendChild(placeholder);
+        tileElement.addEventListener('click', () => toggleTileSelection(index));
+        grid.appendChild(tileElement);
+    });
+}
+
+function toggleTileSelection(index) {
+    const tile = $('tile-' + index);
+    const i = selectedTiles.indexOf(index);
+    if (i > -1) { selectedTiles.splice(i, 1); tile.classList.remove('selected'); }
+    else { selectedTiles.push(index); tile.classList.add('selected'); }
+}
+
+function verifyCaptcha() {
+    const statusElement = $('captchaStatus');
+    statusElement.className = '';
+    statusElement.textContent = '';
+
+    if (selectedTiles.length !== actualCorrectCount) {
+        statusElement.className = 'captcha-status error';
+        statusElement.innerHTML = '<i class="fa-solid fa-exclamation-circle"></i> Please select ALL matching images (' + actualCorrectCount + ' found)';
+        return;
+    }
+
+    const allCorrect = selectedTiles.every(index => tileData[index].isCorrect);
+
+    if (allCorrect) {
+        statusElement.className = 'captcha-status success';
+        statusElement.innerHTML = '<i class="fa-solid fa-check-circle"></i> Verification successful!';
+        $('captcha_verified').value = 'true';
+        setTimeout(() => {
+            $('captchaModalOverlay').classList.remove('active');
+            $('captchaCheckbox').checked = true;
+        }, 1500);
+    } else {
+        statusElement.className = 'captcha-status error';
+        statusElement.innerHTML = '<i class="fa-solid fa-exclamation-circle"></i> Incorrect selection. Try again.';
+        setTimeout(refreshCaptcha, 1000);
+    }
+}
+
+function refreshCaptcha() {
+    $('captcha_verified').value = '';
+    $('captchaStatus').className = '';
+    $('captchaStatus').textContent = '';
+    generateCaptchaGrid();
+}
+
+function shuffleArray(array) {
+    const s = [...array];
+    for (let i = s.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [s[i], s[j]] = [s[j], s[i]];
+    }
+    return s;
+}
+
+// Close captcha modal when clicking outside
+$('captchaModalOverlay').addEventListener('click', function (e) {
+    if (e.target === this) {
+        this.classList.remove('active');
+        $('captchaCheckbox').checked = false;
+    }
+});
+
+/* ---------- FILE INPUT + DRAG & DROP (admin page only) ---------- */
+(function () {
+    const fileInput = $('verification_image');
+    const label = document.querySelector('.file-input-label');
+    const fileInfo = $('fileInfo');
+    const fileName = $('fileName');
+    if (!fileInput || !label) return;
+
+    const MAX_MB = 5;
+    const idleBg = 'linear-gradient(135deg, rgba(198, 69, 62, 0.1) 0%, rgba(198, 69, 62, 0.05) 100%)';
+
+    fileInput.addEventListener('change', function () {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const okType = /^image\/(jpeg|png)$/.test(file.type);
+            if (!okType || file.size > MAX_MB * 1024 * 1024) {
+                alert('Please upload a JPG or PNG image that is not larger than ' + MAX_MB + 'MB.');
+                this.value = '';
+                fileInfo.classList.remove('shown');
+                label.style.borderColor = 'var(--primary-red)';
+                checkFormCompletion();
+                return;
+            }
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            fileName.textContent = '✓ ' + file.name + ' (' + sizeMB + ' MB)';
+            fileInfo.classList.add('shown');
+            label.style.borderColor = '#2D5A3D';
+        } else {
+            fileInfo.classList.remove('shown');
+            label.style.borderColor = 'var(--primary-red)';
+        }
+        checkFormCompletion();
+    });
+
+    label.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        label.style.background = 'linear-gradient(135deg, rgba(45, 90, 61, 0.15) 0%, rgba(45, 90, 61, 0.08) 100%)';
+        label.style.borderColor = '#2D5A3D';
+    });
+    label.addEventListener('dragleave', function () {
+        label.style.background = idleBg;
+        label.style.borderColor = 'var(--primary-red)';
+    });
+    label.addEventListener('drop', function (e) {
+        e.preventDefault();
+        label.style.background = idleBg;
+        label.style.borderColor = 'var(--primary-red)';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+})();
+
+/* ---------- GUIDE OVERLAY ---------- */
+(function () {
+    const guideBtn = $('guideBtn');
+    const guideOverlay = $('guideOverlay');
+    const guideCloseBtn = $('guideCloseBtn');
+    if (!guideBtn || !guideOverlay) return;
+
+    guideBtn.addEventListener('click', () => guideOverlay.classList.add('active'));
+    guideCloseBtn.addEventListener('click', () => guideOverlay.classList.remove('active'));
+    guideOverlay.addEventListener('click', (e) => { if (e.target === guideOverlay) guideOverlay.classList.remove('active'); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && guideOverlay.classList.contains('active')) guideOverlay.classList.remove('active');
+    });
+})();
+
+/* ---------- CLIENT-SIDE VALIDATION ---------- */
+$('registerForm').addEventListener('submit', function (e) {
+    const name = $('name').value.trim();
+    const email = $('email').value.trim();
+    const password = $('password').value;
+    const cpassword = $('cpassword').value;
+    const captchaVerified = $('captcha_verified').value;
+
+    const fail = (msg) => { alert(msg); e.preventDefault(); return false; };
+
+    if (!name || name.length < 2) return fail('Please enter your full name');
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) return fail('Please enter a valid email address');
+    if (!password || password.length < 8) return fail('Password must be at least 8 characters long');
+    if (password !== cpassword) return fail('Passwords do not match');
+    if (captchaVerified !== 'true') return fail('Please complete the robot verification!');
+
+    if (REQUIRES_DOC) {
+        const f = $('verification_image');
+        if (!f.files || f.files.length === 0) return fail('Please upload a verification document for admin accounts');
+    }
+});
+
+/* ---------- AUTO-DISMISS MESSAGES ---------- */
+document.querySelectorAll('.message').forEach(msg => {
+    setTimeout(() => {
+        msg.style.opacity = '0';
+        msg.style.transform = 'translateY(-10px)';
+        setTimeout(() => msg.remove(), 300);
+    }, 5000);
+});

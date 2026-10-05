@@ -1,0 +1,36 @@
+FROM composer:2 AS dependencies
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-interaction \
+    --no-progress \
+    --classmap-authoritative
+
+FROM php:8.2-apache
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcurl4-openssl-dev libonig-dev \
+    && docker-php-ext-install curl mbstring mysqli \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY docker/apache-app.conf /etc/apache2/conf-available/app.conf
+RUN a2enconf app
+
+WORKDIR /var/www/html
+COPY . .
+COPY config.sample.php ./config.php
+COPY --from=dependencies /app/vendor ./vendor
+COPY docker/entrypoint.sh /usr/local/bin/six-origins-entrypoint
+
+RUN mkdir -p uploads logs images/user_uploads images/admin_uploads /data/sessions /data/topup_proofs \
+    && chown -R www-data:www-data images/user_uploads images/admin_uploads uploads logs /data \
+    && chmod 755 /usr/local/bin/six-origins-entrypoint
+
+ENV PORT=80
+EXPOSE 80
+
+CMD ["six-origins-entrypoint"]
