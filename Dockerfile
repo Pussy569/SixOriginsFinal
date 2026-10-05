@@ -20,7 +20,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/apache-app.conf /etc/apache2/conf-available/app.conf
-RUN a2enconf app
+RUN a2enconf app \
+    && apache2ctl -t
 
 WORKDIR /var/www/html
 COPY . .
