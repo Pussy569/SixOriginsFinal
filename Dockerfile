@@ -14,7 +14,9 @@ FROM php:8.2-apache
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libcurl4-openssl-dev libonig-dev \
     && docker-php-ext-install curl mbstring mysqli \
-    && a2enmod rewrite \
+    && a2dismod mpm_event || true \
+    && a2dismod mpm_worker || true \
+    && a2enmod mpm_prefork rewrite \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/apache-app.conf /etc/apache2/conf-available/app.conf
