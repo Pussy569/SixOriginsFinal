@@ -13,6 +13,9 @@ if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
     exit 1
 fi
 
+rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf
+a2enmod mpm_prefork
+
 link_persistent_dir() {
     source_dir="$1"
     persistent_dir="$2"
@@ -54,5 +57,21 @@ printf '%s\n' \
 
 sed -i "s/^Listen 80$/Listen ${port}/" /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${port}>/" /etc/apache2/sites-available/000-default.conf
+
+if ! apache2ctl -t; then
+    echo "Apache configuration is invalid. Enabled MPM directives:" >&2
+    grep -RniE '^[[:space:]]*LoadModule[[:space:]]+mpm_' \
+        /etc/apache2/apache2.conf \
+        /etc/apache2/mods-enabled \
+        /etc/apache2/conf-enabled \
+        /etc/apache2/sites-enabled 2>/dev/null || true
+    exit 1
+fi
+
+mpm_modules="$(apache2ctl -M | awk '$1 ~ /^mpm_/ && $2 == "(shared)" { print $1 }')"
+if [ "$mpm_modules" != "mpm_prefork_module" ]; then
+    echo "Expected only mpm_prefork_module to be loaded; found: ${mpm_modules:-none}" >&2
+    exit 1
+fi
 
 exec apache2-foreground

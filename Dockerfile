@@ -16,7 +16,7 @@ RUN apt-get update \
     && docker-php-ext-install curl mbstring mysqli \
     && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork rewrite \
-    && test "$(find /etc/apache2/mods-enabled -maxdepth 1 -name 'mpm_*.load' | wc -l)" -eq 1 \
+    && test "$(apache2ctl -M | awk '$1 ~ /^mpm_/ && $2 == "(shared)" { print $1 }')" = "mpm_prefork_module" \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/apache-app.conf /etc/apache2/conf-available/app.conf
