@@ -13,6 +13,9 @@ if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
     exit 1
 fi
 
+rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf
+a2enmod mpm_prefork
+
 link_persistent_dir() {
     source_dir="$1"
     persistent_dir="$2"
