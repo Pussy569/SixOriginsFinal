@@ -67,15 +67,10 @@ if (isset($_POST['cancel_customer_order'])) {
             // For now, we'll allow cancellation. The JavaScript will handle the timer.
         }
         
-        // ==================== WASTE MANAGEMENT & INVENTORY RESTORATION ====================
-        if ($current_status === 'preparing') {
-            // Add to waste management
-            addWasteRecord($conn, $order_id, $user_id ?? null);
-            
-            // Restore inventory (reverse the deduction)
+        // Inventory is deducted only when an order reaches "completed".
+        if ($current_status === 'completed') {
             restoreInventoryForOrder($conn, $order_id);
         }
-        // ==================== END WASTE MANAGEMENT ====================
         
         // Cancel the order
         $cancel_stmt = $conn->prepare("UPDATE orders SET payment_status = 'cancelled', cancelled_at = NOW() WHERE id = ?");

@@ -234,7 +234,7 @@ session_start();
       <h3>5. Two-Factor Authentication (2FA)</h3>
       <p>
          For added security, we offer optional 2FA via email verification codes. When enabled, you'll receive 
-         a verification code via email during login. This code is sent using SMTP mail service and expires after 10 minutes.
+         a verification code via email during login. This code is sent using Resend and expires after 10 minutes.
       </p>
 
       <h3>6. Data Retention</h3>

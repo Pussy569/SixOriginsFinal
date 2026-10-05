@@ -2,7 +2,7 @@
 
 ## Runtime and commands
 
-- This is a procedural PHP application intended to run under Apache with MySQL/MariaDB (the repository uses XAMPP). The application connects using `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`; `shop_db.sql` is an ignored phpMyAdmin schema/data snapshot, not a deployable migration. Check the runtime database as well when changing schemas: newer inventory features use tables such as `inventory` and `product_ingredients` that are not defined in that dump.
+- This is a procedural PHP application intended to run under Apache with MySQL/MariaDB (the repository uses XAMPP). The application connects using `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. The one local database import file is `database/database.sql`; it contains the existing Head Admin email and password hash and is ignored by Git. Root SQL dumps are also ignored local-only data. Keep PHP query logic in the page/controller that owns the flow unless explicitly asked to refactor it.
 - Install the Composer dependencies from the repository root with `php .\composer.phar install`. The project has no application build script or configured formatter, linter, or automated test runner.
 - Check one PHP file's syntax with `php -l .\path\to\file.php`. To syntax-check root-level PHP files in PowerShell, run `Get-ChildItem -Filter *.php | ForEach-Object { php -l $_.FullName }`.
 

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/mail_helper.php';
+
 include 'config.php';
 
 /**
@@ -75,25 +77,16 @@ if(isset($_POST['send_reply'])){
         
         $subject = "Reply from Six Origins Cafe Support";
         
-        // Constructing the Email Body
-        $body = "Hello " . $customer_name . ",\n\n";
-        $body .= "We have received your inquiry and our team has provided a response:\n\n";
-        $body .= "--------------------------------------------------\n";
-        $body .= $reply_text . "\n";
-        $body .= "--------------------------------------------------\n\n";
-        $body .= "If you have further questions, feel free to reply to this email or visit our cafe.\n\n";
-        $body .= "Warm regards,\n";
-        $body .= "Six Origins Cafe Administration\n";
-        $body .= "☕ Brewed with Passion";
-
-        // Headers
-        $headers = "From: support@sixoriginscafe.com\r\n";
-        $headers .= "Reply-To: support@sixoriginscafe.com\r\n";
-        $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        
+        $safeName = htmlspecialchars($customer_name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $safeReply = nl2br(htmlspecialchars($reply_text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $body = '<p>Hello ' . $safeName . ',</p>
+                 <p>We have received your inquiry and our team has provided a response:</p>
+                 <blockquote>' . $safeReply . '</blockquote>
+                 <p>If you have further questions, feel free to reply to this email or visit our cafe.</p>
+                 <p>Warm regards,<br>Six Origins Cafe Administration<br>☕ Brewed with Passion</p>';
+        $text = "Hello {$customer_name},\n\nWe have received your inquiry and our team has provided a response:\n\n{$reply_text}\n\nIf you have further questions, feel free to reply to this email or visit our cafe.\n\nWarm regards,\nSix Origins Cafe Administration\nBrewed with Passion";
         if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
-            $email_sent = @mail($to, $subject, $body, $headers);
+            $email_sent = send_six_origins_mail($to, $customer_name, $subject, $body, $text, 'support@sixoriginscafe.com');
         }
     }
 

@@ -1,6 +1,8 @@
 # Local database dumps and database files
 *.sql
-!database/*.sql
+shop_db.sql
+finalshopdatabase.sql
+/database/database.sql
 *.sqlite
 *.sqlite3
 *.db
@@ -16,6 +18,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+/vendor/
 
 # Local logs
 /debug.log

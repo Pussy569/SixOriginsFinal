@@ -14,7 +14,7 @@ $row = mysqli_fetch_assoc($r);
 $total += intval($row['cnt']);
 
 // Count recent activities (last 24 hours)
-$r = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM admin_activity WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)");
+$r = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM admin_activity WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)");
 $row = mysqli_fetch_assoc($r);
 $total += intval($row['cnt']);
 

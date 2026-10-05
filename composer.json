@@ -1,5 +1,6 @@
 {
     "require": {
-        "twilio/sdk": "^8.11"
+        "twilio/sdk": "^8.11",
+        "resend/resend-php": "^1.16"
     }
 }

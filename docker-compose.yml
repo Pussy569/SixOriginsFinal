@@ -16,11 +16,7 @@ services:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-false}
       TOPUP_PROOF_DIR: /data/topup_proofs
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_APP_PASSWORD: ${MAIL_APP_PASSWORD:-}
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Six Origins}
       TEXTBEE_API_KEY: ${TEXTBEE_API_KEY:-}
@@ -51,7 +47,7 @@ services:
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/mysql
-      - ./shop_db.sql:/docker-entrypoint-initdb.d/01-shop_db.sql:ro
+      - ./database/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
 
 volumes:
   app_data:

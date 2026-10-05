@@ -1,54 +1,22 @@
 <?php
 session_start();
 include 'config.php';
-require_once __DIR__ . '/smtp_settings.php';
-
-require_once __DIR__ . '/PHPMailer/src/Exception.php';
-require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
-require_once __DIR__ . '/PHPMailer/src/SMTP.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once __DIR__ . '/mail_helper.php';
 
 function dbg($m){
     // uncomment to debug: file_put_contents(__DIR__.'/debug.log', date('[Y-m-d H:i:s] ').$m.PHP_EOL, FILE_APPEND);
 }
 
 /**
- * Send verification email using SMTP environment configuration.
+ * Send verification email using the shared Resend transport.
  */
 function send_verification_mail(string $toEmail, string $code): bool|string {
-    global $SMTP_SETTINGS;
-    if ($SMTP_SETTINGS['username'] === '' || $SMTP_SETTINGS['password'] === '') {
-        error_log('Six Origins mail error: SMTP credentials are not configured.');
-        return false;
-    }
-
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = $SMTP_SETTINGS['host'];
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $SMTP_SETTINGS['username'];
-        $mail->Password   = $SMTP_SETTINGS['password'];
-        $mail->SMTPSecure = $SMTP_SETTINGS['encryption'];
-        $mail->Port       = $SMTP_SETTINGS['port'];
-
-        $mail->setFrom($SMTP_SETTINGS['from_email'], $SMTP_SETTINGS['from_name']);
-        $mail->addAddress($toEmail);
-
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Login Verification Code';
-        $mail->Body    = "<p style='font-family:Montserrat,Arial;color:#5E1F13'>Hello,</p>
-                         <p style='font-family:Montserrat,Arial;color:#5E1F13'>Your login verification code is:<br><strong style='font-size:1.4rem;color:#C6453E'>{$code}</strong></p>
-                         <p style='font-family:Montserrat,Arial;color:#5E1F13'>This code expires in 10 minutes. If you did not request this, please ignore this email.</p>
-                         <p style='font-family:Montserrat,Arial;color:#5E1F13'>— Six Origins Cafe Team</p>";
-
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        error_log('Six Origins verification email failed: ' . $mail->ErrorInfo);
-        return false;
-    }
+    $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $html = "<p style='font-family:Montserrat,Arial;color:#5E1F13'>Hello,</p>
+             <p style='font-family:Montserrat,Arial;color:#5E1F13'>Your login verification code is:<br><strong style='font-size:1.4rem;color:#C6453E'>{$safeCode}</strong></p>
+             <p style='font-family:Montserrat,Arial;color:#5E1F13'>This code expires in 10 minutes. If you did not request this, please ignore this email.</p>
+             <p style='font-family:Montserrat,Arial;color:#5E1F13'>— Six Origins Cafe Team</p>";
+    return send_six_origins_mail($toEmail, '', 'Your Login Verification Code', $html);
 }
 
 if (empty($_SESSION['pending_2fa_user_id'])) {

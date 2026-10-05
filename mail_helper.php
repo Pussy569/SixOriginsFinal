@@ -1,26 +1,15 @@
 <?php
 /**
- * mail_helper.php — Six Origins email notifications
- * Include with:  require_once 'mail_helper.php';
+ * Shared Resend email transport and Six Origins account notifications.
  */
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once __DIR__ . '/vendor/autoload.php';
 
-// PHPMailer loading: Composer first, then manual folder fallback
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-   require_once __DIR__ . '/vendor/autoload.php';
-} else {
-   require_once __DIR__ . '/PHPMailer/src/Exception.php';
-   require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
-   require_once __DIR__ . '/PHPMailer/src/SMTP.php';
+if (!defined('RESEND_API_KEY')) {
+   define('RESEND_API_KEY', getenv('RESEND_API_KEY') ?: '');
 }
-
-if (!defined('MAIL_USERNAME')) {
-   define('MAIL_USERNAME', getenv('MAIL_USERNAME') ?: '');
-}
-if (!defined('MAIL_APP_PASSWORD')) {
-   define('MAIL_APP_PASSWORD', getenv('MAIL_APP_PASSWORD') ?: '');
+if (!defined('MAIL_FROM_EMAIL')) {
+   define('MAIL_FROM_EMAIL', getenv('MAIL_FROM_EMAIL') ?: '');
 }
 if (!defined('MAIL_FROM_NAME')) {
    define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: 'Six Origins');
@@ -45,79 +34,94 @@ function six_origins_email_layout($title, $bodyHtml) {
    </div>';
 }
 
-/** Core sender. Returns true on success, false on failure (never throws). */
-function send_six_origins_mail($toEmail, $toName, $subject, $html) {
+/** Send mail through Resend. */
+function send_six_origins_mail($toEmail, $toName, $subject, $html, $text = null, $replyTo = null): bool {
    if (empty($toEmail) || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+      error_log('Six Origins mail error: recipient email address is invalid.');
       return false;
    }
-   if (MAIL_USERNAME === '' || MAIL_APP_PASSWORD === '') {
-      error_log('Six Origins mail error: SMTP credentials are not configured.');
+   if (RESEND_API_KEY === '' || MAIL_FROM_EMAIL === '') {
+      error_log('Six Origins mail error: Resend API key or sender email is not configured.');
       return false;
    }
 
-   $mail = new PHPMailer(true);
+   $plainText = $text ?? trim(strip_tags(str_replace(['</p>', '<br>', '<br/>', '<br />'], "\n", $html)));
+   $message = [
+         'from' => MAIL_FROM_NAME . ' <' . MAIL_FROM_EMAIL . '>',
+         'to' => [$toEmail],
+         'subject' => $subject,
+         'html' => $html,
+         'text' => $plainText,
+   ];
+   if (is_string($replyTo) && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
+      $message['reply_to'] = $replyTo;
+   }
+
    try {
-      $mail->isSMTP();
-      $mail->Host       = 'smtp.gmail.com';
-      $mail->SMTPAuth   = true;
-      $mail->Username   = MAIL_USERNAME;
-      $mail->Password   = MAIL_APP_PASSWORD;
-      $mail->SMTPSecure = 'tls';
-      $mail->Port       = 587;
-      $mail->CharSet    = 'UTF-8';
-
-      $mail->setFrom(MAIL_USERNAME, MAIL_FROM_NAME);
-      $mail->addAddress($toEmail, $toName);
-
-      $mail->isHTML(true);
-      $mail->Subject = $subject;
-      $mail->Body    = $html;
-      $mail->AltBody = trim(strip_tags(str_replace(['</p>', '<br>', '<br/>'], "\n", $html)));
-
-      $mail->send();
+      Resend::client(RESEND_API_KEY)->emails->send($message);
       return true;
-   } catch (Exception $e) {
-      error_log('Six Origins mail error: ' . $mail->ErrorInfo);
+   } catch (Throwable $e) {
+      error_log('Six Origins Resend email failed: ' . $e->getMessage());
       return false;
    }
 }
 
 /** Sent when the Head Admin approves an account (admin, rider, senior, PWD, etc.) */
 function send_approval_email($name, $email, $user_type) {
-   $safeName = htmlspecialchars($name);
-   $type     = strtolower($user_type);
+   $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $type = strtolower($user_type);
 
    if ($type === 'admin') {
       $subject = 'Your Six Origins admin account has been approved';
-      $title   = 'Admin Account Approved ✅';
-      $body    = '<p>Hi <strong>' . $safeName . '</strong>,</p>
-                  <p>Good news! The <strong>Head Admin</strong> has reviewed and <strong>approved</strong> the admin account you created.</p>
-                  <p>You can now log in and start managing the Six Origins system.</p>';
+      $title = 'Admin Account Approved ✅';
+      $body = '<p>Hi <strong>' . $safeName . '</strong>,</p>
+               <p>Good news! The <strong>Head Admin</strong> has reviewed and <strong>approved</strong> the admin account you created.</p>
+               <p>You can now log in and start managing the Six Origins system.</p>';
    } elseif ($type === 'delivery_rider') {
       $subject = 'Your Six Origins rider account has been approved';
-      $title   = 'Rider Account Approved ✅';
-      $body    = '<p>Hi <strong>' . $safeName . '</strong>,</p>
-                  <p>Your delivery rider account has been <strong>approved</strong>. You can now log in and start accepting deliveries.</p>';
+      $title = 'Rider Account Approved ✅';
+      $body = '<p>Hi <strong>' . $safeName . '</strong>,</p>
+               <p>Your delivery rider account has been <strong>approved</strong>. You can now log in and start accepting deliveries.</p>';
    } else {
       $subject = 'Your Six Origins account has been approved';
-      $title   = 'Account Approved ✅';
-      $body    = '<p>Hi <strong>' . $safeName . '</strong>,</p>
-                  <p>Your account (and verification, if submitted) has been <strong>approved</strong>. You can now log in and enjoy Six Origins.</p>';
+      $title = 'Account Approved ✅';
+      $body = '<p>Hi <strong>' . $safeName . '</strong>,</p>
+               <p>Your account (and verification, if submitted) has been <strong>approved</strong>. You can now log in and enjoy Six Origins.</p>';
    }
 
    $body .= '<p style="margin-top:24px;">Thank you,<br><strong>The Six Origins Team</strong></p>';
+   return send_six_origins_mail($email, $name, $subject, six_origins_email_layout($title, $body));
+}
+
+/** Sent right after a customer registers. */
+function send_welcome_email($name, $email) {
+   $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $subject = 'Welcome to Six Origins ☕';
+   $title = 'Welcome, ' . $safeName . '!';
+   $body = '<p>Thank you for creating an account and visiting our coffee shop website!</p>
+            <p>Your account is ready — you can now log in, browse our menu, place orders, and enjoy your favorite brews.</p>
+            <p style="margin-top:24px;">We\'re glad to have you with us.<br><strong>The Six Origins Team</strong></p>';
 
    return send_six_origins_mail($email, $name, $subject, six_origins_email_layout($title, $body));
 }
 
-/** Sent right after a customer registers (use this in your register/signup page) */
-function send_welcome_email($name, $email) {
-   $safeName = htmlspecialchars($name);
-   $subject  = 'Welcome to Six Origins ☕';
-   $title    = 'Welcome, ' . $safeName . '!';
-   $body     = '<p>Thank you for creating an account and visiting our coffee shop website!</p>
-                <p>Your account is ready — you can now log in, browse our menu, place orders, and enjoy your favorite brews.</p>
-                <p style="margin-top:24px;">We\'re glad to have you with us.<br><strong>The Six Origins Team</strong></p>';
+/** Notify a customer who previously ordered a product about its updated details. */
+function send_product_update_email(string $name, string $email, string $productName, $price, string $details): bool {
+   $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $safeProductName = htmlspecialchars($productName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $safeDetails = nl2br(htmlspecialchars($details, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+   $body = '<p>Hi <strong>' . $safeName . '</strong>,</p>
+            <p>We have updated <strong>' . $safeProductName . '</strong>, a product you have ordered from Six Origins.</p>
+            <p><strong>Current price:</strong> ₱' . number_format((float)$price, 2) . '</p>';
+   if ($details !== '') {
+      $body .= '<p><strong>Product details:</strong><br>' . $safeDetails . '</p>';
+   }
+   $body .= '<p>Visit Six Origins to see the latest menu.</p>';
 
-   return send_six_origins_mail($email, $name, $subject, six_origins_email_layout($title, $body));
+   return send_six_origins_mail(
+      $email,
+      $name,
+      'Product update: ' . $productName,
+      six_origins_email_layout('A product you ordered was updated', $body)
+   );
 }

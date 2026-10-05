@@ -1,6 +1,7 @@
 <?php
 include 'config.php';
 include 'admin_log_activity.php';
+require_once __DIR__ . '/mail_helper.php';
 
 // Verify admin session
 $admin_id = $_SESSION['admin_id'] ?? null;
@@ -402,6 +403,18 @@ if (isset($_POST['update_product'])) {
             throw new Exception('Product name is too long (max 100 characters)');
         }
 
+        $previous_stmt = $conn->prepare("SELECT name FROM `products` WHERE id = ?");
+        if (!$previous_stmt) {
+            throw new Exception("Database error: " . $conn->error);
+        }
+        $previous_stmt->bind_param("i", $update_p_id);
+        $previous_stmt->execute();
+        $previous_product = $previous_stmt->get_result()->fetch_assoc();
+        $previous_stmt->close();
+        if (!$previous_product) {
+            throw new Exception('Product not found');
+        }
+
         // Update basic product info
         $stmt = $conn->prepare("UPDATE `products` SET name = ?, price = ?, details = ?, size_type = ?, allow_special_instructions = ? WHERE id = ?");
         if (!$stmt) {
@@ -470,6 +483,46 @@ if (isset($_POST['update_product'])) {
             $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($update_name) . '" updated with new image! ✨'];
         } else {
             $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($update_name) . '" updated successfully! ✨'];
+        }
+
+        $recipients_result = $conn->query("SELECT user_id, name, email, total_products FROM `orders`");
+        if (!$recipients_result) {
+            error_log('Product updated, but previous customers could not be loaded for email notification: ' . $conn->error);
+            $_SESSION['message']['text'] .= ' ⚠️ Product updated, but previous customers could not be loaded for email notification.';
+        } else {
+            $recipients = [];
+            $productPattern = '/(?:^|\s*\|\|\s*|,\s*)' . preg_quote($previous_product['name'], '/') . '\s*\(/u';
+            while ($order = $recipients_result->fetch_assoc()) {
+                if (str_starts_with((string)$order['user_id'], 'guest_') || !filter_var($order['email'], FILTER_VALIDATE_EMAIL)) {
+                    continue;
+                }
+                if (preg_match($productPattern, (string)$order['total_products'])) {
+                    $recipients[strtolower($order['email'])] = [
+                        'name' => (string)$order['name'],
+                        'email' => (string)$order['email'],
+                    ];
+                }
+            }
+            $recipients_result->free();
+
+            $notified_count = 0;
+            foreach ($recipients as $recipient) {
+                if (send_product_update_email(
+                    $recipient['name'],
+                    $recipient['email'],
+                    $update_name,
+                    $update_price,
+                    $update_details
+                )) {
+                    $notified_count++;
+                }
+            }
+
+            if ($notified_count === count($recipients) && $notified_count > 0) {
+                $_SESSION['message']['text'] .= ' ' . $notified_count . ' previous customer(s) notified by email.';
+            } elseif ($notified_count < count($recipients)) {
+                $_SESSION['message']['text'] .= ' ⚠️ Email notification sent to ' . $notified_count . ' of ' . count($recipients) . ' previous customer(s).';
+            }
         }
 
     } catch (Exception $e) {

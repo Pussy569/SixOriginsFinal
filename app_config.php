@@ -347,31 +347,9 @@ if (!function_exists('isOrderExpired')) {
 
 if (!function_exists('sendEmail')) {
     function sendEmail($to, $subject, $body, $headers = []) {
-        $default_headers = [
-            'From' => 'noreply@sixoriginscafe.com',
-            'Content-Type' => 'text/html; charset=UTF-8'
-        ];
-        $headers = array_merge($default_headers, $headers);
-        $header_string = '';
-        foreach ($headers as $key => $value) {
-            $header_string .= "$key: $value\r\n";
-        }
-        return mail($to, $subject, $body, $header_string);
-    }
-}
-
-if (!function_exists('createNotification')) {
-    function createNotification($user_id, $type, $message, $link = '') {
-        global $conn;
-        $stmt = $conn->prepare("INSERT INTO `notifications` (user_id, type, message, link, created_at) VALUES (?, ?, ?, ?, NOW())");
-        if (!$stmt) {
-            logSecurityEvent('DATABASE_ERROR', ['error' => 'Create notification prepare failed']);
-            return false;
-        }
-        $stmt->bind_param("isss", $user_id, $type, $message, $link);
-        $result = $stmt->execute();
-        $stmt->close();
-        return $result;
+        require_once __DIR__ . '/mail_helper.php';
+        $replyTo = $headers['Reply-To'] ?? null;
+        return send_six_origins_mail($to, '', $subject, $body, null, $replyTo);
     }
 }
 

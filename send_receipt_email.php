@@ -1,38 +1,7 @@
 <?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once __DIR__ . '/mail_helper.php';
 
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-require_once __DIR__ . '/smtp_settings.php';
-
-function sendReceiptEmail($toEmail, $toName, $orderData) {
-    global $SMTP_SETTINGS;
-    if ($SMTP_SETTINGS['username'] === '' || $SMTP_SETTINGS['password'] === '') {
-        error_log('Six Origins mail error: SMTP credentials are not configured.');
-        return;
-    }
-
-    $mail = new PHPMailer(true);
-
-    try {
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = $SMTP_SETTINGS['host'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $SMTP_SETTINGS['username'];
-        $mail->Password = $SMTP_SETTINGS['password'];
-        $mail->SMTPSecure = $SMTP_SETTINGS['encryption'];
-        $mail->Port = $SMTP_SETTINGS['port'];
-
-        // Recipients
-        $mail->setFrom($SMTP_SETTINGS['from_email'], $SMTP_SETTINGS['from_name']);
-        $mail->addAddress($toEmail, $toName);
-
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = "Order Update - #" . $orderData['order_id'];
+function sendReceiptEmail($toEmail, $toName, $orderData): bool {
 
         // ✅ NEW: normalize special instructions into a clean array regardless
         // of whether the caller passed an array or a raw newline-separated string
@@ -172,8 +141,6 @@ function sendReceiptEmail($toEmail, $toName, $orderData) {
             </p>
         </div>";
 
-        $mail->Body = $body;
-
         // ✅ NEW: plain-text fallback now also mentions special instructions if present
         // (product customization tags are stripped from the plain-text version's product
         // names since altBody is meant to stay short — the HTML body has the full detail)
@@ -183,14 +150,11 @@ function sendReceiptEmail($toEmail, $toName, $orderData) {
         }, $orderData['products']);
 
         $altBody = "Your order #{$orderData['order_id']} status is now: {$orderData['status']}.";
+        if (!empty($plainProducts)) {
+            $altBody .= "\nProducts: " . implode(', ', $plainProducts) . ".";
+        }
         if (!empty($special_instructions)) {
             $altBody .= " Special instructions: " . implode('; ', $special_instructions) . ".";
         }
-        $mail->AltBody = $altBody;
-
-        $mail->send();
-    } catch (Exception $e) {
-        error_log("Email could not be sent. Mailer Error: {$mail->ErrorInfo}");
-    }
+        return send_six_origins_mail($toEmail, $toName, "Order Update - #" . $orderData['order_id'], $body, $altBody);
 }
-?>

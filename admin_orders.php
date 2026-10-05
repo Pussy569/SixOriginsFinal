@@ -68,6 +68,25 @@ function parseOrderProducts(?string $raw): array {
 // whitelist is rejected instead of being written straight to the database.
 $allowed_order_statuses = ['pending', 'accepted', 'preparing', 'done preparing', 'out for delivery', 'completed'];
 
+function notifyOrderStatusByEmail(array $orderInfo, string $status): bool {
+    $parsedProducts = parseOrderProducts((string)($orderInfo['total_products'] ?? ''));
+    $orderData = [
+        'order_id' => $orderInfo['id'],
+        'name' => $orderInfo['name'],
+        'address' => $orderInfo['address'],
+        'email' => $orderInfo['email'],
+        'method' => $orderInfo['method'],
+        'total' => $orderInfo['total_price'],
+        'status' => ucwords($status),
+        'products' => array_map(function ($product) {
+            return $product['raw'];
+        }, $parsedProducts),
+        'special_instructions' => parseSpecialInstructions($orderInfo['special_instructions'] ?? null),
+    ];
+
+    return sendReceiptEmail($orderData['email'], $orderData['name'], $orderData);
+}
+
 // ==================== MARK ORDER AS "DONE PREPARING" (ADMIN QUICK ACTION) ====================
 if (isset($_POST['mark_done_now'])) {
     try {
@@ -105,7 +124,13 @@ if (isset($_POST['mark_done_now'])) {
         }
         $update_stmt->close();
 
-        $_SESSION['message'] = ['type' => 'success', 'text' => '✅ Order marked as "Done Preparing" instantly!'];
+        $email_sent = notifyOrderStatusByEmail($order, 'done preparing');
+        $_SESSION['message'] = [
+            'type' => $email_sent ? 'success' : 'error',
+            'text' => $email_sent
+                ? '✅ Order marked as "Done Preparing" and the customer was notified by email.'
+                : '⚠️ Order marked as "Done Preparing", but the customer email notification failed.',
+        ];
 
     } catch (Exception $e) {
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
@@ -159,29 +184,7 @@ if (isset($_POST['update_order'])) {
             $info_stmt->close();
 
             if ($order_info) {
-                // ✅ UPDATED: parse products with the same '||' delimiter used by cart.php /
-                // orders.php, so preference/extras notes containing commas aren't mangled.
-                $parsed_products = parseOrderProducts($order_info['total_products']);
-                $product_list = array_map(function ($p) {
-                    return $p['raw'];
-                }, $parsed_products);
-
-                // ✅ pull the per-item special instructions along so the receipt email can include them
-                $special_instructions_list = parseSpecialInstructions($order_info['special_instructions'] ?? null);
-
-                $order_data = [
-                    'order_id' => $order_info['id'],
-                    'name' => $order_info['name'],
-                    'address' => $order_info['address'],
-                    'email' => $order_info['email'],
-                    'method' => $order_info['method'],
-                    'total' => $order_info['total_price'],
-                    'status' => ucfirst($new_status),
-                    'products' => $product_list,
-                    'special_instructions' => $special_instructions_list,
-                ];
-
-                sendReceiptEmail($order_data['email'], $order_data['name'], $order_data);
+                $email_sent = notifyOrderStatusByEmail($order_info, $new_status);
 
                 // ==================== SEND SMS NOTIFICATION ====================
                 $customer_phone = isset($order_info['number']) ? trim($order_info['number']) : '';
@@ -201,15 +204,23 @@ if (isset($_POST['update_order'])) {
 
                     if ($sms_sent) {
                         error_log("✅ SMS sent successfully for order {$order_info['id']}");
-                        $message[] = '✅ Order status updated! Receipt and SMS notification sent to customer.';
+                        $message[] = $email_sent
+                            ? '✅ Order status updated! Email and SMS notifications sent to customer.'
+                            : '⚠️ Order status updated and SMS sent, but the email notification failed.';
                     } else {
                         error_log("❌ SMS failed for order {$order_info['id']}");
-                        $message[] = '⚠️ Order status updated! Receipt sent, but SMS notification failed.';
+                        $message[] = $email_sent
+                            ? '⚠️ Order status updated! Email sent, but SMS notification failed.'
+                            : '⚠️ Order status updated, but email and SMS notifications failed.';
                     }
                 } else if ($is_guest_order) {
-                    $message[] = 'Order status updated and receipt sent to customer! (Guest - SMS not sent)';
+                    $message[] = $email_sent
+                        ? 'Order status updated and email notification sent! (Guest - SMS not sent)'
+                        : '⚠️ Order status updated, but email notification failed. (Guest - SMS not sent)';
                 } else {
-                    $message[] = 'Order status updated and receipt sent to customer! (No phone number)';
+                    $message[] = $email_sent
+                        ? 'Order status updated and email notification sent! (No phone number)'
+                        : '⚠️ Order status updated, but email notification failed. (No phone number)';
                 }
                 // ==================== END SMS NOTIFICATION ====================
             } else {
@@ -264,22 +275,13 @@ if (isset($_GET['cancel_order'])) {
                 $payment_method = $order['method'];
                 $current_status = strtolower($order['payment_status']);
 
-                // ==================== WASTE MANAGEMENT: only applies if inventory was already deducted ====================
-                // Inventory is only deducted once an order reaches "completed", so restoring/
-                // waste-logging on cancel only makes sense from that status onward.
+                // Inventory is deducted only when an order reaches "completed".
                 if ($current_status === 'completed') {
-                    $waste_result = addWasteRecord($conn, $order_id, $admin_id);
-                    if ($waste_result['success']) {
-                        $message[] = '🗑️ Cancelled order added to waste management (' . $waste_result['count'] . ' items)';
-                    }
-
-                    // Restore inventory since we're cancelling a "completed" order
                     $restore_result = restoreInventoryForOrder($conn, $order_id);
                     if ($restore_result['success']) {
                         $message[] = '↩️ Inventory restored: ' . implode(', ', $restore_result['items']);
                     }
                 }
-                // ==================== END WASTE MANAGEMENT ====================
 
                 $cancel_stmt = $conn->prepare("UPDATE `orders` SET payment_status = 'cancelled', cancelled_at = NOW() WHERE id = ?");
                 $cancel_stmt->bind_param("i", $order_id);
@@ -287,6 +289,11 @@ if (isset($_GET['cancel_order'])) {
                 $cancel_stmt->close();
 
                 if ($cancel_update) {
+                    $email_sent = notifyOrderStatusByEmail($order, 'cancelled');
+                    $message[] = $email_sent
+                        ? '✅ Customer notified of the cancellation by email.'
+                        : '⚠️ Order cancelled, but the customer email notification failed.';
+
                     // ==================== SEND CANCELLATION SMS ====================
                     $customer_phone = isset($order['number']) ? trim($order['number']) : '';
                     $customer_name = $order['name'];
@@ -1110,7 +1117,7 @@ function messageIsError(string $text): bool {
                <?php endif; ?>
 
                <?php if(!$is_cancelled): ?>
-               <a href="admin_orders.php?cancel_order=<?php echo intval($fetch_orders['id']); ?>" onclick="return confirm('Cancel this order? Inventory will be restored and waste will be logged.')" class="cancel-btn">
+               <a href="admin_orders.php?cancel_order=<?php echo intval($fetch_orders['id']); ?>" onclick="return confirm('Cancel this order? Inventory will be restored if it was deducted.')" class="cancel-btn">
                   <i class="fa-solid fa-times-circle"></i> Cancel
                </a>
                <?php endif; ?>

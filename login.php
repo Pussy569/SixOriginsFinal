@@ -11,14 +11,7 @@ ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
 include 'config.php';
-require_once __DIR__ . '/smtp_settings.php';
-
-require_once __DIR__ . '/PHPMailer/src/Exception.php';
-require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
-require_once __DIR__ . '/PHPMailer/src/SMTP.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once __DIR__ . '/mail_helper.php';
 
 function dbg($m){
     global $DEBUG;
@@ -28,85 +21,31 @@ function dbg($m){
 }
 
 function send_verification_mail(string $toEmail, string $code): bool|string {
-    global $SMTP_SETTINGS;
-    if ($SMTP_SETTINGS['username'] === '' || $SMTP_SETTINGS['password'] === '') {
-        error_log('Six Origins mail error: SMTP credentials are not configured.');
-        return false;
-    }
-
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = $SMTP_SETTINGS['host'];
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $SMTP_SETTINGS['username'];
-        $mail->Password   = $SMTP_SETTINGS['password'];
-        $mail->SMTPSecure = $SMTP_SETTINGS['encryption'];
-        $mail->Port       = $SMTP_SETTINGS['port'];
-
-        $mail->setFrom($SMTP_SETTINGS['from_email'], $SMTP_SETTINGS['from_name']);
-        $mail->addAddress($toEmail);
-
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Login Verification Code';
-        $mail->Body    = "<p>Hello,</p>
-                         <p>Your login verification code is:<br><strong style='font-size:1.4rem;'>{$code}</strong></p>
-                         <p>This code expires in 10 minutes. If you did not request this, please ignore this email.</p>
-                         <p>— Six Origins Team</p>";
-
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        error_log('Six Origins verification email failed: ' . $mail->ErrorInfo);
-        return false;
-    }
+    $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $html = "<p>Hello,</p>
+             <p>Your login verification code is:<br><strong style='font-size:1.4rem;'>{$safeCode}</strong></p>
+             <p>This code expires in 10 minutes. If you did not request this, please ignore this email.</p>
+             <p>— Six Origins Team</p>";
+    return send_six_origins_mail($toEmail, '', 'Your Login Verification Code', $html);
 }
 
 function send_lockout_mail(string $toEmail, string $name, int $lockout_minutes): bool|string {
-    global $SMTP_SETTINGS;
-    if ($SMTP_SETTINGS['username'] === '' || $SMTP_SETTINGS['password'] === '') {
-        error_log('Six Origins mail error: SMTP credentials are not configured.');
-        return false;
-    }
-
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = $SMTP_SETTINGS['host'];
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $SMTP_SETTINGS['username'];
-        $mail->Password   = $SMTP_SETTINGS['password'];
-        $mail->SMTPSecure = $SMTP_SETTINGS['encryption'];
-        $mail->Port       = $SMTP_SETTINGS['port'];
-
-        $mail->setFrom($SMTP_SETTINGS['from_email'], $SMTP_SETTINGS['from_name']);
-        $mail->addAddress($toEmail);
-
-        $mail->isHTML(true);
-        $mail->Subject = '🔒 Account Temporarily Locked - Security Alert';
-
-        $hours = $lockout_minutes / 60;
-        $time_text = $hours >= 1 ? number_format($hours, 1) . " hour(s)" : "{$lockout_minutes} minute(s)";
-
-        $mail->Body    = "<p>Hello {$name},</p>
-                         <p>Your account has been temporarily locked due to multiple failed login attempts.</p>
-                         <p><strong>🔐 Lockout Duration: {$time_text}</strong></p>
-                         <p>For security reasons, you cannot attempt to login during this period. After the lockout duration expires, you can try again.</p>
-                         <p><strong>Lockout Details:</strong></p>
-                         <ul>
-                            <li>Time: " . date('Y-m-d H:i:s') . "</li>
-                            <li>Your account will be unlocked at: " . date('Y-m-d H:i:s', time() + ($lockout_minutes * 60)) . "</li>
-                         </ul>
-                         <p><strong>If this wasn't you:</strong><br>
-                         If you didn't attempt to login, your password may be compromised. Please reset your password immediately.</p>
-                         <p>— Six Origins Security Team</p>";
-
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        error_log('Six Origins lockout email failed: ' . $mail->ErrorInfo);
-        return false;
-    }
+    $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $hours = $lockout_minutes / 60;
+    $time_text = $hours >= 1 ? number_format($hours, 1) . " hour(s)" : "{$lockout_minutes} minute(s)";
+    $html = "<p>Hello {$safeName},</p>
+             <p>Your account has been temporarily locked due to multiple failed login attempts.</p>
+             <p><strong>🔐 Lockout Duration: {$time_text}</strong></p>
+             <p>For security reasons, you cannot attempt to login during this period. After the lockout duration expires, you can try again.</p>
+             <p><strong>Lockout Details:</strong></p>
+             <ul>
+                <li>Time: " . date('Y-m-d H:i:s') . "</li>
+                <li>Your account will be unlocked at: " . date('Y-m-d H:i:s', time() + ($lockout_minutes * 60)) . "</li>
+             </ul>
+             <p><strong>If this wasn't you:</strong><br>
+             If you didn't attempt to login, your password may be compromised. Please reset your password immediately.</p>
+             <p>— Six Origins Security Team</p>";
+    return send_six_origins_mail($toEmail, $name, '🔒 Account Temporarily Locked - Security Alert', $html);
 }
 
 function check_account_lockout(string $email): array {
