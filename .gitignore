@@ -1,5 +1,6 @@
 # Local database dumps and database files
 *.sql
+!database/*.sql
 *.sqlite
 *.sqlite3
 *.db

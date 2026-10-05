@@ -17,7 +17,7 @@ Docker Desktop (or Docker Engine with the Compose plugin) is required.
 
 The database connection uses `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`. Compose sets these for the web container. Configure the same variables in Apache when running PHP directly under XAMPP.
 
-The database container imports `shop_db.sql` only when its data volume is first created. That ignored local snapshot is for local development only; it contains personal/test data and does not include the current application schema. For example, the snapshot is missing login lockout fields, order timing fields, inventory/recipe tables, and admin activity tables used by current code. Do not use it to initialize production. Before deployment, provision and migrate a production database from a reviewed schema/data source that includes all tables and columns used by the current application. Back up the database before applying any migration.
+The database container imports `shop_db.sql` only when its data volume is first created. That ignored local snapshot is for local development only and may contain personal/test data. Do not use it to initialize production.
 
 Docker persists sessions, private top-up proofs, private verification documents, and profile/product uploads under `/data`. The entrypoint links the public image folders to the durable volume while leaving bundled images untouched. `docker compose down` stops and removes the containers but keeps the data. `docker compose down -v` also deletes the volumes and all stored application/database data.
 
@@ -42,7 +42,21 @@ The Compose MariaDB container is for local development only. In Railway, attach 
 - `DB_USER`
 - `DB_PASSWORD`
 
-Set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_BASE_URL` to the public HTTPS URL of the Railway service (or custom domain). The service refuses requests unless all four database variables are present and the HTTPS base URL and persistent proof-storage path are configured. Import a reviewed, current schema/data set into the database before serving traffic. The local `shop_db.sql` snapshot is ignored by Git and excluded from the Docker image; it is incomplete for the current application and must not be used for production. Verify the schema against login, order, inventory/recipe, admin activity, wallet, and top-up flows before go-live.
+Set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_BASE_URL` to the public HTTPS URL of the Railway service (or custom domain). The service requires `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`; production also requires `APP_BASE_URL` and `TOPUP_PROOF_DIR`. The local `shop_db.sql` snapshot is ignored by Git and excluded from the Docker image. Do not use it to initialize production.
+
+### Initialize the Railway MySQL 8 database
+
+For a new, empty Railway MySQL 8 database, import the reviewed structure, triggers, and placeholder admin separately, in this order:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/schema.sql
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/triggers.sql
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/seed.sql
+```
+
+Enter the database password at each prompt. These scripts are for a new empty database, not an existing database. The seed admin uses a fake `.invalid` email and a random placeholder password hash; replace it with your real admin email and a hash generated with PHP `password_hash()` before deployment. The dump-derived local files `shop_db.sql` and `finalshopdatabase.sql` are not deployment inputs and must stay out of Git.
+
+Configure `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `APP_BASE_URL`, `APP_ENV=production`, `APP_DEBUG=false`, and `TOPUP_PROOF_DIR=/data/topup_proofs` in Railway. `.env.example` documents local Compose settings and optional integrations (`OLLAMA_URL`, `MAIL_*`, and `TEXTBEE_*`); do not use its local database passwords for Railway. Attach a persistent Railway Volume at `/data`.
 
 Set `TOPUP_PROOF_DIR=/data/topup_proofs` and attach a persistent Railway Volume at `/data`. The entrypoint keeps sessions at `/data/sessions`, proofs at `/data/topup_proofs`, verification documents at `/data/verification_uploads`, and public user-uploaded images at `/data/user_uploads` and `/data/admin_uploads`. Copy existing uploads and proofs into those paths before switching traffic. Top-up proofs and verification documents are served only to signed-in admins.
 
