@@ -498,7 +498,7 @@
         <div class="quick-links">
            <a href="index.php">Home</a>
            <a href="Item.php">Shop</a>
-           <a href="about us.php">About Us</a>
+           <a href="about.php">About Us</a>
            <a href="contact.php">Contact</a>
            <a href="orders.php">Orders</a>
         </div>

@@ -1421,7 +1421,7 @@ img, video { max-width: 100%; }
             <h3><i class="fa-solid fa-heart"></i> Our Story</h3>
             <p>Six Origins Cafe isn't just a coffee shop—it's a dream built from the ground up. It started with a vision to create a cozy Japanese-inspired café where quality meets simplicity.</p>
             <p>At the heart of Six Origins is our commitment to excellence. We source the finest beans from six distinct origins around the world, expertly roast them, and brew each cup to perfection. From freshly brewed specialty drinks to rich cream-based blends, refreshing teas, and handcrafted pastries, everything is made to delight and connect.</p>
-            <a href="About us.php"><i class="fa-solid fa-arrow-right"></i> Read More</a>
+            <a href="about.php"><i class="fa-solid fa-arrow-right"></i> Read More</a>
          </div>
 
          <div class="carousel-wrapper">
