@@ -2712,11 +2712,11 @@ if (isset($_GET['remove_extra_group'])) {
             </div>
 
             <div class="field">
-               <label id="sizeStockLabel"><i class="fa-solid fa-ruler"></i> Cup Sizes, Prices &amp; Stock</label>
+               <label id="sizeStockLabel"><i class="fa-solid fa-ruler"></i> Product Options, Prices &amp; Stock</label>
                <div class="size-stock-container" id="sizeStockContainer">
                   <div class="size-stock-row">
                      <div class="input-wrapper">
-                        <input type="text" name="size[]" class="size-name-input" placeholder="e.g., 12oz / Small" maxlength="20" required>
+                        <input type="text" name="size[]" class="size-name-input" placeholder="e.g., Small, 1 Slice, Whole Cake" maxlength="20" required>
                      </div>
                      <div class="input-wrapper">
                         <input type="number" name="size_price[]" min="1" step="1" placeholder="Price (₱)" required>
@@ -2734,6 +2734,7 @@ if (isset($_GET['remove_extra_group'])) {
                      <i class="fa-solid fa-minus"></i> Remove
                   </button>
                </div>
+               <div class="help-text"><i class="fa-solid fa-info-circle"></i> Use any names that fit this product; sizes do not have to be Small/Medium/Large or cup sizes. Packaging is assigned manually per option in Manage Ingredients.</div>
             </div>
 
             <div class="field">
@@ -2976,13 +2977,13 @@ if (isset($_GET['remove_extra_group'])) {
             <label style="margin-top: 18px;">Add New Sizes</label>
             <div id="newSizeFields">
                <div class="field-row new-size-row" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                  <div class="input-wrapper"><input type="text" name="new_size[0]" maxlength="20" placeholder="Size name"></div>
+                  <div class="input-wrapper"><input type="text" name="new_size[0]" maxlength="20" placeholder="e.g., 1 Slice or Whole Cake"></div>
                   <div class="input-wrapper"><input type="number" name="new_size_price[0]" min="1" step="1" placeholder="Price"></div>
                   <div class="input-wrapper"><input type="number" name="new_size_stock[0]" min="0" step="1" placeholder="Starting stock"></div>
                </div>
             </div>
             <button type="button" class="btn btn-secondary" onclick="addNewSizeFields()">Add another size</button>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> New sizes are available immediately. Their matching packaging can be set below in Packaging Used by Size.</div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Enter any product-specific option name (not only cup sizes). New options are available immediately; choose their packaging manually in Manage Ingredients.</div>
          </div>
 
          <!-- Update Image Preview -->
@@ -3341,10 +3342,10 @@ if (isset($_GET['remove_extra_group'])) {
       <?php endif; ?>
 
       <div class="ingredients-section-label" style="margin-top:24px;">
-         <i class="fa-solid fa-mug-hot"></i> Packaging Used by Size
+         <i class="fa-solid fa-box"></i> Optional Packaging for Each Product Option
       </div>
       <div class="help-text" style="margin-bottom:12px;">
-         Link a packaging inventory item to the matching product size. Only that size's orders deduct this amount; regular consumable recipes above still apply to every size.
+         Choose the product option name you created (for example, “1 Slice” or “Whole Cake”), then manually select its packaging inventory item and quantity. Packaging is optional: leave an option unmapped if it does not need tracked packaging. Only orders of a mapped option deduct that packaging; regular recipe ingredients above still apply to every option.
       </div>
 
       <?php if (!empty($size_packaging)): ?>
@@ -3363,7 +3364,7 @@ if (isset($_GET['remove_extra_group'])) {
             <?php endforeach; ?>
          </div>
       <?php else: ?>
-         <div class="no-ingredients-msg">No size-specific packaging has been linked yet.</div>
+         <div class="no-ingredients-msg">No optional packaging mappings yet. Add only the mappings this product needs.</div>
       <?php endif; ?>
 
       <?php if (!empty($product_size_options) && !empty($packaging_inventory)): ?>
@@ -3372,10 +3373,10 @@ if (isset($_GET['remove_extra_group'])) {
          <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
 
          <div class="field">
-            <label><i class="fa-solid fa-ruler"></i> Product Size</label>
+            <label><i class="fa-solid fa-ruler"></i> Product Option</label>
             <div class="input-wrapper">
                <select name="product_size_id" required>
-                  <option value="">Choose a size...</option>
+                  <option value="">Choose this product's option...</option>
                   <?php foreach ($product_size_options as $size_option): ?>
                      <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
                   <?php endforeach; ?>
@@ -3384,7 +3385,7 @@ if (isset($_GET['remove_extra_group'])) {
          </div>
 
          <div class="field">
-            <label><i class="fa-solid fa-box"></i> Packaging Inventory Item</label>
+            <label><i class="fa-solid fa-box"></i> Packaging Inventory Item to Deduct</label>
             <div class="input-wrapper">
                <select name="size_ingredient_id" required>
                   <option value="">Choose packaging...</option>
@@ -3400,12 +3401,12 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="field">
             <label><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold</label>
             <div class="input-wrapper">
-               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 cup" required>
+               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 container" required>
             </div>
          </div>
 
          <div class="modal-actions">
-            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Link Packaging to Size</button>
+            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Manual Packaging Mapping</button>
          </div>
       </form>
       <?php elseif (empty($product_size_options)): ?>
@@ -3658,9 +3659,9 @@ if (isset($_GET['remove_extra_group'])) {
       if (!select || !label) return;
       const isSlice = select.value === 'slice';
       label.innerHTML = isSlice
-         ? '<i class="fa-solid fa-ruler"></i> Slice / Pieces, Prices &amp; Stock'
-         : '<i class="fa-solid fa-ruler"></i> Cup Sizes, Prices &amp; Stock';
-      const placeholder = isSlice ? 'e.g., 1 Slice / 6 Pieces' : 'e.g., 12oz / Small';
+         ? '<i class="fa-solid fa-ruler"></i> Slice / Piece Options, Prices &amp; Stock'
+         : '<i class="fa-solid fa-ruler"></i> Product Options, Prices &amp; Stock';
+      const placeholder = isSlice ? 'e.g., 1 Slice / Whole Cake' : 'e.g., Small / 12oz / 1 Container';
       document.querySelectorAll('.size-name-input').forEach(function(inp) {
          inp.placeholder = placeholder;
       });
@@ -3715,7 +3716,7 @@ if (isset($_GET['remove_extra_group'])) {
       row.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
       row.style.marginTop = '10px';
       row.innerHTML = `
-         <div class="input-wrapper"><input type="text" name="new_size[${index}]" maxlength="20" placeholder="Size name"></div>
+         <div class="input-wrapper"><input type="text" name="new_size[${index}]" maxlength="20" placeholder="e.g., 1 Slice or Whole Cake"></div>
          <div class="input-wrapper"><input type="number" name="new_size_price[${index}]" min="1" step="1" placeholder="Price"></div>
          <div class="input-wrapper"><input type="number" name="new_size_stock[${index}]" min="0" step="1" placeholder="Starting stock"></div>
       `;

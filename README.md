@@ -34,7 +34,7 @@ Order status changes, including cancellations and the admin "Done Preparing" act
 
 Products can have a separate whole-peso price and stock quantity for each size. Set both on every size row when creating a product; customer catalog, detail, and cart flows use the selected size's saved price.
 
-To manage sizes later, open a product's Edit dialog to add new sizes with their own price and starting stock, or hide/unhide an existing size. Hidden sizes are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, link recipe ingredients at the product level (they apply to every size) and link packaging under “Packaging Used by Size” (only the selected size's packaging is deducted when sold).
+To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients linked at the product level apply to every option. Packaging is optional and manually mapped by the admin to whichever option needs it; only that option's mapped packaging is deducted when sold. Leave packaging unmapped when an option does not need tracked packaging.
 
 Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:
 
