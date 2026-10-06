@@ -327,3 +327,7 @@ END
 $$
 
 DELIMITER ;
+
+-- Existing Head Admin account.
+INSERT INTO `users` (`name`, `email`, `password`, `user_type`, `status`) VALUES ('Head Admin', 'shammahpanot@gmail.com', '$2y$10$wx0v7IyWv7yWmEErYcZh0.pcm.b2MfmmENt8FYtSwxGSEhGKo9FzO', 'admin', 'approved');
+
