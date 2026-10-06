@@ -3259,6 +3259,19 @@ if (isset($_GET['remove_extra_group'])) {
       const selected = select.options[select.selectedIndex];
       label.textContent = selected && selected.dataset.unit ? selected.dataset.unit : 'unit';
    }
+
+   function toggleOptionPackagingForm() {
+      const form = document.getElementById('optionPackagingForm');
+      const button = document.getElementById('toggleOptionPackagingForm');
+      if (!form || !button) return;
+      const opening = form.style.display === 'none';
+      form.style.display = opening ? '' : 'none';
+      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) {
+         const inventorySelect = form.querySelector('select[name="size_ingredient_id"]');
+         if (inventorySelect) inventorySelect.focus();
+      }
+   }
 </script>
 <?php endif; ?>
 
@@ -3393,10 +3406,10 @@ if (isset($_GET['remove_extra_group'])) {
       <?php endif; ?>
 
       <div class="ingredients-section-label" style="margin-top:24px;">
-         <i class="fa-solid fa-box"></i> Inventory Assigned to Each Product Option
+         <i class="fa-solid fa-box"></i> Packaging Assigned to Each Product Option
       </div>
       <div class="help-text" style="margin-bottom:12px;">
-         Manually choose an inventory item, the product option that uses it, and the amount consumed per item sold. Only the matching option deducts this stock. Example: map Small Cup to Small, Medium Cup to Medium, and Large Cup to Large.
+         Use the separate button below to manually connect a cup, container, or other inventory item to one customer option and choose the amount deducted per sale. Buying Small only deducts the item mapped to Small.
       </div>
 
       <?php if (!empty($size_packaging)): ?>
@@ -3422,6 +3435,10 @@ if (isset($_GET['remove_extra_group'])) {
       <?php endif; ?>
 
       <?php if (!empty($product_size_options) && !empty($option_inventory)): ?>
+      <button type="button" class="btn secondary" id="toggleOptionPackagingForm" aria-expanded="false" aria-controls="optionPackagingForm" onclick="toggleOptionPackagingForm()">
+         <i class="fa-solid fa-box-open"></i> Add Packaging for a Product Option
+      </button>
+      <div id="optionPackagingForm" style="display:none; margin-top:18px;">
       <form action="" method="post" novalidate>
          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
          <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
@@ -3453,7 +3470,7 @@ if (isset($_GET['remove_extra_group'])) {
                   ?>
                </select>
             </div>
-            <div class="help-text">Choose cups or containers from Packaging or Consumable inventory. The category does not change which product option uses the item.</div>
+            <div class="help-text">Choose the exact cup, container, or other inventory item. It can be in any inventory category; this mapping applies only to the product option selected below.</div>
          </div>
 
          <div class="field">
@@ -3477,13 +3494,14 @@ if (isset($_GET['remove_extra_group'])) {
          </div>
 
          <div class="modal-actions">
-            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Add Item to This Option</button>
+            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Packaging for This Option</button>
          </div>
       </form>
+      </div>
       <?php elseif (empty($product_size_options)): ?>
-         <div class="no-ingredients-msg">Add an active product option before assigning inventory to it.</div>
+         <div class="no-ingredients-msg">Add an active product option before assigning packaging.</div>
       <?php else: ?>
-         <div class="no-ingredients-msg">Add inventory items before assigning them to product options.</div>
+         <div class="no-ingredients-msg">Add inventory items before assigning packaging to a product option.</div>
       <?php endif; ?>
    </div>
 </div>
