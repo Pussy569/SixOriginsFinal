@@ -3,6 +3,7 @@
 shop_db.sql
 finalshopdatabase.sql
 /database/database.sql
+!/database/schema.sql
 *.sqlite
 *.sqlite3
 *.db

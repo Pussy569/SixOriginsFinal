@@ -55,6 +55,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/datab
 
 Enter the database password at the prompt. This import is for a new empty database, not an existing database. The file contains your Head Admin login email and existing password hash, so transfer/import it securely and never commit or publish it. The dump-derived local files `shop_db.sql` and `finalshopdatabase.sql` are not deployment inputs and must stay out of Git.
 
+For a fresh database that should contain only the database structure, `database/schema.sql` is a safe DDL-only export of the same tables, indexes, foreign keys, and audit triggers. It contains no administrator account or application data. Import it only into an empty database; it is not a migration for an existing database:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/schema.sql
+```
+
+Enter the database password at the prompt. Add an administrator through your trusted, private provisioning process; do not use or publish the private seed from `database/database.sql`.
+
 Configure `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `APP_BASE_URL`, `APP_ENV=production`, `APP_DEBUG=false`, and `TOPUP_PROOF_DIR=/data/topup_proofs` in Railway. `.env.example` documents local Compose settings and optional integrations (`OLLAMA_URL`, Resend (`RESEND_API_KEY` and `MAIL_FROM_*`), and `TEXTBEE_*`); do not use its local database passwords for Railway. Attach a persistent Railway Volume at `/data`.
 
 Set `TOPUP_PROOF_DIR=/data/topup_proofs` and attach a persistent Railway Volume at `/data`. The entrypoint keeps sessions at `/data/sessions`, proofs at `/data/topup_proofs`, verification documents at `/data/verification_uploads`, and public user-uploaded images at `/data/user_uploads` and `/data/admin_uploads`. Copy existing uploads and proofs into those paths before switching traffic. Top-up proofs and verification documents are served only to signed-in admins.
