@@ -22,6 +22,8 @@ services:
       TEXTBEE_API_KEY: ${TEXTBEE_API_KEY:-}
       TEXTBEE_DEVICE_ID: ${TEXTBEE_DEVICE_ID:-}
       OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/api/chat}
+      OLLAMA_BASIC_AUTH_USERNAME: ${OLLAMA_BASIC_AUTH_USERNAME:-}
+      OLLAMA_BASIC_AUTH_PASSWORD: ${OLLAMA_BASIC_AUTH_PASSWORD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

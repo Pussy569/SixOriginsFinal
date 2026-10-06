@@ -3,6 +3,25 @@
 // ==================== OLLAMA CONFIG ====================
 define('OLLAMA_URL', getenv('OLLAMA_URL') ?: 'http://127.0.0.1:11434/api/chat');
 define('OLLAMA_MODEL', 'qwen3:4b');
+define('OLLAMA_BASIC_AUTH_USERNAME', getenv('OLLAMA_BASIC_AUTH_USERNAME') ?: '');
+define('OLLAMA_BASIC_AUTH_PASSWORD', getenv('OLLAMA_BASIC_AUTH_PASSWORD') ?: '');
+
+function ollama_basic_auth_options(): ?array {
+    $hasUsername = OLLAMA_BASIC_AUTH_USERNAME !== '';
+    $hasPassword = OLLAMA_BASIC_AUTH_PASSWORD !== '';
+    if (!$hasUsername && !$hasPassword) {
+        return [];
+    }
+    if (!$hasUsername || !$hasPassword) {
+        error_log('[Chatbot Ollama] Basic Auth requires both OLLAMA_BASIC_AUTH_USERNAME and OLLAMA_BASIC_AUTH_PASSWORD.');
+        return null;
+    }
+
+    return [
+        CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+        CURLOPT_USERPWD => OLLAMA_BASIC_AUTH_USERNAME . ':' . OLLAMA_BASIC_AUTH_PASSWORD,
+    ];
+}
 
 // How many past turns (user+assistant pairs) to keep and feed back to Qwen, so it can
 // answer follow-ups like "explain that forecast in more detail" or "why is that low".
@@ -62,6 +81,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
 
     header('Content-Type: application/json');
 
+    $authOptions = ollama_basic_auth_options();
+    if ($authOptions === null) {
+        http_response_code(500);
+        echo json_encode([
+            'ok' => false,
+            'stage' => 'configuration',
+            'hint' => 'Ollama Basic Auth is incomplete. Configure both username and password, or leave both unset.',
+        ]);
+        exit;
+    }
+
     $start = microtime(true);
     $ch = curl_init(OLLAMA_URL);
     curl_setopt_array($ch, [
@@ -77,7 +107,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_TIMEOUT => 60,
         CURLOPT_CONNECTTIMEOUT => OLLAMA_CONNECT_TIMEOUT,
-    ]);
+    ] + $authOptions);
     $raw = curl_exec($ch);
     $curl_err = curl_error($ch);
     $curl_errno = curl_errno($ch);
@@ -92,7 +122,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
             'curl_errno' => $curl_errno,
             'curl_error' => $curl_err,
             'elapsed_seconds' => $elapsed,
-            'hint' => 'PHP could not even connect to ' . OLLAMA_URL . '. Check that "ollama serve" is running on the same machine PHP runs on, and that no firewall blocks 127.0.0.1:11434.',
+            'hint' => 'PHP could not connect to the configured Ollama endpoint. Check that Ollama and any tunnel are running and that OLLAMA_URL is correct.',
         ]);
         exit;
     }
@@ -280,6 +310,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             $payload['format'] = 'json';
         }
 
+        $authOptions = ollama_basic_auth_options();
+        if ($authOptions === null) {
+            return null;
+        }
+
         $ch = curl_init(OLLAMA_URL);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
@@ -288,7 +323,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_TIMEOUT => $timeout,
             CURLOPT_CONNECTTIMEOUT => OLLAMA_CONNECT_TIMEOUT,
-        ]);
+        ] + $authOptions);
         $raw = curl_exec($ch);
         $curl_err = curl_error($ch);
         $curl_errno = curl_errno($ch);
