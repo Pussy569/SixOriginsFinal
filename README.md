@@ -24,6 +24,10 @@ The old `auto_tasks.php` endpoint and the unused waste-management feature have b
 
 The application bootstrap, reusable helpers, notification services, and shared customer/admin layout templates live under `app/bootstrap/`, `app/helpers/`, `app/services/`, and `app/views/`. Root-level compatibility files keep existing includes working; keep them in place when adding to this organization until all legacy references are deliberately migrated. Page controllers and AJAX endpoints remain at the root because their existing public URLs are part of the application interface.
 
+### Install Six Origins on a phone
+
+The storefront is installable as a Progressive Web App (PWA). Open its HTTPS URL on Android in Chrome and choose **Install app** or **Add to Home screen** from the browser menu. On iPhone/iPad, open the site in Safari, tap **Share**, then **Add to Home Screen**. The installed app uses the Six Origins artwork from `images/SixOriginspic.jpg` for its app icon and shows a brief animated coffee-themed launch screen. Browser-based installs require HTTPS; `localhost` is also allowed for local testing. Page content still requires an internet connection.
+
 The admin chatbot expects Ollama at `OLLAMA_URL`; by default, the container connects to Ollama on the Docker host at `host.docker.internal:11434`. Set `OLLAMA_URL` in `.env` if Ollama is elsewhere. If the Ollama endpoint is protected with HTTP Basic Auth, set both `OLLAMA_BASIC_AUTH_USERNAME` and `OLLAMA_BASIC_AUTH_PASSWORD`; leave both empty for an unprotected local endpoint. Email notifications use Resend: set `RESEND_API_KEY`, `MAIL_FROM_EMAIL` to an address on a verified Resend domain, and `MAIL_FROM_NAME`. SMS notifications require their respective credentials in `.env`. Never put production secrets or database dumps in Git.
 
 Order status changes, including cancellations and the admin "Done Preparing" action, email the customer. Editing a product emails only registered customers with a previous order containing that product; guest orders are not emailed.

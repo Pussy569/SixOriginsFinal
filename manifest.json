@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Six Origins Cafe",
+  "short_name": "Six Origins",
+  "description": "Coffee, comfort, and a little warmth from Six Origins Cafe.",
+  "start_url": "./index.php",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8ef",
+  "theme_color": "#5e1f13",
+  "icons": [
+    {
+      "src": "./images/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./images/app-icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

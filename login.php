@@ -401,13 +401,21 @@ if (isset($_POST['submit'])) {
 <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <meta name="theme-color" content="#5E1F13" />
+   <meta name="mobile-web-app-capable" content="yes" />
+   <meta name="apple-mobile-web-app-capable" content="yes" />
+   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+   <meta name="apple-mobile-web-app-title" content="Six Origins" />
    <title>Login | Six Origins Cafe</title>
+   <link rel="manifest" href="./manifest.json">
+   <link rel="apple-touch-icon" href="images/app-icon-192.png">
+   <script src="Js/app-launch.js" defer></script>
 
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-   <link rel="icon" type="image/png" href="images/logos.png">
+   <link rel="icon" type="image/png" href="images/app-icon-192.png">
    <style>
       :root{--primary-red:#C6453E;--dark-brown:#5E1F13;--gray-brown:#664C47;--light-cream:#FFF2E0;--white:#FFFFFF;--radius:16px;--shadow:0 8px 24px rgba(94,31,19,.08);--shadow-hover:0 12px 36px rgba(94,31,19,.12);--transition:all .3s cubic-bezier(.4,0,.2,1)}
       *{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',system-ui,-apple-system,"Segoe UI",Roboto,Arial}
@@ -709,7 +717,7 @@ if (isset($_POST['submit'])) {
       <div class="loader-logo-wrap">
          <div class="loader-ring"></div>
          <div class="loader-ring second"></div>
-         <img src="images/logos.png" alt="Six Origins" class="loader-logo">
+         <img src="images/app-icon-192.png" alt="Six Origins" class="loader-logo">
       </div>
       <div class="loader-title">Six Origins</div>
       <div class="loader-text"><span id="loaderMsg">Brewing your page</span>
