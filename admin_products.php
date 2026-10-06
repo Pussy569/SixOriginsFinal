@@ -684,6 +684,7 @@ if (isset($_POST['add_product_ingredient'])) {
     try {
         $ingredient_id = intval($_POST['ingredient_id'] ?? 0);
         $quantity_used = floatval($_POST['quantity_used'] ?? 0);
+        $ingredient_scope = $_POST['ingredient_scope'] ?? 'product';
 
         if ($pi_product_id <= 0 || $ingredient_id <= 0) {
             throw new Exception('Invalid product or inventory item selected');
@@ -709,26 +710,87 @@ if (isset($_POST['add_product_ingredient'])) {
         if (!$product_row || !$ing_row) {
             throw new Exception('Product or inventory item not found');
         }
-        if (strtolower((string)$ing_row['category']) === 'packaging') {
-            throw new Exception('Packaging must be linked to a specific product size.');
+        if (!in_array($ingredient_scope, ['product', 'option'], true)) {
+            throw new Exception('Choose whether this inventory item applies to every product option or only one option.');
         }
 
-        // Link ingredient to product. If already linked, just update the amount used.
-        $stmt = $conn->prepare("INSERT INTO `product_ingredients` (product_id, ingredient_id, quantity_used) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used)");
-        if (!$stmt) {
-            throw new Exception("Database error: " . $conn->error);
+        if ($ingredient_scope === 'option') {
+            $product_size_id = (int)($_POST['product_size_id'] ?? 0);
+            if ($product_size_id <= 0) {
+                throw new Exception('Choose which product option uses this packaging item.');
+            }
+
+            $global_link_stmt = $conn->prepare(
+                "SELECT id FROM product_ingredients WHERE product_id = ? AND ingredient_id = ? LIMIT 1"
+            );
+            if (!$global_link_stmt) {
+                throw new Exception("Database error checking existing ingredient link: " . $conn->error);
+            }
+            $global_link_stmt->bind_param("ii", $pi_product_id, $ingredient_id);
+            $global_link_stmt->execute();
+            $already_linked_globally = $global_link_stmt->get_result()->num_rows > 0;
+            $global_link_stmt->close();
+            if ($already_linked_globally) {
+                throw new Exception('This item is already linked to every product option. Remove its existing product-wide link first to avoid deducting it twice.');
+            }
+
+            $size_stmt = $conn->prepare(
+                "SELECT size FROM product_sizes WHERE id = ? AND product_id = ? AND is_active = 1"
+            );
+            if (!$size_stmt) {
+                throw new Exception("Database error checking product option: " . $conn->error);
+            }
+            $size_stmt->bind_param("ii", $product_size_id, $pi_product_id);
+            $size_stmt->execute();
+            $size_row = $size_stmt->get_result()->fetch_assoc();
+            $size_stmt->close();
+            if (!$size_row) {
+                throw new Exception('Choose an available option belonging to this product.');
+            }
+
+            $packaging_stmt = $conn->prepare(
+                "INSERT INTO product_size_ingredients (product_size_id, ingredient_id, quantity_used)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used)"
+            );
+            if (!$packaging_stmt) {
+                throw new Exception("Database error linking packaging: " . $conn->error);
+            }
+            $packaging_stmt->bind_param("iid", $product_size_id, $ingredient_id, $quantity_used);
+            if (!$packaging_stmt->execute()) {
+                throw new Exception("Failed to link packaging: " . $packaging_stmt->error);
+            }
+            $packaging_stmt->close();
+
+            log_admin_activity(
+                $admin_id,
+                'Link Option Inventory',
+                $ing_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $ing_row['unit'] . ') linked to ' . $product_row['name'] . ' - ' . $size_row['size']
+            );
+            $_SESSION['message'] = [
+                'type' => 'success',
+                'text' => htmlspecialchars($ing_row['ingredient_name']) . ' will be deducted only for "' . htmlspecialchars($size_row['size']) . '" of "' . htmlspecialchars($product_row['name']) . '".'
+            ];
+        } else {
+            if (strtolower((string)$ing_row['category']) === 'packaging') {
+                throw new Exception('Choose a specific product option for packaging so other options are not deducted.');
+            }
+            // Recipe ingredients apply to every product option.
+            $stmt = $conn->prepare("INSERT INTO `product_ingredients` (product_id, ingredient_id, quantity_used) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used)");
+            if (!$stmt) {
+                throw new Exception("Database error: " . $conn->error);
+            }
+            $stmt->bind_param("iid", $pi_product_id, $ingredient_id, $quantity_used);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to link ingredient: " . $stmt->error);
+            }
+            $stmt->close();
+
+            log_admin_activity($admin_id, 'Link Ingredient', $ing_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $ing_row['unit'] . ' per unit) linked to product: ' . $product_row['name']);
+
+            $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($ing_row['ingredient_name']) . ' linked to "' . htmlspecialchars($product_row['name']) . '" successfully! 🧪'];
         }
-        $stmt->bind_param("iid", $pi_product_id, $ingredient_id, $quantity_used);
-
-        if (!$stmt->execute()) {
-            throw new Exception("Failed to link ingredient: " . $stmt->error);
-        }
-        $stmt->close();
-
-        // LOG THE ACTIVITY
-        log_admin_activity($admin_id, 'Link Ingredient', $ing_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $ing_row['unit'] . ' per unit) linked to product: ' . $product_row['name']);
-
-        $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($ing_row['ingredient_name']) . ' linked to "' . htmlspecialchars($product_row['name']) . '" successfully! 🧪'];
 
     } catch (Exception $e) {
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
@@ -2798,8 +2860,14 @@ if (isset($_GET['remove_extra_group'])) {
                   $sizes_stmt->close();
 
                   // Count linked ingredients for the summary strip
-                  $ic_stmt = $conn->prepare("SELECT COUNT(*) as cnt FROM `product_ingredients` WHERE product_id = ?");
-                  $ic_stmt->bind_param("i", $product['id']);
+                  $ic_stmt = $conn->prepare(
+                     "SELECT
+                        (SELECT COUNT(*) FROM product_ingredients WHERE product_id = ?) +
+                        (SELECT COUNT(*) FROM product_size_ingredients psi
+                         JOIN product_sizes ps ON psi.product_size_id = ps.id
+                         WHERE ps.product_id = ?) AS cnt"
+                  );
+                  $ic_stmt->bind_param("ii", $product['id'], $product['id']);
                   $ic_stmt->execute();
                   $ingredient_count = $ic_stmt->get_result()->fetch_assoc()['cnt'] ?? 0;
                   $ic_stmt->close();
@@ -2854,9 +2922,9 @@ if (isset($_GET['remove_extra_group'])) {
 
                   <div class="ingredients-summary">
                      <?php if ($ingredient_count > 0): ?>
-                        <i class="fa-solid fa-flask"></i> <?php echo intval($ingredient_count); ?> ingredient<?php echo $ingredient_count != 1 ? 's' : ''; ?> linked
+                        <i class="fa-solid fa-flask"></i> <?php echo intval($ingredient_count); ?> inventory mapping<?php echo $ingredient_count != 1 ? 's' : ''; ?> linked
                      <?php else: ?>
-                        <i class="fa-solid fa-triangle-exclamation" style="color:#C93353;"></i> <span class="none">No ingredients linked yet</span>
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#C93353;"></i> <span class="none">No inventory items linked yet</span>
                      <?php endif; ?>
                   </div>
 
@@ -3069,16 +3137,11 @@ if (isset($_GET['remove_extra_group'])) {
          $inv_result = $inv_stmt->get_result();
          $available_inventory = [];
          while ($row = $inv_result->fetch_assoc()) {
-            if (strtolower((string)$row['category']) !== 'packaging' && !in_array((int)$row['id'], $linked_ids, true)) {
+            if (strtolower((string)$row['category']) === 'packaging' || !in_array((int)$row['id'], $linked_ids, true)) {
                $available_inventory[] = $row;
             }
          }
          $inv_stmt->close();
-
-         $packaging_stmt = $conn->prepare("SELECT id, ingredient_name, unit, quantity FROM inventory WHERE category = 'packaging' ORDER BY ingredient_name ASC");
-         $packaging_stmt->execute();
-         $packaging_inventory = $packaging_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-         $packaging_stmt->close();
 
          $size_stmt = $conn->prepare("SELECT id, size FROM product_sizes WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
          $size_stmt->bind_param("i", $mi_product_id);
@@ -3147,7 +3210,7 @@ if (isset($_GET['remove_extra_group'])) {
       </div>
 
       <div class="ingredients-section-label">
-         <i class="fa-solid fa-plus"></i> Link Recipe Ingredient
+         <i class="fa-solid fa-plus"></i> Link Inventory Item to This Product
       </div>
 
       <?php if (!empty($available_inventory)): ?>
@@ -3158,17 +3221,18 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="field">
             <label><i class="fa-solid fa-cubes"></i> Inventory Item</label>
             <div class="input-wrapper">
-               <select name="ingredient_id" id="ingredientSelect" required onchange="updateIngredientUnit()">
+               <select name="ingredient_id" id="ingredientSelect" required onchange="updateIngredientLinkMode(<?php echo !empty($product_size_options) ? 'true' : 'false'; ?>)">
                   <option value="">Choose from inventory...</option>
                   <?php
                      $current_cat = null;
                      foreach ($available_inventory as $inv) {
-                        if ($inv['category'] !== $current_cat) {
+                        $inventory_category = strtolower((string)$inv['category']) === 'packaging' ? 'Packaging' : ucfirst((string)$inv['category']);
+                        if ($inventory_category !== $current_cat) {
                            if ($current_cat !== null) echo '</optgroup>';
-                           echo '<optgroup label="' . htmlspecialchars(ucfirst($inv['category'])) . '">';
-                           $current_cat = $inv['category'];
+                           echo '<optgroup label="' . htmlspecialchars($inventory_category) . '">';
+                           $current_cat = $inventory_category;
                         }
-                        echo '<option value="' . intval($inv['id']) . '" data-unit="' . htmlspecialchars($inv['unit']) . '">'
+                        echo '<option value="' . intval($inv['id']) . '" data-category="' . htmlspecialchars(strtolower((string)$inv['category'])) . '" data-unit="' . htmlspecialchars($inv['unit']) . '">'
                            . htmlspecialchars($inv['ingredient_name']) . ' (' . htmlspecialchars($inv['unit']) . ', '
                            . number_format($inv['quantity'], 2) . ' in stock)</option>';
                      }
@@ -3176,11 +3240,39 @@ if (isset($_GET['remove_extra_group'])) {
                   ?>
                </select>
             </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Recipe ingredients apply to every size. Link packaging separately for each size below.</div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Unlinked consumables and packaging are listed here. Choose whether an item is used in every option or only one option. Remove an existing product-wide link before assigning that same item to one option.</div>
+         </div>
+
+         <div class="field" id="ingredientScopeField" style="display:none;">
+            <label for="ingredientScope"><i class="fa-solid fa-diagram-project"></i> Apply This Inventory Usage To</label>
+            <div class="input-wrapper">
+               <select name="ingredient_scope" id="ingredientScope" required>
+                  <option value="product">Every product option (recipe ingredient)</option>
+                  <option value="option">One selected option only (packaging / size-specific)</option>
+               </select>
+            </div>
+            <div class="help-text">Example: choose “One selected option only” for Small Cup, Medium Cup, Large Cup, or a cake container—even if the inventory entry is listed under Consumable.</div>
+         </div>
+
+         <div class="field" id="packagingOptionField" style="display:none;">
+            <label for="ingredientProductSize"><i class="fa-solid fa-ruler"></i> Which Product Option Uses This Item?</label>
+            <div class="input-wrapper">
+               <select name="product_size_id" id="ingredientProductSize" disabled>
+                  <option value="">Choose a product option...</option>
+                  <?php foreach ($product_size_options as $size_option): ?>
+                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
+                  <?php endforeach; ?>
+               </select>
+            </div>
+            <?php if (empty($product_size_options)): ?>
+               <div class="help-text">Add an active product option first to link packaging.</div>
+            <?php else: ?>
+               <div class="help-text">Only orders of this selected option deduct the item. Other product options are not affected.</div>
+            <?php endif; ?>
          </div>
 
          <div class="field">
-            <label><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Unit Sold</label>
+            <label id="quantityUsedLabel"><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold</label>
             <div class="input-wrapper">
                <input type="number" name="quantity_used" id="quantityUsedInput" min="0.01" step="0.01" placeholder="e.g. 150" required>
             </div>
@@ -3189,25 +3281,59 @@ if (isset($_GET['remove_extra_group'])) {
 
          <div class="modal-actions">
             <button type="submit" name="add_product_ingredient" class="btn">
-               <i class="fa-solid fa-link"></i> Link Ingredient
+               <i class="fa-solid fa-link"></i> Save Inventory Usage
             </button>
          </div>
       </form>
       <?php else: ?>
          <div class="all-linked-msg">
-            <i class="fa-solid fa-circle-check"></i> All inventory items are already linked to this product.
+            <i class="fa-solid fa-circle-check"></i> No unlinked inventory items are available. Remove an existing product-wide link before assigning that same item to one product option.
          </div>
       <?php endif; ?>
    </div>
 </div>
 <script>
-   function updateIngredientUnit() {
+   function updateIngredientLinkMode(canMapOption) {
       const select = document.getElementById('ingredientSelect');
       const label = document.getElementById('selectedUnitLabel');
-      if (!select || !label) return;
+      const scopeField = document.getElementById('ingredientScopeField');
+      const scopeSelect = document.getElementById('ingredientScope');
+      if (!select || !label || !scopeField || !scopeSelect) return;
       const selected = select.options[select.selectedIndex];
       label.textContent = selected && selected.dataset.unit ? selected.dataset.unit : 'unit';
+      const hasInventoryItem = !!(selected && selected.value);
+      scopeField.style.display = hasInventoryItem ? '' : 'none';
+      if (hasInventoryItem) {
+         scopeSelect.value = selected.dataset.category === 'packaging' ? 'option' : 'product';
+      } else {
+         scopeSelect.value = 'product';
+      }
+      const productWideScope = scopeSelect.options[0];
+      productWideScope.disabled = !!(hasInventoryItem && selected.dataset.category === 'packaging');
+      updateOptionScopeUI(canMapOption);
    }
+
+   function updateOptionScopeUI(canMapOption) {
+      const select = document.getElementById('ingredientSelect');
+      const scopeSelect = document.getElementById('ingredientScope');
+      const optionField = document.getElementById('packagingOptionField');
+      const optionSelect = document.getElementById('ingredientProductSize');
+      const quantityLabel = document.getElementById('quantityUsedLabel');
+      const selected = select && select.options[select.selectedIndex];
+      if (!select || !scopeSelect || !optionField || !optionSelect || !quantityLabel) return;
+      const appliesToOption = !!(selected && selected.value && scopeSelect.value === 'option');
+      optionField.style.display = appliesToOption ? '' : 'none';
+      optionSelect.disabled = !appliesToOption || !canMapOption;
+      optionSelect.required = !!appliesToOption && canMapOption;
+      quantityLabel.innerHTML = appliesToOption
+         ? '<i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item of This Option Sold'
+         : '<i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold';
+      if (!appliesToOption) optionSelect.value = '';
+   }
+   document.getElementById('ingredientScope')?.addEventListener('change', function() {
+      const hasProductOptions = !!document.querySelector('#ingredientProductSize option[value]:not([value=""])');
+      updateOptionScopeUI(hasProductOptions);
+   });
 </script>
 <?php endif; ?>
 
@@ -3342,10 +3468,10 @@ if (isset($_GET['remove_extra_group'])) {
       <?php endif; ?>
 
       <div class="ingredients-section-label" style="margin-top:24px;">
-         <i class="fa-solid fa-box"></i> Optional Packaging for Each Product Option
+         <i class="fa-solid fa-box"></i> Packaging Assigned to Product Options
       </div>
       <div class="help-text" style="margin-bottom:12px;">
-         Choose the product option name you created (for example, “1 Slice” or “Whole Cake”), then manually select its packaging inventory item and quantity. Packaging is optional: leave an option unmapped if it does not need tracked packaging. Only orders of a mapped option deduct that packaging; regular recipe ingredients above still apply to every option.
+         These manually assigned items are deducted only when their matching product option is ordered. To add or change an assignment, choose an inventory item above and select “One selected option only.” Options without an assignment do not deduct that item.
       </div>
 
       <?php if (!empty($size_packaging)): ?>
@@ -3364,55 +3490,7 @@ if (isset($_GET['remove_extra_group'])) {
             <?php endforeach; ?>
          </div>
       <?php else: ?>
-         <div class="no-ingredients-msg">No optional packaging mappings yet. Add only the mappings this product needs.</div>
-      <?php endif; ?>
-
-      <?php if (!empty($product_size_options) && !empty($packaging_inventory)): ?>
-      <form action="" method="post" novalidate>
-         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-         <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
-
-         <div class="field">
-            <label><i class="fa-solid fa-ruler"></i> Product Option</label>
-            <div class="input-wrapper">
-               <select name="product_size_id" required>
-                  <option value="">Choose this product's option...</option>
-                  <?php foreach ($product_size_options as $size_option): ?>
-                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
-                  <?php endforeach; ?>
-               </select>
-            </div>
-         </div>
-
-         <div class="field">
-            <label><i class="fa-solid fa-box"></i> Packaging Inventory Item to Deduct</label>
-            <div class="input-wrapper">
-               <select name="size_ingredient_id" required>
-                  <option value="">Choose packaging...</option>
-                  <?php foreach ($packaging_inventory as $packaging_item): ?>
-                     <option value="<?php echo (int)$packaging_item['id']; ?>">
-                        <?php echo htmlspecialchars($packaging_item['ingredient_name']); ?> (<?php echo htmlspecialchars($packaging_item['unit']); ?>, <?php echo number_format((float)$packaging_item['quantity'], 2); ?> in stock)
-                     </option>
-                  <?php endforeach; ?>
-               </select>
-            </div>
-         </div>
-
-         <div class="field">
-            <label><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold</label>
-            <div class="input-wrapper">
-               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 container" required>
-            </div>
-         </div>
-
-         <div class="modal-actions">
-            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Manual Packaging Mapping</button>
-         </div>
-      </form>
-      <?php elseif (empty($product_size_options)): ?>
-         <div class="no-ingredients-msg">Add an active size to this product before linking size-specific packaging.</div>
-      <?php else: ?>
-         <div class="no-ingredients-msg">Add packaging entries in Inventory before linking packaging to a size.</div>
+         <div class="no-ingredients-msg">No option-specific inventory items are assigned yet. Choose an item above and select “One selected option only.”</div>
       <?php endif; ?>
    </div>
 </div>
