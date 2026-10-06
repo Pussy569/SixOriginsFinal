@@ -823,14 +823,15 @@ if (isset($_POST['add_size_packaging'])) {
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
-    header('location:admin_products.php' . ($sp_product_id > 0 ? '?manage_ingredients=' . $sp_product_id : ''));
+    header('location:admin_products.php' . ($sp_product_id > 0 ? '?manage_packaging=' . $sp_product_id : ''));
     exit;
 }
 
 // ==================== REMOVE SIZE-SPECIFIC PACKAGING ====================
 if (isset($_GET['remove_size_packaging'])) {
     validate_csrf_get();
-    $back_product_id = (int)($_GET['manage_ingredients'] ?? 0);
+    $back_product_id = (int)($_GET['manage_packaging'] ?? $_GET['manage_ingredients'] ?? 0);
+    $return_to_packaging = isset($_GET['manage_packaging']);
 
     try {
         $link_id = (int)$_GET['remove_size_packaging'];
@@ -863,7 +864,8 @@ if (isset($_GET['remove_size_packaging'])) {
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
-    header('location:admin_products.php' . ($back_product_id > 0 ? '?manage_ingredients=' . $back_product_id : ''));
+    $return_view = $return_to_packaging ? 'manage_packaging' : 'manage_ingredients';
+    header('location:admin_products.php' . ($back_product_id > 0 ? '?' . $return_view . '=' . $back_product_id : ''));
     exit;
 }
 
@@ -1944,6 +1946,18 @@ if (isset($_GET['remove_extra_group'])) {
          box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
       }
 
+      .product-actions a.packaging {
+         background: linear-gradient(135deg, #0e7490 0%, #155e75 100%);
+         color: #fff;
+         box-shadow: 0 2px 6px rgba(14, 116, 144, 0.2);
+      }
+
+      .product-actions a.packaging:hover {
+         background: linear-gradient(135deg, #164e63 0%, #083344 100%);
+         transform: translateY(-2px);
+         box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3);
+      }
+
       /* Reused existing palette colors (--gray-brown / --dark-brown / warning amber
          already used for .alert.warning) so no new hues are introduced */
       .product-actions a.preferences {
@@ -2917,6 +2931,9 @@ if (isset($_GET['remove_extra_group'])) {
                      <a class="ingredients" href="admin_products.php?manage_ingredients=<?php echo intval($product['id']); ?>" title="Manage Ingredients">
                         <i class="fa-solid fa-flask"></i> Ingredients
                      </a>
+                     <a class="packaging" href="admin_products.php?manage_packaging=<?php echo intval($product['id']); ?>" title="Manage Size-Specific Packaging">
+                        <i class="fa-solid fa-box-open"></i> Packaging
+                     </a>
                      <a class="edit" href="admin_products.php?update=<?php echo intval($product['id']); ?>" title="Edit">
                         <i class="fa-solid fa-edit"></i> Edit
                      </a>
@@ -3075,8 +3092,9 @@ if (isset($_GET['remove_extra_group'])) {
 <!-- Manage Ingredients Modal -->
 <?php
    $mi_product = null;
-   if (isset($_GET['manage_ingredients'])) {
-      $mi_product_id = intval($_GET['manage_ingredients']);
+   $manage_packaging_only = isset($_GET['manage_packaging']);
+   if (isset($_GET['manage_ingredients']) || $manage_packaging_only) {
+      $mi_product_id = (int)($manage_packaging_only ? $_GET['manage_packaging'] : $_GET['manage_ingredients']);
       $mi_stmt = $conn->prepare("SELECT * FROM `products` WHERE id = ?");
       $mi_stmt->bind_param("i", $mi_product_id);
       $mi_stmt->execute();
@@ -3154,7 +3172,7 @@ if (isset($_GET['remove_extra_group'])) {
       }
    }
 
-   if ($mi_product !== null):
+   if ($mi_product !== null && !$manage_packaging_only):
 ?>
 <div class="modal show" id="ingredientsModal">
    <div class="modal-content">
@@ -3260,19 +3278,111 @@ if (isset($_GET['remove_extra_group'])) {
       label.textContent = selected && selected.dataset.unit ? selected.dataset.unit : 'unit';
    }
 
-   function toggleOptionPackagingForm() {
-      const form = document.getElementById('optionPackagingForm');
-      const button = document.getElementById('toggleOptionPackagingForm');
-      if (!form || !button) return;
-      const opening = form.style.display === 'none';
-      form.style.display = opening ? '' : 'none';
-      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
-      if (opening) {
-         const inventorySelect = form.querySelector('select[name="size_ingredient_id"]');
-         if (inventorySelect) inventorySelect.focus();
-      }
-   }
 </script>
+<?php endif; ?>
+
+<?php if ($mi_product !== null && $manage_packaging_only): ?>
+<div class="modal show" id="packagingModal">
+   <div class="modal-content">
+      <div class="modal-header ingredients">
+         <h2><i class="fa-solid fa-box-open"></i> Manage Product Packaging</h2>
+         <a href="admin_products.php" class="modal-close" title="Close">×</a>
+      </div>
+      <div class="ingredients-product-tag">
+         <i class="fa-solid fa-box"></i> <?php echo htmlspecialchars($mi_product['name']); ?>
+      </div>
+      <div class="help-text" style="margin-bottom:16px;">
+         Manually connect an inventory item to the matching customer option and set the amount to deduct per item sold. Buying one option will not deduct packaging mapped to other options.
+      </div>
+
+      <div class="ingredients-section-label">
+         <i class="fa-solid fa-link"></i> Packaging Mappings
+      </div>
+      <?php if (!empty($size_packaging)): ?>
+         <div class="linked-ingredients-list">
+            <?php foreach ($size_packaging as $link): ?>
+               <div class="ingredient-item-row">
+                  <div class="ingredient-item-info">
+                     <span class="ingredient-item-name"><?php echo htmlspecialchars($link['size']); ?> — <?php echo htmlspecialchars($link['ingredient_name']); ?></span>
+                     <span class="ingredient-item-meta">
+                        <span class="cat-tag"><?php echo htmlspecialchars(strtolower((string)$link['category']) === 'drinks' ? 'Consumable' : ucfirst((string)$link['category'])); ?></span>
+                        Deducts <?php echo number_format((float)$link['quantity_used'], 2); ?> <?php echo htmlspecialchars($link['unit']); ?> per matching item sold
+                     </span>
+                  </div>
+                  <a href="admin_products.php?remove_size_packaging=<?php echo (int)$link['id']; ?>&manage_packaging=<?php echo (int)$mi_product_id; ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
+                     class="remove-ingredient-btn" onclick="return confirm('Remove this packaging mapping?');" title="Remove">
+                     <i class="fa-solid fa-trash"></i> Remove
+                  </a>
+               </div>
+            <?php endforeach; ?>
+         </div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">No packaging has been assigned to this product's options yet.</div>
+      <?php endif; ?>
+
+      <?php if (!empty($product_size_options) && !empty($option_inventory)): ?>
+      <div class="ingredients-section-label" style="margin-top:20px;">
+         <i class="fa-solid fa-plus"></i> Add Packaging to an Option
+      </div>
+      <form action="" method="post" novalidate>
+         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+         <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
+         <div class="field">
+            <label><i class="fa-solid fa-cubes"></i> Inventory Item</label>
+            <div class="input-wrapper">
+               <select name="size_ingredient_id" required>
+                  <option value="">Choose from inventory...</option>
+                  <?php
+                     $current_cat = null;
+                     foreach ($option_inventory as $inventory_item) {
+                        $inventory_category = strtolower((string)$inventory_item['category']) === 'drinks'
+                           ? 'Consumable'
+                           : ucfirst((string)$inventory_item['category']);
+                        if ($inventory_category !== $current_cat) {
+                           if ($current_cat !== null) echo '</optgroup>';
+                           echo '<optgroup label="' . htmlspecialchars($inventory_category) . '">';
+                           $current_cat = $inventory_category;
+                        }
+                        $is_product_wide = in_array((int)$inventory_item['id'], $linked_ids, true);
+                        echo '<option value="' . (int)$inventory_item['id'] . '"' . ($is_product_wide ? ' disabled' : '') . '>'
+                           . htmlspecialchars($inventory_item['ingredient_name']) . ' ('
+                           . htmlspecialchars($inventory_item['unit']) . ', '
+                           . number_format((float)$inventory_item['quantity'], 2) . ' in stock)'
+                           . ($is_product_wide ? ' — already used by every option' : '') . '</option>';
+                     }
+                     if ($current_cat !== null) echo '</optgroup>';
+                  ?>
+               </select>
+            </div>
+         </div>
+         <div class="field">
+            <label><i class="fa-solid fa-ruler"></i> Customer Option</label>
+            <div class="input-wrapper">
+               <select name="product_size_id" required>
+                  <option value="">Choose the matching option...</option>
+                  <?php foreach ($product_size_options as $size_option): ?>
+                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
+                  <?php endforeach; ?>
+               </select>
+            </div>
+         </div>
+         <div class="field">
+            <label><i class="fa-solid fa-weight-scale"></i> Quantity to Deduct Per Item Sold</label>
+            <div class="input-wrapper">
+               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 cup or container" required>
+            </div>
+         </div>
+         <div class="modal-actions">
+            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Packaging Mapping</button>
+         </div>
+      </form>
+      <?php elseif (empty($product_size_options)): ?>
+         <div class="no-ingredients-msg">Add an active customer option to this product before assigning packaging.</div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">Add inventory items before assigning packaging.</div>
+      <?php endif; ?>
+   </div>
+</div>
 <?php endif; ?>
 
 <!-- Manage Preferences Modal -->
@@ -3405,104 +3515,6 @@ if (isset($_GET['remove_extra_group'])) {
       </form>
       <?php endif; ?>
 
-      <div class="ingredients-section-label" style="margin-top:24px;">
-         <i class="fa-solid fa-box"></i> Packaging Assigned to Each Product Option
-      </div>
-      <div class="help-text" style="margin-bottom:12px;">
-         Use the separate button below to manually connect a cup, container, or other inventory item to one customer option and choose the amount deducted per sale. Buying Small only deducts the item mapped to Small.
-      </div>
-
-      <?php if (!empty($size_packaging)): ?>
-         <div class="linked-ingredients-list">
-            <?php foreach ($size_packaging as $link): ?>
-               <div class="ingredient-item-row">
-                  <div class="ingredient-item-info">
-                     <span class="ingredient-item-name"><?php echo htmlspecialchars($link['size']); ?> — <?php echo htmlspecialchars($link['ingredient_name']); ?></span>
-                     <span class="ingredient-item-meta">
-                        <span class="cat-tag"><?php echo htmlspecialchars(strtolower((string)$link['category']) === 'drinks' ? 'Consumable' : ucfirst((string)$link['category'])); ?></span>
-                        Uses <?php echo number_format((float)$link['quantity_used'], 2); ?> <?php echo htmlspecialchars($link['unit']); ?> per matching item sold
-                     </span>
-                  </div>
-                  <a href="admin_products.php?remove_size_packaging=<?php echo (int)$link['id']; ?>&manage_ingredients=<?php echo (int)$mi_product_id; ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
-                        class="remove-ingredient-btn" onclick="return confirm('Remove this product-option inventory mapping?');" title="Remove">
-                     <i class="fa-solid fa-trash"></i> Remove
-                  </a>
-               </div>
-            <?php endforeach; ?>
-         </div>
-      <?php else: ?>
-         <div class="no-ingredients-msg">No inventory items are assigned to individual product options yet.</div>
-      <?php endif; ?>
-
-      <?php if (!empty($product_size_options) && !empty($option_inventory)): ?>
-      <button type="button" class="btn secondary" id="toggleOptionPackagingForm" aria-expanded="false" aria-controls="optionPackagingForm" onclick="toggleOptionPackagingForm()">
-         <i class="fa-solid fa-box-open"></i> Add Packaging for a Product Option
-      </button>
-      <div id="optionPackagingForm" style="display:none; margin-top:18px;">
-      <form action="" method="post" novalidate>
-         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-         <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
-
-         <div class="field">
-            <label><i class="fa-solid fa-cubes"></i> Inventory Item to Deduct</label>
-            <div class="input-wrapper">
-               <select name="size_ingredient_id" required>
-                  <option value="">Choose from inventory...</option>
-                  <?php
-                     $current_cat = null;
-                     foreach ($option_inventory as $inventory_item) {
-                        $inventory_category = strtolower((string)$inventory_item['category']) === 'drinks'
-                           ? 'Consumable'
-                           : ucfirst((string)$inventory_item['category']);
-                        if ($inventory_category !== $current_cat) {
-                           if ($current_cat !== null) echo '</optgroup>';
-                           echo '<optgroup label="' . htmlspecialchars($inventory_category) . '">';
-                           $current_cat = $inventory_category;
-                        }
-                        $is_product_wide = in_array((int)$inventory_item['id'], $linked_ids, true);
-                        echo '<option value="' . (int)$inventory_item['id'] . '"' . ($is_product_wide ? ' disabled' : '') . '>'
-                           . htmlspecialchars($inventory_item['ingredient_name']) . ' ('
-                           . htmlspecialchars($inventory_item['unit']) . ', '
-                           . number_format((float)$inventory_item['quantity'], 2) . ' in stock)'
-                           . ($is_product_wide ? ' — remove its product-wide link first' : '') . '</option>';
-                     }
-                     if ($current_cat !== null) echo '</optgroup>';
-                  ?>
-               </select>
-            </div>
-            <div class="help-text">Choose the exact cup, container, or other inventory item. It can be in any inventory category; this mapping applies only to the product option selected below.</div>
-         </div>
-
-         <div class="field">
-            <label><i class="fa-solid fa-ruler"></i> Product Option That Uses This Item</label>
-            <div class="input-wrapper">
-               <select name="product_size_id" required>
-                  <option value="">Choose the matching customer option...</option>
-                  <?php foreach ($product_size_options as $size_option): ?>
-                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
-                  <?php endforeach; ?>
-               </select>
-            </div>
-            <div class="help-text">For example, map a Small Cup inventory item to Small. Medium and Large stock will not be deducted by that mapping. Items already linked above for every option are disabled here until that product-wide link is removed.</div>
-         </div>
-
-         <div class="field">
-            <label><i class="fa-solid fa-weight-scale"></i> Quantity to Deduct Per Item Sold</label>
-            <div class="input-wrapper">
-               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 cup" required>
-            </div>
-         </div>
-
-         <div class="modal-actions">
-            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Packaging for This Option</button>
-         </div>
-      </form>
-      </div>
-      <?php elseif (empty($product_size_options)): ?>
-         <div class="no-ingredients-msg">Add an active product option before assigning packaging.</div>
-      <?php else: ?>
-         <div class="no-ingredients-msg">Add inventory items before assigning packaging to a product option.</div>
-      <?php endif; ?>
    </div>
 </div>
 <?php endif; ?>
