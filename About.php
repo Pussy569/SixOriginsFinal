@@ -974,7 +974,7 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
           </div>
           <div class="content">
             <h3>Community Impact</h3>
-            <p>More than just a cafe, Six Origins is a gathering place where friendship are brewed and local creators are supported across Rizal.</p>
+            <p>More than just a cafe, Six Origins is a gathering place where friendships are brewed and local creators are supported across Rizal.</p>
             <ul>
               <li>Support for local artisans and creators</li>
               <li>Community events and coffee sessions</li>
