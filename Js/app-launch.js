@@ -10,6 +10,7 @@
   const launchScreen = document.querySelector('.pwa-launch-screen');
   if (!launchScreen || !document.documentElement.classList.contains('pwa-launch')) return;
 
+  const minimumLaunchDuration = 4500;
   const startedAt = performance.now();
   let dismissed = false;
   const dismissLaunchScreen = () => {
@@ -22,9 +23,9 @@
         launchScreen.remove();
         document.documentElement.classList.remove('pwa-launch');
       }, 500);
-    }, Math.max(0, 950 - visibleFor));
+    }, Math.max(0, minimumLaunchDuration - visibleFor));
   };
 
   window.addEventListener('load', dismissLaunchScreen, { once: true });
-  window.setTimeout(dismissLaunchScreen, 8000);
+  window.setTimeout(dismissLaunchScreen, 10000);
 })();
