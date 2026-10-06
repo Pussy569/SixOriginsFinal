@@ -104,7 +104,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
             'options' => ['temperature' => 0],
         ]),
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'ngrok-skip-browser-warning: true',
+        ],
         CURLOPT_TIMEOUT => 60,
         CURLOPT_CONNECTTIMEOUT => OLLAMA_CONNECT_TIMEOUT,
     ] + $authOptions);
@@ -320,7 +323,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'ngrok-skip-browser-warning: true',
+            ],
             CURLOPT_TIMEOUT => $timeout,
             CURLOPT_CONNECTTIMEOUT => OLLAMA_CONNECT_TIMEOUT,
         ] + $authOptions);
