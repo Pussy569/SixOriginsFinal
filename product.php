@@ -11,23 +11,72 @@ if(!isset($user_id)){
 
 $message = [];
 
-// Handle add to cart (same logic as in Item.php)
+// Handle add to cart using the selected size's authoritative price and stock.
 if(isset($_POST['add_to_cart'])){
-   $product_id = mysqli_real_escape_string($conn, $_POST['product_id']);
-   $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
-   $product_price = (float) $_POST['product_price'];
-   $product_image = mysqli_real_escape_string($conn, $_POST['product_image']);
-   $product_size = mysqli_real_escape_string($conn, $_POST['product_size']);
-   $product_quantity = max(1, (int) $_POST['product_quantity']); // never below 1
+   $posted_product_id = (int)($_POST['product_id'] ?? 0);
+   $product_size = trim((string)($_POST['product_size'] ?? ''));
+   $product_quantity = max(1, (int)($_POST['product_quantity'] ?? 1));
+   $product_quantity = min(20, $product_quantity);
 
-   $check_cart = mysqli_query($conn, "SELECT * FROM `cart` WHERE user_id = '$user_id' AND product_id = '$product_id' AND size = '$product_size'") or die(mysqli_error($conn));
+   $transaction_started = false;
+   try {
+      if ($posted_product_id <= 0 || $product_size === '') {
+         throw new Exception('Please select a valid size before adding to cart.');
+      }
 
-   if(mysqli_num_rows($check_cart) > 0){
-      $message[] = ['type' => 'info', 'text' => 'Already in your cart.'];
-   } else {
-      mysqli_query($conn, "UPDATE `product_sizes` SET stock = stock - $product_quantity WHERE product_id = '$product_id' AND size = '$product_size'") or die(mysqli_error($conn));
-      mysqli_query($conn, "INSERT INTO `cart` (user_id, product_id, name, price, quantity, image, size) VALUES ('$user_id', '$product_id', '$product_name', '$product_price', '$product_quantity', '$product_image', '$product_size')") or die(mysqli_error($conn));
-      $message[] = ['type' => 'success', 'text' => 'Added to your cart.'];
+      $conn->begin_transaction();
+      $transaction_started = true;
+      $size_stmt = $conn->prepare("SELECT ps.id, ps.price, ps.stock, p.name, p.image FROM `product_sizes` ps JOIN `products` p ON p.id = ps.product_id WHERE ps.product_id = ? AND ps.size = ? FOR UPDATE");
+      $size_stmt->bind_param("is", $posted_product_id, $product_size);
+      $size_stmt->execute();
+      $variant = $size_stmt->get_result()->fetch_assoc();
+      $size_stmt->close();
+
+      if (!$variant || (int)$variant['stock'] < $product_quantity) {
+         throw new Exception('Sorry, there is not enough stock for that size.');
+      }
+
+      $check_cart = $conn->prepare("SELECT id FROM `cart` WHERE user_id = ? AND product_id = ? AND size = ?");
+      $check_cart->bind_param("sis", $user_id, $posted_product_id, $product_size);
+      $check_cart->execute();
+      $already_in_cart = $check_cart->get_result()->num_rows > 0;
+      $check_cart->close();
+
+      if ($already_in_cart) {
+         $conn->rollback();
+         $transaction_started = false;
+         $message[] = ['type' => 'info', 'text' => 'Already in your cart.'];
+      } else {
+         $stock_stmt = $conn->prepare("UPDATE `product_sizes` SET stock = stock - ? WHERE id = ? AND stock >= ?");
+         $stock_stmt->bind_param("iii", $product_quantity, $variant['id'], $product_quantity);
+         $stock_stmt->execute();
+         if ($stock_stmt->affected_rows !== 1) {
+            $stock_stmt->close();
+            throw new Exception('Sorry, this size just went out of stock.');
+         }
+         $stock_stmt->close();
+
+         $unit_price = (int)$variant['price'];
+         $insert_stmt = $conn->prepare("INSERT INTO `cart` (user_id, product_id, name, price, quantity, image, size) VALUES (?, ?, ?, ?, ?, ?, ?)");
+         $insert_stmt->bind_param("sisiiss", $user_id, $posted_product_id, $variant['name'], $unit_price, $product_quantity, $variant['image'], $product_size);
+         $insert_stmt->execute();
+         $insert_stmt->close();
+
+         $conn->commit();
+         $transaction_started = false;
+         $message[] = ['type' => 'success', 'text' => 'Added to your cart.'];
+      }
+   } catch (Throwable $e) {
+      if ($transaction_started) {
+         try {
+            $conn->rollback();
+            $transaction_started = false;
+         } catch (Throwable $rollback_error) {
+            error_log('Product add-to-cart rollback failed: ' . $rollback_error->getMessage());
+         }
+      }
+      error_log('Product add-to-cart failed: ' . $e->getMessage());
+      $message[] = ['type' => 'error', 'text' => 'Unable to add this size to your cart right now. Please try again.'];
    }
 }
 
@@ -284,11 +333,12 @@ while($s = mysqli_fetch_assoc($sizes_result)){
                         <label class="pd-chip">
                            <input type="radio" name="product_size" required
                                   value="<?php echo htmlspecialchars($s['size']); ?>"
+                                  data-price="<?php echo (float)$s['price']; ?>"
                                   data-stock="<?php echo $stock; ?>"
                                   <?php echo $stock <= 0 ? 'disabled' : ''; ?>>
                            <span>
                               <?php echo htmlspecialchars($s['size']); ?>
-                              <em><?php echo $stock > 0 ? $stock . ' left' : 'Sold out'; ?></em>
+                              <em>₱<?php echo number_format((float)$s['price'], 2); ?> · <?php echo $stock > 0 ? $stock . ' left' : 'Sold out'; ?></em>
                            </span>
                         </label>
                      <?php endforeach; ?>
@@ -331,7 +381,6 @@ while($s = mysqli_fetch_assoc($sizes_result)){
                <?php if ($has_stock): ?>
                   <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
                   <input type="hidden" name="product_name" value="<?php echo htmlspecialchars($prod['name']); ?>">
-                  <input type="hidden" name="product_price" value="<?php echo htmlspecialchars($prod['price']); ?>">
                   <input type="hidden" name="product_image" value="<?php echo htmlspecialchars($prod['image']); ?>">
                   <button type="submit" name="add_to_cart" class="pd-btn pd-btn-primary" aria-label="Add to cart">
                      <i class="fa-solid fa-cart-plus"></i> Add to cart
@@ -355,7 +404,7 @@ while($s = mysqli_fetch_assoc($sizes_result)){
 
 <script>
 (function () {
-   var price = <?php echo json_encode((float)$prod['price']); ?>;
+   var fallbackPrice = <?php echo json_encode((float)$prod['price']); ?>;
    var radios = document.querySelectorAll('input[name="product_size"]');
    var qty = document.getElementById('qty');
    var minus = document.getElementById('qtyMinus');
@@ -368,6 +417,13 @@ while($s = mysqli_fetch_assoc($sizes_result)){
    function selectedStock() {
       for (var i = 0; i < radios.length; i++) {
          if (radios[i].checked) return parseInt(radios[i].dataset.stock, 10) || 0;
+      }
+
+      function selectedPrice() {
+         for (var i = 0; i < radios.length; i++) {
+            if (radios[i].checked) return parseFloat(radios[i].dataset.price) || 0;
+         }
+         return fallbackPrice;
       }
       return null;
    }
@@ -390,7 +446,7 @@ while($s = mysqli_fetch_assoc($sizes_result)){
 
       minus.disabled = q <= 1;
       plus.disabled = q >= maxQty;
-      total.textContent = '₱' + (price * q).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      total.textContent = '₱' + (selectedPrice() * q).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       if (s === null) return;
       if (s <= 0) setBadge('none', 'fa-circle-xmark', 'Out of stock');

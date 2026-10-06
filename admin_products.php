@@ -72,19 +72,54 @@ if (isset($_POST['add_product'])) {
     try {
         // Input validation and sanitization
         $name = trim($_POST['name'] ?? '');
-        $price = isset($_POST['price']) ? floatval($_POST['price']) : 0;
         $details = trim($_POST['details'] ?? '');
         $size_type = $_POST['size_type'] ?? 'cup';
         if (!array_key_exists($size_type, $ALLOWED_SIZE_TYPES)) {
             $size_type = 'cup';
         }
         $allow_special_instructions = isset($_POST['allow_special_instructions']) ? 1 : 0;
-        $size = array_filter($_POST['size'] ?? [], function($val) { return !empty(trim($val)); });
-        $stock = array_filter($_POST['stock'] ?? [], function($val) { return !empty(trim($val)); });
+        $submitted_sizes = $_POST['size'] ?? [];
+        $submitted_prices = $_POST['size_price'] ?? [];
+        $submitted_stock = $_POST['stock'] ?? [];
+        if (!is_array($submitted_sizes) || !is_array($submitted_prices) || !is_array($submitted_stock)
+            || count($submitted_sizes) < 1 || count($submitted_sizes) > 10
+            || count($submitted_sizes) !== count($submitted_prices) || count($submitted_sizes) !== count($submitted_stock)) {
+            throw new Exception('Add between 1 and 10 complete size, price, and stock options.');
+        }
+
+        $size_variants = [];
+        $seen_sizes = [];
+        foreach ($submitted_sizes as $index => $submitted_size) {
+            if (!is_string($submitted_size) || !is_string($submitted_prices[$index] ?? null) || !is_string($submitted_stock[$index] ?? null)) {
+                throw new Exception('Each size, price, and stock value must be a single value.');
+            }
+            $variant_size = trim((string)$submitted_size);
+            $variant_price_raw = trim((string)($submitted_prices[$index] ?? ''));
+            $variant_stock_raw = trim((string)($submitted_stock[$index] ?? ''));
+            if ($variant_size === '' || mb_strlen($variant_size) > 20) {
+                throw new Exception('Each size must have a name no longer than 20 characters.');
+            }
+            if (isset($seen_sizes[mb_strtolower($variant_size)])) {
+                throw new Exception('Size names must be unique for each product.');
+            }
+            $seen_sizes[mb_strtolower($variant_size)] = true;
+            if ($variant_price_raw === '' || !ctype_digit($variant_price_raw) || (float)$variant_price_raw < 1 || (float)$variant_price_raw > 2147483647) {
+                throw new Exception('Enter a whole-peso price greater than zero for every size.');
+            }
+            if ($variant_stock_raw === '' || !ctype_digit($variant_stock_raw) || (float)$variant_stock_raw < 1 || (float)$variant_stock_raw > 2147483647) {
+                throw new Exception('Enter a stock quantity greater than zero for every size.');
+            }
+            $size_variants[] = [
+                'size' => $variant_size,
+                'price' => (int)$variant_price_raw,
+                'stock' => (int)$variant_stock_raw,
+            ];
+        }
+        $price = min(array_column($size_variants, 'price'));
 
         // Validate required fields
-        if (empty($name) || $price <= 0) {
-            throw new Exception('Product name and valid price are required');
+        if (empty($name)) {
+            throw new Exception('Product name is required');
         }
         if (mb_strlen($name) > 100) {
             throw new Exception('Product name is too long (max 100 characters)');
@@ -169,32 +204,18 @@ if (isset($_POST['add_product'])) {
             throw new Exception('Failed to save image file');
         }
 
-        // Insert sizes and stock with prepared statements
-        if (!empty($size) && !empty($stock)) {
-            $size_stmt = $conn->prepare("INSERT INTO `product_sizes` (product_id, size, price, stock) VALUES(?, ?, ?, ?)");
-            if (!$size_stmt) {
-                throw new Exception("Database error: " . $conn->error);
-            }
-
-            foreach ($size as $index => $sz) {
-                $sz = trim($sz);
-                if (mb_strlen($sz) > 20) {
-                    $sz = mb_substr($sz, 0, 20);
-                }
-                $stk = intval($stock[$index] ?? 0);
-                $size_price = floatval($price); // Use product price as default size price
-
-                if (empty($sz) || $stk <= 0) {
-                    continue;
-                }
-
-                $size_stmt->bind_param("isdi", $product_id, $sz, $size_price, $stk);
-                if (!$size_stmt->execute()) {
-                    throw new Exception("Failed to insert size: " . $size_stmt->error);
-                }
-            }
-            $size_stmt->close();
+        // Save each size's price and stock as one variant.
+        $size_stmt = $conn->prepare("INSERT INTO `product_sizes` (product_id, size, price, stock) VALUES(?, ?, ?, ?)");
+        if (!$size_stmt) {
+            throw new Exception("Database error: " . $conn->error);
         }
+        foreach ($size_variants as $variant) {
+            $size_stmt->bind_param("isii", $product_id, $variant['size'], $variant['price'], $variant['stock']);
+            if (!$size_stmt->execute()) {
+                throw new Exception("Failed to insert size: " . $size_stmt->error);
+            }
+        }
+        $size_stmt->close();
 
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($name) . '" added successfully! You can now add Preferences and Extras from its card. 🎉'];
 
@@ -386,7 +407,7 @@ if (isset($_POST['update_product'])) {
     try {
         $update_p_id = intval($_POST['update_p_id']);
         $update_name = trim($_POST['update_name'] ?? '');
-        $update_price = isset($_POST['update_price']) ? floatval($_POST['update_price']) : 0;
+        $posted_variant_prices = $_POST['update_size_prices'] ?? [];
         $update_details = trim($_POST['update_details'] ?? '');
         $update_old_image = $_POST['update_old_image'] ?? '';
         $update_size_type = $_POST['update_size_type'] ?? 'cup';
@@ -396,14 +417,14 @@ if (isset($_POST['update_product'])) {
         $update_allow_special_instructions = isset($_POST['update_allow_special_instructions']) ? 1 : 0;
 
         // Validate inputs
-        if (empty($update_name) || $update_price <= 0) {
-            throw new Exception('Product name and valid price are required');
+        if (empty($update_name)) {
+            throw new Exception('Product name is required');
         }
         if (mb_strlen($update_name) > 100) {
             throw new Exception('Product name is too long (max 100 characters)');
         }
 
-        $previous_stmt = $conn->prepare("SELECT name FROM `products` WHERE id = ?");
+        $previous_stmt = $conn->prepare("SELECT name, price FROM `products` WHERE id = ?");
         if (!$previous_stmt) {
             throw new Exception("Database error: " . $conn->error);
         }
@@ -415,16 +436,49 @@ if (isset($_POST['update_product'])) {
             throw new Exception('Product not found');
         }
 
+        if (!is_array($posted_variant_prices)) {
+            throw new Exception('Invalid size price data.');
+        }
+        $size_lookup = $conn->prepare("SELECT id FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+        $size_lookup->bind_param("i", $update_p_id);
+        $size_lookup->execute();
+        $existing_size_ids = array_map('intval', array_column($size_lookup->get_result()->fetch_all(MYSQLI_ASSOC), 'id'));
+        $size_lookup->close();
+        if (count($posted_variant_prices) !== count($existing_size_ids)) {
+            throw new Exception('Provide a price for every existing product size.');
+        }
+
+        $variant_prices = [];
+        foreach ($existing_size_ids as $size_id) {
+            $raw_variant_price = $posted_variant_prices[$size_id] ?? '';
+            if (!is_string($raw_variant_price) || !ctype_digit($raw_variant_price) || (float)$raw_variant_price < 1 || (float)$raw_variant_price > 2147483647) {
+                throw new Exception('Enter a whole-peso price greater than zero for every size.');
+            }
+            $variant_prices[$size_id] = (int)$raw_variant_price;
+        }
+        $update_price = !empty($variant_prices) ? min($variant_prices) : (int)$previous_product['price'];
+
         // Update basic product info
         $stmt = $conn->prepare("UPDATE `products` SET name = ?, price = ?, details = ?, size_type = ?, allow_special_instructions = ? WHERE id = ?");
         if (!$stmt) {
             throw new Exception("Database error: " . $conn->error);
         }
-        $stmt->bind_param("sdssii", $update_name, $update_price, $update_details, $update_size_type, $update_allow_special_instructions, $update_p_id);
+        $stmt->bind_param("sissii", $update_name, $update_price, $update_details, $update_size_type, $update_allow_special_instructions, $update_p_id);
         if (!$stmt->execute()) {
             throw new Exception("Failed to update product: " . $stmt->error);
         }
         $stmt->close();
+
+        if (!empty($variant_prices)) {
+            $variant_price_stmt = $conn->prepare("UPDATE `product_sizes` SET price = ? WHERE id = ? AND product_id = ?");
+            foreach ($variant_prices as $size_id => $variant_price) {
+                $variant_price_stmt->bind_param("iii", $variant_price, $size_id, $update_p_id);
+                if (!$variant_price_stmt->execute()) {
+                    throw new Exception("Failed to update size price: " . $variant_price_stmt->error);
+                }
+            }
+            $variant_price_stmt->close();
+        }
 
         // LOG THE ACTIVITY
         log_admin_activity($admin_id, 'Update Product', 'Updated product: ' . $update_name);
@@ -1314,12 +1368,31 @@ if (isset($_GET['remove_extra_group'])) {
 
       .size-stock-row {
          display: grid;
-         grid-template-columns: 1fr 1fr;
+         grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
          gap: 10px;
       }
 
       .size-stock-row .input-wrapper {
          padding: 10px 12px;
+      }
+
+      .size-price-edit-list {
+         display: flex;
+         flex-direction: column;
+         gap: 8px;
+      }
+
+      .size-price-edit-row {
+         display: grid;
+         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+         align-items: center;
+         gap: 10px;
+         color: var(--dark-brown);
+         font-weight: 700;
+      }
+
+      .size-price-edit-row .input-wrapper {
+         padding: 8px 10px;
       }
 
       .button-group {
@@ -2186,9 +2259,7 @@ if (isset($_GET['remove_extra_group'])) {
             min-height: 80px;
          }
 
-         .size-stock-row {
-            grid-template-columns: 1fr 1fr;
-         }
+         .size-stock-row { grid-template-columns: 1fr; }
 
          .button-group {
             flex-direction: column;
@@ -2419,18 +2490,10 @@ if (isset($_GET['remove_extra_group'])) {
                <div class="help-text"><i class="fa-solid fa-info-circle"></i> Must be unique</div>
             </div>
 
-            <div class="field-row">
-               <div class="field">
-                  <label><i class="fa-solid fa-peso-sign"></i> Price</label>
-                  <div class="input-wrapper">
-                     <input type="number" name="price" min="0.01" step="0.01" placeholder="199.00" required>
-                  </div>
-               </div>
-               <div class="field">
-                  <label><i class="fa-solid fa-image"></i> Image</label>
-                  <div class="input-wrapper">
-                     <input type="file" id="imageInput" name="image" accept="image/*" required>
-                  </div>
+            <div class="field">
+               <label><i class="fa-solid fa-image"></i> Image</label>
+               <div class="input-wrapper">
+                  <input type="file" id="imageInput" name="image" accept="image/*" required>
                </div>
             </div>
 
@@ -2461,11 +2524,14 @@ if (isset($_GET['remove_extra_group'])) {
             </div>
 
             <div class="field">
-               <label id="sizeStockLabel"><i class="fa-solid fa-ruler"></i> Cup Sizes &amp; Stock</label>
+               <label id="sizeStockLabel"><i class="fa-solid fa-ruler"></i> Cup Sizes, Prices &amp; Stock</label>
                <div class="size-stock-container" id="sizeStockContainer">
                   <div class="size-stock-row">
                      <div class="input-wrapper">
                         <input type="text" name="size[]" class="size-name-input" placeholder="e.g., 12oz / Small" maxlength="20" required>
+                     </div>
+                     <div class="input-wrapper">
+                        <input type="number" name="size_price[]" min="1" step="1" placeholder="Price (₱)" required>
                      </div>
                      <div class="input-wrapper">
                         <input type="number" name="stock[]" min="1" placeholder="Stock" required>
@@ -2524,7 +2590,7 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="products-grid">
             <?php
                while($product = $select_products->fetch_assoc()){
-                  $sizes_stmt = $conn->prepare("SELECT id, size, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+                  $sizes_stmt = $conn->prepare("SELECT id, size, price, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
                   $sizes_stmt->bind_param("i", $product['id']);
                   $sizes_stmt->execute();
                   $sizes_result = $sizes_stmt->get_result();
@@ -2577,8 +2643,9 @@ if (isset($_GET['remove_extra_group'])) {
 
                <div class="product-details">
                   <h3 class="product-title"><?php echo htmlspecialchars($product['name']); ?></h3>
+                  <?php $starting_price = !empty($sizes) ? min(array_column($sizes, 'price')) : (int)$product['price']; ?>
                   <div class="product-price">
-                     <i class="fa-solid fa-peso-sign"></i> <?php echo number_format($product['price'], 2); ?>
+                     <i class="fa-solid fa-peso-sign"></i> From <?php echo number_format($starting_price, 2); ?>
                   </div>
 
                   <?php if(!empty($product['details'])): ?>
@@ -2589,7 +2656,7 @@ if (isset($_GET['remove_extra_group'])) {
                      <span class="size-badge type-badge"><i class="fa-solid <?php echo $size_type_icon; ?>"></i> <?php echo htmlspecialchars($size_type_label); ?></span>
                      <?php foreach($sizes as $size): ?>
                         <span class="size-badge <?php echo $size['stock'] <= 10 ? 'low-stock' : ''; ?>">
-                           <?php echo htmlspecialchars($size['size']); ?> (<?php echo intval($size['stock']); ?>)
+                           <?php echo htmlspecialchars($size['size']); ?> — ₱<?php echo number_format((float)$size['price'], 2); ?> (<?php echo intval($size['stock']); ?>)
                         </span>
                      <?php endforeach; ?>
                   </div>
@@ -2665,6 +2732,11 @@ if (isset($_GET['remove_extra_group'])) {
          $product = $update_query->fetch_assoc();
          $stmt->close();
          $edit_size_type = $product['size_type'] ?? 'cup';
+         $edit_sizes_stmt = $conn->prepare("SELECT id, size, price FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+         $edit_sizes_stmt->bind_param("i", $update_id);
+         $edit_sizes_stmt->execute();
+         $edit_sizes = $edit_sizes_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+         $edit_sizes_stmt->close();
 ?>
 <div class="modal show" id="editModal">
    <div class="modal-content">
@@ -2687,19 +2759,26 @@ if (isset($_GET['remove_extra_group'])) {
             </div>
          </div>
 
-         <div class="field-row">
-            <div class="field">
-               <label><i class="fa-solid fa-peso-sign"></i> Price</label>
-               <div class="input-wrapper">
-                  <input type="number" name="update_price" min="0.01" step="0.01" value="<?php echo htmlspecialchars($product['price']); ?>" required>
-               </div>
+         <div class="field">
+            <label><i class="fa-solid fa-image"></i> Replace Image</label>
+            <div class="input-wrapper">
+               <input type="file" id="updateImageInput" name="update_image" accept="image/*">
             </div>
-            <div class="field">
-               <label><i class="fa-solid fa-image"></i> Replace Image</label>
-               <div class="input-wrapper">
-                  <input type="file" id="updateImageInput" name="update_image" accept="image/*">
-               </div>
+         </div>
+
+         <div class="field">
+            <label><i class="fa-solid fa-peso-sign"></i> Prices by Size</label>
+            <div class="size-price-edit-list">
+               <?php foreach ($edit_sizes as $edit_size): ?>
+                  <div class="size-price-edit-row">
+                     <span><?php echo htmlspecialchars($edit_size['size']); ?></span>
+                     <div class="input-wrapper">
+                        <input type="number" name="update_size_prices[<?php echo (int)$edit_size['id']; ?>]" min="1" step="1" value="<?php echo (int)$edit_size['price']; ?>" required aria-label="Price for <?php echo htmlspecialchars($edit_size['size']); ?>">
+                     </div>
+                  </div>
+               <?php endforeach; ?>
             </div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Set a separate whole-peso price for each size. Stock is updated with the Stock button.</div>
          </div>
 
          <!-- Update Image Preview -->
@@ -3276,8 +3355,8 @@ if (isset($_GET['remove_extra_group'])) {
       if (!select || !label) return;
       const isSlice = select.value === 'slice';
       label.innerHTML = isSlice
-         ? '<i class="fa-solid fa-ruler"></i> Slice / Pieces &amp; Stock'
-         : '<i class="fa-solid fa-ruler"></i> Cup Sizes &amp; Stock';
+         ? '<i class="fa-solid fa-ruler"></i> Slice / Pieces, Prices &amp; Stock'
+         : '<i class="fa-solid fa-ruler"></i> Cup Sizes, Prices &amp; Stock';
       const placeholder = isSlice ? 'e.g., 1 Slice / 6 Pieces' : 'e.g., 12oz / Small';
       document.querySelectorAll('.size-name-input').forEach(function(inp) {
          inp.placeholder = placeholder;
@@ -3299,6 +3378,9 @@ if (isset($_GET['remove_extra_group'])) {
       row.innerHTML = `
          <div class="input-wrapper">
             <input type="text" name="size[]" class="size-name-input" placeholder="${placeholder}" maxlength="20" required>
+         </div>
+         <div class="input-wrapper">
+            <input type="number" name="size_price[]" min="1" step="1" placeholder="Price (₱)" required>
          </div>
          <div class="input-wrapper">
             <input type="number" name="stock[]" min="1" placeholder="Stock" required>

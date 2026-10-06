@@ -150,7 +150,7 @@ if (isset($_POST['add_to_cart'])) {
       } else {
 
          // Look up the real product info from the DB (never trust hidden POST fields for price)
-         $prod_stmt = $conn->prepare("SELECT name, price, image FROM `products` WHERE id = ?");
+         $prod_stmt = $conn->prepare("SELECT name, image FROM `products` WHERE id = ?");
          $prod_stmt->bind_param("i", $product_id);
          $prod_stmt->execute();
          $product_row = $prod_stmt->get_result()->fetch_assoc();
@@ -162,12 +162,10 @@ if (isset($_POST['add_to_cart'])) {
 
             // Validate the chosen preferences/extras against what the admin actually configured
             $sel = validate_and_summarize_selections($conn, $product_id, $_POST['preferences'] ?? [], $_POST['extras'] ?? []);
-            $unit_price = intval(round((float)$product_row['price'] + $sel['extras_total']));
-
             $conn->begin_transaction();
             try {
                // Lock the size row so two shoppers can't both take the last unit
-               $lock_stmt = $conn->prepare("SELECT id, stock FROM `product_sizes` WHERE product_id = ? AND size = ? FOR UPDATE");
+               $lock_stmt = $conn->prepare("SELECT id, stock, price FROM `product_sizes` WHERE product_id = ? AND size = ? FOR UPDATE");
                $lock_stmt->bind_param("is", $product_id, $product_size);
                $lock_stmt->execute();
                $size_row = $lock_stmt->get_result()->fetch_assoc();
@@ -178,6 +176,7 @@ if (isset($_POST['add_to_cart'])) {
                if (!$size_row || (int)$size_row['stock'] < $product_quantity) {
                   throw new Exception('Sorry, we don\'t have enough stock left for that quantity. Please lower the quantity and try again.');
                }
+               $unit_price = intval(round((float)$size_row['price'] + $sel['extras_total']));
 
                $cart_check = $conn->prepare("SELECT id FROM `cart` WHERE user_id = ? AND product_id = ? AND size = ? AND selections_hash = ?");
                $cart_check->bind_param("siss", $user_id, $product_id, $product_size, $sel['hash']);
@@ -1275,7 +1274,7 @@ img, video { max-width: 100%; }
 
                   // ✅ Fetch ALL sizes (not just in-stock ones) so out-of-stock
                   // options can still be shown, disabled, with no numbers.
-                  $sizes_stmt = $conn->prepare("SELECT size, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+                  $sizes_stmt = $conn->prepare("SELECT size, price, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
                   $sizes_stmt->bind_param("i", $product_id);
                   $sizes_stmt->execute();
                   $sizes_result = $sizes_stmt->get_result();
@@ -1292,7 +1291,8 @@ img, video { max-width: 100%; }
                   [$preference_groups, $extra_groups] = fetch_customizations($conn, $product_id);
          ?>
          <form action="" method="post" class="product<?php echo $product_out_of_stock ? ' out-of-stock' : ''; ?>" aria-labelledby="prod-<?php echo $product_id; ?>">
-            <div class="badge-price">₱<?php echo htmlspecialchars($fetch_products['price']); ?></div>
+            <?php $starting_price = !empty($sizes) ? min(array_column($sizes, 'price')) : (float)$fetch_products['price']; ?>
+            <div class="badge-price">From ₱<?php echo number_format($starting_price, 2); ?></div>
             <?php if ($product_out_of_stock): ?>
                <div class="out-of-stock-ribbon"><i class="fa-solid fa-ban"></i> Out of Stock</div>
             <?php endif; ?>
@@ -1312,8 +1312,8 @@ img, video { max-width: 100%; }
                <select name="product_size" id="size-<?php echo $product_id; ?>" class="qty size-select" required <?php echo $dis; ?>>
                   <option value="" disabled selected>Select <?php echo htmlspecialchars($type_meta['label']); ?></option>
                   <?php foreach ($sizes as $size): $sz_out = ((int)$size['stock'] <= 0); ?>
-                  <option value="<?php echo htmlspecialchars($size['size']); ?>" data-stock="<?php echo (int)$size['stock']; ?>" <?php echo $sz_out ? 'disabled' : ''; ?>>
-                     <?php echo htmlspecialchars($size['size']); ?><?php echo $sz_out ? ' (Out of Stock)' : ''; ?>
+                  <option value="<?php echo htmlspecialchars($size['size']); ?>" data-price="<?php echo (float)$size['price']; ?>" data-stock="<?php echo (int)$size['stock']; ?>" <?php echo $sz_out ? 'disabled' : ''; ?>>
+                     <?php echo htmlspecialchars($size['size']); ?> — ₱<?php echo number_format((float)$size['price'], 2); ?><?php echo $sz_out ? ' (Out of Stock)' : ''; ?>
                   </option>
                   <?php endforeach; ?>
                </select>
@@ -1546,10 +1546,14 @@ document.addEventListener('touchstart', function () {
       var qtyInput   = form.querySelector('.product-qty');
       var checkboxes = form.querySelectorAll('.extra-checkbox');
       var lineTotal  = form.querySelector('.line-total');
-      var base       = lineTotal ? parseFloat(lineTotal.dataset.base || '0') : 0;
+      var fallbackBase = lineTotal ? parseFloat(lineTotal.dataset.base || '0') : 0;
 
       function recalcTotal() {
          if (!lineTotal) return;
+         var selectedOption = sizeSelect ? sizeSelect.options[sizeSelect.selectedIndex] : null;
+         var base = selectedOption && selectedOption.value
+            ? parseFloat(selectedOption.getAttribute('data-price') || '0')
+            : fallbackBase;
          var extras = 0;
          checkboxes.forEach(function (cb) { if (cb.checked) extras += parseFloat(cb.dataset.price || '0'); });
          var qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;

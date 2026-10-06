@@ -28,6 +28,8 @@ The admin chatbot expects Ollama at `OLLAMA_URL`; by default, the container conn
 
 Order status changes, including cancellations and the admin "Done Preparing" action, email the customer. Editing a product emails only registered customers with a previous order containing that product; guest orders are not emailed.
 
+Products can have a separate whole-peso price and stock quantity for each size. Set both on every size row when creating a product; customer catalog, detail, and cart flows use the selected size's saved price.
+
 To inspect container output, run `docker compose logs -f web db`.
 
 ## Lint JavaScript
