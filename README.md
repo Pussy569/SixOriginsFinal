@@ -30,6 +30,16 @@ Order status changes, including cancellations and the admin "Done Preparing" act
 
 Products can have a separate whole-peso price and stock quantity for each size. Set both on every size row when creating a product; customer catalog, detail, and cart flows use the selected size's saved price.
 
+To manage sizes later, open a product's Edit dialog to add new sizes with their own price and starting stock, or hide/unhide an existing size. Hidden sizes are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, link recipe ingredients at the product level (they apply to every size) and link packaging under “Packaging Used by Size” (only the selected size's packaging is deducted when sold).
+
+Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261007_size_packaging_inventory.sql
+```
+
+Enter the password at the prompt. Fresh databases should be initialized from the current `database/schema.sql` instead of running this migration.
+
 To inspect container output, run `docker compose logs -f web db`.
 
 ## Lint JavaScript

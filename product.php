@@ -26,7 +26,7 @@ if(isset($_POST['add_to_cart'])){
 
       $conn->begin_transaction();
       $transaction_started = true;
-      $size_stmt = $conn->prepare("SELECT ps.id, ps.price, ps.stock, p.name, p.image FROM `product_sizes` ps JOIN `products` p ON p.id = ps.product_id WHERE ps.product_id = ? AND ps.size = ? FOR UPDATE");
+      $size_stmt = $conn->prepare("SELECT ps.id, ps.price, ps.stock, p.name, p.image FROM `product_sizes` ps JOIN `products` p ON p.id = ps.product_id WHERE ps.product_id = ? AND ps.size = ? AND ps.is_active = 1 FOR UPDATE");
       $size_stmt->bind_param("is", $posted_product_id, $product_size);
       $size_stmt->execute();
       $variant = $size_stmt->get_result()->fetch_assoc();
@@ -95,7 +95,7 @@ if(mysqli_num_rows($select_product) == 0){
 $prod = mysqli_fetch_assoc($select_product);
 
 // fetch ALL sizes (out-of-stock ones are shown disabled so customers see what exists)
-$sizes_result = mysqli_query($conn, "SELECT * FROM `product_sizes` WHERE product_id = '$product_id'") or die('query failed');
+$sizes_result = mysqli_query($conn, "SELECT * FROM `product_sizes` WHERE product_id = '$product_id' AND is_active = 1") or die('query failed');
 $sizes = [];
 $has_stock = false;
 while($s = mysqli_fetch_assoc($sizes_result)){

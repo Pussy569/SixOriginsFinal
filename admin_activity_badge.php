@@ -9,7 +9,7 @@ $row = mysqli_fetch_assoc($r);
 $total += intval($row['cnt']);
 
 // Count low stock products
-$r = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM product_sizes WHERE stock <= 10");
+$r = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM product_sizes WHERE stock <= 10 AND is_active = 1");
 $row = mysqli_fetch_assoc($r);
 $total += intval($row['cnt']);
 

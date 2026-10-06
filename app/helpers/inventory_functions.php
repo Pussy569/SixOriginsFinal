@@ -56,7 +56,7 @@ function parseOrderProductLines($total_products_string) {
         $qty  = intval($m[2]);
         if ($name === '' || $qty <= 0) continue;
 
-        $parsed[] = ['name' => $name, 'qty' => $qty];
+        $parsed[] = ['name' => $name, 'qty' => $qty, 'size' => trim($m[3])];
     }
     return $parsed;
 }
@@ -90,7 +90,14 @@ function buildIngredientTotalsForOrder($conn, $order_id) {
          JOIN inventory i ON pi.ingredient_id = i.id
          WHERE pi.product_id = ?"
     );
-    if (!$prod_stmt || !$ing_stmt) {
+    $size_ing_stmt = $conn->prepare(
+        "SELECT i.id AS ingredient_id, i.ingredient_name, i.unit, psi.quantity_used
+         FROM product_size_ingredients psi
+         JOIN product_sizes ps ON psi.product_size_id = ps.id
+         JOIN inventory i ON psi.ingredient_id = i.id
+         WHERE ps.product_id = ? AND ps.size = ?"
+    );
+    if (!$prod_stmt || !$ing_stmt || !$size_ing_stmt) {
         throw new Exception("DB prepare error (products/product_ingredients): " . $conn->error);
     }
 
@@ -106,7 +113,13 @@ function buildIngredientTotalsForOrder($conn, $order_id) {
         $ing_stmt->execute();
         $ing_res = $ing_stmt->get_result();
 
-        while ($row = $ing_res->fetch_assoc()) {
+        $rows = $ing_res->fetch_all(MYSQLI_ASSOC);
+
+        $size_ing_stmt->bind_param("is", $product_id, $line['size']);
+        $size_ing_stmt->execute();
+        $rows = array_merge($rows, $size_ing_stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+
+        foreach ($rows as $row) {
             $ing_id   = intval($row['ingredient_id']);
             $per_unit = floatval($row['quantity_used']);
             $unit     = $row['unit'] ?? '';
@@ -122,6 +135,7 @@ function buildIngredientTotalsForOrder($conn, $order_id) {
 
     $prod_stmt->close();
     $ing_stmt->close();
+    $size_ing_stmt->close();
 
     return $totals;
 }

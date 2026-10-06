@@ -165,7 +165,7 @@ if (isset($_POST['add_to_cart'])) {
             $conn->begin_transaction();
             try {
                // Lock the size row so two shoppers can't both take the last unit
-               $lock_stmt = $conn->prepare("SELECT id, stock, price FROM `product_sizes` WHERE product_id = ? AND size = ? FOR UPDATE");
+               $lock_stmt = $conn->prepare("SELECT id, stock, price FROM `product_sizes` WHERE product_id = ? AND size = ? AND is_active = 1 FOR UPDATE");
                $lock_stmt->bind_param("is", $product_id, $product_size);
                $lock_stmt->execute();
                $size_row = $lock_stmt->get_result()->fetch_assoc();
@@ -1274,7 +1274,7 @@ img, video { max-width: 100%; }
 
                   // ✅ Fetch ALL sizes (not just in-stock ones) so out-of-stock
                   // options can still be shown, disabled, with no numbers.
-                  $sizes_stmt = $conn->prepare("SELECT size, price, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+                  $sizes_stmt = $conn->prepare("SELECT size, price, stock FROM `product_sizes` WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
                   $sizes_stmt->bind_param("i", $product_id);
                   $sizes_stmt->execute();
                   $sizes_result = $sizes_stmt->get_result();

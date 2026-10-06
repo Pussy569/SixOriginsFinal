@@ -402,7 +402,7 @@ function formatProduct($product, $conn) {
     $sizes = [];
     $any_available = false;
 
-    $stmt = $conn->prepare("SELECT size, stock FROM product_sizes WHERE product_id = ? ORDER BY id ASC");
+    $stmt = $conn->prepare("SELECT size, stock FROM product_sizes WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
     if ($stmt) {
         $stmt->bind_param("i", $p_id);
         $stmt->execute();

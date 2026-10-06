@@ -3,7 +3,7 @@ include 'config.php';
 
 $result = mysqli_query($conn, "SELECT ps.id, p.name, ps.size, ps.stock FROM product_sizes ps 
                                JOIN products p ON ps.product_id = p.id 
-                               WHERE ps.stock <= 5 
+                               WHERE ps.stock <= 5 AND ps.is_active = 1
                                ORDER BY ps.stock ASC LIMIT 5");
 
 if(!$result || mysqli_num_rows($result) === 0) { 

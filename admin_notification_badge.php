@@ -16,7 +16,7 @@ $total += intval($row['cnt'] ?? 0);
 $r = mysqli_query($conn, "
     SELECT COUNT(*) as cnt 
     FROM product_sizes 
-    WHERE stock <= 5
+    WHERE stock <= 5 AND is_active = 1
 ");
 $row = mysqli_fetch_assoc($r);
 $total += intval($row['cnt'] ?? 0);

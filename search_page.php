@@ -156,7 +156,7 @@ if (isset($_POST['add_to_cart'])) {
             $sel = validate_and_summarize_selections($conn, $product_id, $_POST['preferences'] ?? [], $_POST['extras'] ?? []);
             $conn->begin_transaction();
             try {
-               $lock_stmt = $conn->prepare("SELECT id, stock, price FROM `product_sizes` WHERE product_id = ? AND size = ? FOR UPDATE");
+               $lock_stmt = $conn->prepare("SELECT id, stock, price FROM `product_sizes` WHERE product_id = ? AND size = ? AND is_active = 1 FOR UPDATE");
                $lock_stmt->bind_param("is", $product_id, $product_size);
                $lock_stmt->execute();
                $size_row = $lock_stmt->get_result()->fetch_assoc();
@@ -552,7 +552,7 @@ $result_count = count($results);
             $type_meta = $SIZE_TYPE_META[$type] ?? $SIZE_TYPE_META['cup'];
 
             // Fetch ALL sizes (in or out of stock) — customer never sees numbers
-            $sizes_stmt = $conn->prepare("SELECT size, price, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+            $sizes_stmt = $conn->prepare("SELECT size, price, stock FROM `product_sizes` WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
             $sizes_stmt->bind_param("i", $product_id);
             $sizes_stmt->execute();
             $sizes_result = $sizes_stmt->get_result();

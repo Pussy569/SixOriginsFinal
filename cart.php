@@ -170,7 +170,7 @@ if (isset($_POST['update_cart'])) {
             $product_size = $fetch_cart['size'];
             $old_quantity = (int)$fetch_cart['quantity'];
 
-            $size_stmt = $conn->prepare("SELECT stock FROM `product_sizes` WHERE product_id = ? AND size = ? FOR UPDATE");
+            $size_stmt = $conn->prepare("SELECT stock FROM `product_sizes` WHERE product_id = ? AND size = ? AND is_active = 1 FOR UPDATE");
             $size_stmt->bind_param("is", $product_id, $product_size);
             $size_stmt->execute();
             $size_row = $size_stmt->get_result()->fetch_assoc();

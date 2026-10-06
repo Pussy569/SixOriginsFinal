@@ -73,7 +73,7 @@ $low_stock = mysqli_query($conn, "
    SELECT p.name, s.size, s.stock 
    FROM product_sizes s 
    JOIN products p ON s.product_id = p.id 
-   WHERE s.stock <= 5 
+   WHERE s.stock <= 5 AND s.is_active = 1
    ORDER BY s.stock ASC 
    LIMIT 5
 ") or die(mysqli_error($conn));

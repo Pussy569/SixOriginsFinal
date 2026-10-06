@@ -168,7 +168,15 @@ CREATE TABLE `product_sizes` (`id` int NOT NULL,
   `product_id` int NOT NULL,
   `size` varchar(50) NOT NULL,
   `price` int NOT NULL,
-  `stock` int NOT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `stock` int NOT NULL,
+  `is_active` tinyint NOT NULL DEFAULT 1) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `product_size_ingredients` (`id` int NOT NULL,
+  `product_size_id` int NOT NULL,
+  `ingredient_id` int NOT NULL,
+  `quantity_used` decimal(10,2) NOT NULL COMMENT 'Amount of this inventory item consumed per selected size',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `topup_requests` (`id` int NOT NULL,
   `user_id` int NOT NULL,
@@ -249,6 +257,9 @@ ALTER TABLE `product_preference_groups` ADD PRIMARY KEY (`id`),
 ALTER TABLE `product_preference_options` ADD PRIMARY KEY (`id`),
   ADD KEY `idx_group_id` (`group_id`);
 ALTER TABLE `product_sizes` ADD PRIMARY KEY (`id`);
+ALTER TABLE `product_size_ingredients` ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_product_size_ingredient` (`product_size_id`,`ingredient_id`),
+  ADD KEY `idx_product_size_ingredient` (`ingredient_id`);
 ALTER TABLE `topup_requests` ADD PRIMARY KEY (`id`);
 ALTER TABLE `users` ADD PRIMARY KEY (`id`);
 ALTER TABLE `user_discounts` ADD PRIMARY KEY (`id`),
@@ -274,6 +285,7 @@ ALTER TABLE `product_ingredients` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `product_preference_groups` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `product_preference_options` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `product_sizes` MODIFY `id` int NOT NULL AUTO_INCREMENT;
+ALTER TABLE `product_size_ingredients` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `topup_requests` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `users` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `user_discounts` MODIFY `id` int NOT NULL AUTO_INCREMENT;
@@ -291,6 +303,8 @@ ALTER TABLE `product_ingredients` ADD CONSTRAINT `product_ingredients_ibfk_1` FO
   ADD CONSTRAINT `product_ingredients_ibfk_2` FOREIGN KEY (`ingredient_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 ALTER TABLE `product_preference_groups` ADD CONSTRAINT `product_preference_groups_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 ALTER TABLE `product_preference_options` ADD CONSTRAINT `product_preference_options_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `product_preference_groups` (`id`) ON DELETE CASCADE;
+ALTER TABLE `product_size_ingredients` ADD CONSTRAINT `product_size_ingredients_ibfk_1` FOREIGN KEY (`product_size_id`) REFERENCES `product_sizes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `product_size_ingredients_ibfk_2` FOREIGN KEY (`ingredient_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 ALTER TABLE `user_discounts` ADD CONSTRAINT `user_discounts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `user_discounts_ibfk_2` FOREIGN KEY (`discount_id`) REFERENCES `discounts` (`id`) ON DELETE CASCADE;
 
@@ -330,4 +344,3 @@ DELIMITER ;
 
 -- Existing Head Admin account.
 INSERT INTO `users` (`name`, `email`, `password`, `user_type`, `status`) VALUES ('Head Admin', 'shammahpanot@gmail.com', '$2y$10$wx0v7IyWv7yWmEErYcZh0.pcm.b2MfmmENt8FYtSwxGSEhGKo9FzO', 'admin', 'approved');
-

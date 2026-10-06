@@ -440,9 +440,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
         $entities = [];
         $q = $query;
 
-        // --- category: drinks vs packaging ---
+        // --- category: consumable vs packaging ---
         if (preg_match('/\b(drinks?|beverage)\b/i', $q)) {
-            $entities['category'] = 'drinks';
+            $entities['category'] = 'consumable';
+        } elseif (preg_match('/\bconsumables?\b/i', $q)) {
+            $entities['category'] = 'consumable';
         } elseif (preg_match('/\bpackaging\b/i', $q)) {
             $entities['category'] = 'packaging';
         }
@@ -537,7 +539,7 @@ size_type ("cup" or "slice", null if not given), allow_special_instructions (1 o
 Do NOT extract a "category" entity - this store has no category field on products.
 For edit_price, extract entities: product_name, price.
 For delete_product, extract entities: product_name.
-For add_ingredient, extract entities: ingredient_name, category ("drinks" or "packaging"),
+For add_ingredient, extract entities: ingredient_name, category ("consumable" or "packaging"),
 unit ("grams", "ml", "pieces", or "cups"), quantity (opening stock, 0 if not given),
 min_stock_level (low-stock alert level, 0 if not given).
 For all other intents, entities can be an empty object.
@@ -900,20 +902,23 @@ SYS;
     // Mirrors admin_inventory.php's ==================== ADD NEW INGREDIENT ====================
     // handler: same required fields, same allowed category/unit values, same table.
     function execute_add_ingredient($conn, $entities) {
-        $allowed_categories = ['drinks', 'packaging'];
+        $allowed_categories = ['consumable', 'packaging'];
         $allowed_units = ['grams', 'ml', 'pieces', 'cups'];
 
         $name = trim($entities['ingredient_name'] ?? '');
         $category = strtolower(trim($entities['category'] ?? ''));
+        if (in_array($category, ['drink', 'drinks', 'beverage', 'beverages'], true)) {
+            $category = 'consumable';
+        }
         $unit = strtolower(trim($entities['unit'] ?? ''));
         $quantity = isset($entities['quantity']) ? floatval($entities['quantity']) : 0.0;
         $min_stock = isset($entities['min_stock_level']) ? floatval($entities['min_stock_level']) : 0.0;
 
         if ($name === '' || $category === '' || $unit === '') {
-            return ['success' => false, 'message' => 'I need at least the ingredient name, category (drinks or packaging), and unit (grams, ml, pieces, or cups).'];
+            return ['success' => false, 'message' => 'I need at least the ingredient name, category (consumable or packaging), and unit (grams, ml, pieces, or cups).'];
         }
         if (!in_array($category, $allowed_categories, true)) {
-            return ['success' => false, 'message' => 'Category must be either "drinks" or "packaging".'];
+            return ['success' => false, 'message' => 'Category must be either "consumable" or "packaging".'];
         }
         if (!in_array($unit, $allowed_units, true)) {
             return ['success' => false, 'message' => 'Unit must be one of: grams, ml, pieces, cups.'];
@@ -1247,7 +1252,7 @@ SYS;
                 SELECT p.name, s.size, s.stock
                 FROM product_sizes s
                 JOIN products p ON s.product_id = p.id
-                WHERE s.stock <= 10
+                WHERE s.stock <= 10 AND s.is_active = 1
                 ORDER BY s.stock ASC
                 LIMIT 10
             ") or die('Query failed: ' . mysqli_error($conn));
@@ -1574,7 +1579,7 @@ SYS;
                     '3. Use the form on the left to add a new item',
                     '4. Click the pencil icon on a row to update its stock or alert level',
                     '✅ Ingredient inventory updated!',
-                    '💡 Tip: ask me "check ingredients" or "add ingredient <name> category <drinks/packaging> unit <grams/ml/pieces/cups>" to do it from chat.',
+                    '💡 Tip: ask me "check ingredients" or "add ingredient <name> category <consumable/packaging> unit <grams/ml/pieces/cups>" to do it from chat.',
                 ]],
             ];
 
@@ -1629,13 +1634,13 @@ SYS;
                 if (empty($entities['product_name'])) $missing[] = 'product name';
             } elseif ($intent === 'add_ingredient') {
                 if (empty($entities['ingredient_name'])) $missing[] = 'ingredient name';
-                if (empty($entities['category'])) $missing[] = 'category (drinks or packaging)';
+                if (empty($entities['category'])) $missing[] = 'category (consumable or packaging)';
                 if (empty($entities['unit'])) $missing[] = 'unit (grams, ml, pieces, or cups)';
             }
 
             if (!empty($missing)) {
                 $example = $intent === 'add_ingredient'
-                    ? 'add ingredient Milk category drinks unit ml quantity 5000 min stock 1000'
+                    ? 'add ingredient Milk category consumable unit ml quantity 5000 min stock 1000'
                     : 'add product Red Shirt price 599';
                 $response = [
                     'type' => 'command',
@@ -2296,7 +2301,7 @@ if (!isset($_SESSION['admin_id'])) {
                         <div style="padding: 6px 0;">• Add product Red Shirt price 599</div>
                         <div style="padding: 6px 0;">• Change the price of Red Shirt to 649</div>
                         <div style="padding: 6px 0;">• Delete product Red Shirt</div>
-                        <div style="padding: 6px 0;">• Add ingredient Milk category drinks unit ml quantity 5000 min stock 1000</div>
+                        <div style="padding: 6px 0;">• Add ingredient Milk category consumable unit ml quantity 5000 min stock 1000</div>
                     </div>
                 </div>
                 <div class="cb-message-time"><?php echo date('H:i'); ?></div>

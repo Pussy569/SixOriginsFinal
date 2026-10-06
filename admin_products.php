@@ -220,6 +220,9 @@ if (isset($_POST['add_product'])) {
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($name) . '" added successfully! You can now add Preferences and Extras from its card. 🎉'];
 
     } catch (Exception $e) {
+        if ($update_transaction_started) {
+            $conn->rollback();
+        }
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
@@ -404,10 +407,15 @@ if (isset($_GET['delete'])) {
 if (isset($_POST['update_product'])) {
     validate_csrf_token();
 
+    $update_transaction_started = false;
     try {
         $update_p_id = intval($_POST['update_p_id']);
         $update_name = trim($_POST['update_name'] ?? '');
         $posted_variant_prices = $_POST['update_size_prices'] ?? [];
+        $posted_variant_active = $_POST['update_size_active'] ?? [];
+        $new_sizes = $_POST['new_size'] ?? [];
+        $new_size_prices = $_POST['new_size_price'] ?? [];
+        $new_size_stocks = $_POST['new_size_stock'] ?? [];
         $update_details = trim($_POST['update_details'] ?? '');
         $update_old_image = $_POST['update_old_image'] ?? '';
         $update_size_type = $_POST['update_size_type'] ?? 'cup';
@@ -436,29 +444,89 @@ if (isset($_POST['update_product'])) {
             throw new Exception('Product not found');
         }
 
-        if (!is_array($posted_variant_prices)) {
+        if (!is_array($posted_variant_prices) || !is_array($posted_variant_active)
+            || !is_array($new_sizes) || !is_array($new_size_prices) || !is_array($new_size_stocks)) {
             throw new Exception('Invalid size price data.');
         }
-        $size_lookup = $conn->prepare("SELECT id FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+        $size_lookup = $conn->prepare("SELECT id, size FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+        if (!$size_lookup) {
+            throw new Exception("Database error loading product sizes: " . $conn->error);
+        }
         $size_lookup->bind_param("i", $update_p_id);
         $size_lookup->execute();
-        $existing_size_ids = array_map('intval', array_column($size_lookup->get_result()->fetch_all(MYSQLI_ASSOC), 'id'));
+        $existing_sizes = $size_lookup->get_result()->fetch_all(MYSQLI_ASSOC);
         $size_lookup->close();
-        if (count($posted_variant_prices) !== count($existing_size_ids)) {
-            throw new Exception('Provide a price for every existing product size.');
+        $existing_size_ids = array_map('intval', array_column($existing_sizes, 'id'));
+        if (count($posted_variant_prices) !== count($existing_size_ids) || count($posted_variant_active) !== count($existing_size_ids)) {
+            throw new Exception('Provide a price and availability setting for every existing product size.');
         }
 
         $variant_prices = [];
+        $variant_active = [];
+        $all_size_names = [];
+        foreach ($existing_sizes as $existing_size) {
+            $all_size_names[mb_strtolower((string)$existing_size['size'])] = true;
+        }
         foreach ($existing_size_ids as $size_id) {
             $raw_variant_price = $posted_variant_prices[$size_id] ?? '';
             if (!is_string($raw_variant_price) || !ctype_digit($raw_variant_price) || (float)$raw_variant_price < 1 || (float)$raw_variant_price > 2147483647) {
                 throw new Exception('Enter a whole-peso price greater than zero for every size.');
             }
+            $active_value = $posted_variant_active[$size_id] ?? null;
+            if (!in_array((string)$active_value, ['0', '1'], true)) {
+                throw new Exception('Invalid product size availability value.');
+            }
             $variant_prices[$size_id] = (int)$raw_variant_price;
+            $variant_active[$size_id] = (int)$active_value;
         }
-        $update_price = !empty($variant_prices) ? min($variant_prices) : (int)$previous_product['price'];
+
+        if (count($new_sizes) > 10 || count($new_sizes) !== count($new_size_prices) || count($new_sizes) !== count($new_size_stocks)) {
+            throw new Exception('Add up to 10 complete new size, price, and stock options.');
+        }
+        $new_size_variants = [];
+        foreach ($new_sizes as $index => $raw_new_size) {
+            if (!is_string($raw_new_size) || !is_string($new_size_prices[$index] ?? null) || !is_string($new_size_stocks[$index] ?? null)) {
+                throw new Exception('Each new size, price, and stock value must be a single value.');
+            }
+            $new_size = trim($raw_new_size);
+            $new_price = trim($new_size_prices[$index]);
+            $new_stock = trim($new_size_stocks[$index]);
+            if ($new_size === '' && $new_price === '' && $new_stock === '') {
+                continue;
+            }
+            if ($new_size === '' || mb_strlen($new_size) > 20 || isset($all_size_names[mb_strtolower($new_size)])) {
+                throw new Exception('New size names must be unique and no longer than 20 characters.');
+            }
+            if ($new_price === '' || !ctype_digit($new_price) || (float)$new_price < 1 || (float)$new_price > 2147483647) {
+                throw new Exception('Enter a whole-peso price greater than zero for each new size.');
+            }
+            if ($new_stock === '' || !ctype_digit($new_stock) || (float)$new_stock > 2147483647) {
+                throw new Exception('Enter a valid non-negative stock quantity for each new size.');
+            }
+            $all_size_names[mb_strtolower($new_size)] = true;
+            $new_size_variants[] = ['size' => $new_size, 'price' => (int)$new_price, 'stock' => (int)$new_stock];
+        }
+
+        $active_price_values = [];
+        foreach ($variant_prices as $size_id => $variant_price) {
+            if ($variant_active[$size_id] === 1) {
+                $active_price_values[] = $variant_price;
+            }
+        }
+        foreach ($new_size_variants as $new_variant) {
+            $active_price_values[] = $new_variant['price'];
+        }
+        if (empty($active_price_values)) {
+            throw new Exception('Keep at least one product size available.');
+        }
+        if (count($active_price_values) > 10) {
+            throw new Exception('A product can have at most 10 active sizes.');
+        }
+        $update_price = !empty($active_price_values) ? min($active_price_values) : (int)$previous_product['price'];
 
         // Update basic product info
+        $conn->begin_transaction();
+        $update_transaction_started = true;
         $stmt = $conn->prepare("UPDATE `products` SET name = ?, price = ?, details = ?, size_type = ?, allow_special_instructions = ? WHERE id = ?");
         if (!$stmt) {
             throw new Exception("Database error: " . $conn->error);
@@ -470,15 +538,33 @@ if (isset($_POST['update_product'])) {
         $stmt->close();
 
         if (!empty($variant_prices)) {
-            $variant_price_stmt = $conn->prepare("UPDATE `product_sizes` SET price = ? WHERE id = ? AND product_id = ?");
+            $variant_price_stmt = $conn->prepare("UPDATE `product_sizes` SET price = ?, is_active = ? WHERE id = ? AND product_id = ?");
+            if (!$variant_price_stmt) {
+                throw new Exception("Database error updating product sizes: " . $conn->error);
+            }
             foreach ($variant_prices as $size_id => $variant_price) {
-                $variant_price_stmt->bind_param("iii", $variant_price, $size_id, $update_p_id);
+                $variant_price_stmt->bind_param("iiii", $variant_price, $variant_active[$size_id], $size_id, $update_p_id);
                 if (!$variant_price_stmt->execute()) {
                     throw new Exception("Failed to update size price: " . $variant_price_stmt->error);
                 }
             }
             $variant_price_stmt->close();
         }
+        if (!empty($new_size_variants)) {
+            $new_size_stmt = $conn->prepare("INSERT INTO product_sizes (product_id, size, price, stock, is_active) VALUES (?, ?, ?, ?, 1)");
+            if (!$new_size_stmt) {
+                throw new Exception("Database error adding product sizes: " . $conn->error);
+            }
+            foreach ($new_size_variants as $new_variant) {
+                $new_size_stmt->bind_param("isii", $update_p_id, $new_variant['size'], $new_variant['price'], $new_variant['stock']);
+                if (!$new_size_stmt->execute()) {
+                    throw new Exception("Failed to add product size: " . $new_size_stmt->error);
+                }
+            }
+            $new_size_stmt->close();
+        }
+        $conn->commit();
+        $update_transaction_started = false;
 
         // LOG THE ACTIVITY
         log_admin_activity($admin_id, 'Update Product', 'Updated product: ' . $update_name);
@@ -614,7 +700,7 @@ if (isset($_POST['add_product_ingredient'])) {
         $check_stmt->close();
 
         // Confirm inventory item exists
-        $ing_stmt = $conn->prepare("SELECT ingredient_name, unit FROM `inventory` WHERE id = ?");
+        $ing_stmt = $conn->prepare("SELECT ingredient_name, unit, category FROM `inventory` WHERE id = ?");
         $ing_stmt->bind_param("i", $ingredient_id);
         $ing_stmt->execute();
         $ing_row = $ing_stmt->get_result()->fetch_assoc();
@@ -622,6 +708,9 @@ if (isset($_POST['add_product_ingredient'])) {
 
         if (!$product_row || !$ing_row) {
             throw new Exception('Product or inventory item not found');
+        }
+        if (strtolower((string)$ing_row['category']) === 'packaging') {
+            throw new Exception('Packaging must be linked to a specific product size.');
         }
 
         // Link ingredient to product. If already linked, just update the amount used.
@@ -646,6 +735,105 @@ if (isset($_POST['add_product_ingredient'])) {
     }
 
     header('location:admin_products.php' . ($pi_product_id > 0 ? '?manage_ingredients=' . $pi_product_id : ''));
+    exit;
+}
+
+// ==================== LINK PACKAGING TO A PRODUCT SIZE ====================
+if (isset($_POST['add_size_packaging'])) {
+    validate_csrf_token();
+    $sp_product_id = (int)($_POST['sp_product_id'] ?? 0);
+
+    try {
+        $product_size_id = (int)($_POST['product_size_id'] ?? 0);
+        $ingredient_id = (int)($_POST['size_ingredient_id'] ?? 0);
+        $quantity_used = (float)($_POST['size_quantity_used'] ?? 0);
+
+        if ($sp_product_id <= 0 || $product_size_id <= 0 || $ingredient_id <= 0 || $quantity_used <= 0) {
+            throw new Exception('Choose a product size, packaging item, and positive quantity.');
+        }
+
+        $size_stmt = $conn->prepare(
+            "SELECT p.name AS product_name, ps.size
+             FROM product_sizes ps JOIN products p ON ps.product_id = p.id
+             WHERE ps.id = ? AND ps.product_id = ? AND ps.is_active = 1"
+        );
+        $size_stmt->bind_param("ii", $product_size_id, $sp_product_id);
+        $size_stmt->execute();
+        $size_row = $size_stmt->get_result()->fetch_assoc();
+        $size_stmt->close();
+        if (!$size_row) {
+            throw new Exception('The selected product size is unavailable.');
+        }
+
+        $item_stmt = $conn->prepare("SELECT ingredient_name, unit FROM inventory WHERE id = ? AND category = 'packaging'");
+        $item_stmt->bind_param("i", $ingredient_id);
+        $item_stmt->execute();
+        $item_row = $item_stmt->get_result()->fetch_assoc();
+        $item_stmt->close();
+        if (!$item_row) {
+            throw new Exception('Choose an inventory item in the Packaging category.');
+        }
+
+        $link_stmt = $conn->prepare(
+            "INSERT INTO product_size_ingredients (product_size_id, ingredient_id, quantity_used)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used)"
+        );
+        $link_stmt->bind_param("iid", $product_size_id, $ingredient_id, $quantity_used);
+        $link_stmt->execute();
+        $link_stmt->close();
+
+        log_admin_activity(
+            $admin_id,
+            'Link Size Packaging',
+            $item_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $item_row['unit'] . ') linked to ' . $size_row['product_name'] . ' - ' . $size_row['size']
+        );
+        $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($item_row['ingredient_name']) . ' linked to ' . htmlspecialchars($size_row['size']) . ' successfully.'];
+    } catch (Exception $e) {
+        $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
+    }
+
+    header('location:admin_products.php' . ($sp_product_id > 0 ? '?manage_ingredients=' . $sp_product_id : ''));
+    exit;
+}
+
+// ==================== REMOVE SIZE-SPECIFIC PACKAGING ====================
+if (isset($_GET['remove_size_packaging'])) {
+    validate_csrf_get();
+    $back_product_id = (int)($_GET['manage_ingredients'] ?? 0);
+
+    try {
+        $link_id = (int)$_GET['remove_size_packaging'];
+        $info_stmt = $conn->prepare(
+            "SELECT psi.id, p.id AS product_id, p.name AS product_name, ps.size, i.ingredient_name
+             FROM product_size_ingredients psi
+             JOIN product_sizes ps ON psi.product_size_id = ps.id
+             JOIN products p ON ps.product_id = p.id
+             JOIN inventory i ON psi.ingredient_id = i.id
+             WHERE psi.id = ?"
+        );
+        $info_stmt->bind_param("i", $link_id);
+        $info_stmt->execute();
+        $info = $info_stmt->get_result()->fetch_assoc();
+        $info_stmt->close();
+        if (!$info) {
+            throw new Exception('Packaging link not found.');
+        }
+
+        $delete_stmt = $conn->prepare("DELETE FROM product_size_ingredients WHERE id = ?");
+        $delete_stmt->bind_param("i", $link_id);
+        $delete_stmt->execute();
+        $delete_stmt->close();
+        if ($back_product_id <= 0) {
+            $back_product_id = (int)$info['product_id'];
+        }
+        log_admin_activity($admin_id, 'Unlink Size Packaging', 'Removed ' . $info['ingredient_name'] . ' from ' . $info['product_name'] . ' - ' . $info['size']);
+        $_SESSION['message'] = ['type' => 'success', 'text' => 'Size-specific packaging link removed.'];
+    } catch (Exception $e) {
+        $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
+    }
+
+    header('location:admin_products.php' . ($back_product_id > 0 ? '?manage_ingredients=' . $back_product_id : ''));
     exit;
 }
 
@@ -2590,7 +2778,7 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="products-grid">
             <?php
                while($product = $select_products->fetch_assoc()){
-                  $sizes_stmt = $conn->prepare("SELECT id, size, price, stock FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+                  $sizes_stmt = $conn->prepare("SELECT id, size, price, stock, is_active FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
                   $sizes_stmt->bind_param("i", $product['id']);
                   $sizes_stmt->execute();
                   $sizes_result = $sizes_stmt->get_result();
@@ -2599,8 +2787,10 @@ if (isset($_GET['remove_extra_group'])) {
                   $has_low_stock = false;
                   while($size = $sizes_result->fetch_assoc()){
                      $sizes[] = $size;
-                     $total_stock += $size['stock'];
-                     if ($size['stock'] <= 10) {
+                     if ((int)$size['is_active'] === 1) {
+                        $total_stock += $size['stock'];
+                     }
+                     if ((int)$size['is_active'] === 1 && $size['stock'] <= 10) {
                         $has_low_stock = true;
                      }
                   }
@@ -2656,7 +2846,7 @@ if (isset($_GET['remove_extra_group'])) {
                      <span class="size-badge type-badge"><i class="fa-solid <?php echo $size_type_icon; ?>"></i> <?php echo htmlspecialchars($size_type_label); ?></span>
                      <?php foreach($sizes as $size): ?>
                         <span class="size-badge <?php echo $size['stock'] <= 10 ? 'low-stock' : ''; ?>">
-                           <?php echo htmlspecialchars($size['size']); ?> — ₱<?php echo number_format((float)$size['price'], 2); ?> (<?php echo intval($size['stock']); ?>)
+                           <?php echo htmlspecialchars($size['size']); ?> — ₱<?php echo number_format((float)$size['price'], 2); ?> (<?php echo intval($size['stock']); ?>)<?php if (!(int)$size['is_active']): ?> — hidden<?php endif; ?>
                         </span>
                      <?php endforeach; ?>
                   </div>
@@ -2732,7 +2922,7 @@ if (isset($_GET['remove_extra_group'])) {
          $product = $update_query->fetch_assoc();
          $stmt->close();
          $edit_size_type = $product['size_type'] ?? 'cup';
-         $edit_sizes_stmt = $conn->prepare("SELECT id, size, price FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
+         $edit_sizes_stmt = $conn->prepare("SELECT id, size, price, is_active FROM `product_sizes` WHERE product_id = ? ORDER BY id ASC");
          $edit_sizes_stmt->bind_param("i", $update_id);
          $edit_sizes_stmt->execute();
          $edit_sizes = $edit_sizes_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -2771,14 +2961,28 @@ if (isset($_GET['remove_extra_group'])) {
             <div class="size-price-edit-list">
                <?php foreach ($edit_sizes as $edit_size): ?>
                   <div class="size-price-edit-row">
-                     <span><?php echo htmlspecialchars($edit_size['size']); ?></span>
+                     <span><?php echo htmlspecialchars($edit_size['size']); ?><?php if (!(int)$edit_size['is_active']): ?> <small>(hidden)</small><?php endif; ?></span>
                      <div class="input-wrapper">
                         <input type="number" name="update_size_prices[<?php echo (int)$edit_size['id']; ?>]" min="1" step="1" value="<?php echo (int)$edit_size['price']; ?>" required aria-label="Price for <?php echo htmlspecialchars($edit_size['size']); ?>">
                      </div>
+                     <select name="update_size_active[<?php echo (int)$edit_size['id']; ?>]" aria-label="Availability for <?php echo htmlspecialchars($edit_size['size']); ?>">
+                        <option value="1" <?php echo (int)$edit_size['is_active'] === 1 ? 'selected' : ''; ?>>Available</option>
+                        <option value="0" <?php echo (int)$edit_size['is_active'] === 0 ? 'selected' : ''; ?>>Hidden</option>
+                     </select>
                   </div>
                <?php endforeach; ?>
             </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Set a separate whole-peso price for each size. Stock is updated with the Stock button.</div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Set prices and hide/unhide existing sizes. Hidden sizes stay in order history and can be restored later.</div>
+            <label style="margin-top: 18px;">Add New Sizes</label>
+            <div id="newSizeFields">
+               <div class="field-row new-size-row" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                  <div class="input-wrapper"><input type="text" name="new_size[0]" maxlength="20" placeholder="Size name"></div>
+                  <div class="input-wrapper"><input type="number" name="new_size_price[0]" min="1" step="1" placeholder="Price"></div>
+                  <div class="input-wrapper"><input type="number" name="new_size_stock[0]" min="0" step="1" placeholder="Starting stock"></div>
+               </div>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addNewSizeFields()">Add another size</button>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> New sizes are available immediately. Their matching packaging can be set below in Packaging Used by Size.</div>
          </div>
 
          <!-- Update Image Preview -->
@@ -2864,11 +3068,35 @@ if (isset($_GET['remove_extra_group'])) {
          $inv_result = $inv_stmt->get_result();
          $available_inventory = [];
          while ($row = $inv_result->fetch_assoc()) {
-            if (!in_array((int)$row['id'], $linked_ids, true)) {
+            if (strtolower((string)$row['category']) !== 'packaging' && !in_array((int)$row['id'], $linked_ids, true)) {
                $available_inventory[] = $row;
             }
          }
          $inv_stmt->close();
+
+         $packaging_stmt = $conn->prepare("SELECT id, ingredient_name, unit, quantity FROM inventory WHERE category = 'packaging' ORDER BY ingredient_name ASC");
+         $packaging_stmt->execute();
+         $packaging_inventory = $packaging_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+         $packaging_stmt->close();
+
+         $size_stmt = $conn->prepare("SELECT id, size FROM product_sizes WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
+         $size_stmt->bind_param("i", $mi_product_id);
+         $size_stmt->execute();
+         $product_size_options = $size_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+         $size_stmt->close();
+
+         $size_packaging_stmt = $conn->prepare(
+            "SELECT psi.id, psi.quantity_used, ps.size, i.ingredient_name, i.unit
+             FROM product_size_ingredients psi
+             JOIN product_sizes ps ON psi.product_size_id = ps.id
+             JOIN inventory i ON psi.ingredient_id = i.id
+             WHERE ps.product_id = ?
+             ORDER BY ps.id, i.ingredient_name"
+         );
+         $size_packaging_stmt->bind_param("i", $mi_product_id);
+         $size_packaging_stmt->execute();
+         $size_packaging = $size_packaging_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+         $size_packaging_stmt->close();
       } else {
          $mi_stmt->close();
       }
@@ -2897,8 +3125,9 @@ if (isset($_GET['remove_extra_group'])) {
                <div class="ingredient-item-info">
                   <span class="ingredient-item-name"><?php echo htmlspecialchars($li['ingredient_name']); ?></span>
                   <span class="ingredient-item-meta">
-                     <span class="cat-tag"><?php echo htmlspecialchars(ucfirst($li['category'])); ?></span>
+                     <span class="cat-tag"><?php echo htmlspecialchars(strtolower($li['category']) === 'drinks' ? 'Consumable (legacy)' : ucfirst($li['category'])); ?></span>
                      Uses <?php echo number_format($li['quantity_used'], 2); ?> <?php echo htmlspecialchars($li['unit']); ?> per unit sold
+                     <?php if (strtolower((string)$li['category']) === 'packaging'): ?><strong>Legacy global link: applies to every size. Remove it after setting size-specific packaging below.</strong><?php endif; ?>
                   </span>
                </div>
                <a href="admin_products.php?remove_ingredient=<?php echo intval($li['id']); ?>&manage_ingredients=<?php echo intval($mi_product_id); ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
@@ -2917,7 +3146,7 @@ if (isset($_GET['remove_extra_group'])) {
       </div>
 
       <div class="ingredients-section-label">
-         <i class="fa-solid fa-plus"></i> Link Ingredient or Packaging
+         <i class="fa-solid fa-plus"></i> Link Recipe Ingredient
       </div>
 
       <?php if (!empty($available_inventory)): ?>
@@ -2946,7 +3175,7 @@ if (isset($_GET['remove_extra_group'])) {
                   ?>
                </select>
             </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Includes both drinks ingredients and packaging items</div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Recipe ingredients apply to every size. Link packaging separately for each size below.</div>
          </div>
 
          <div class="field">
@@ -3109,6 +3338,80 @@ if (isset($_GET['remove_extra_group'])) {
             </button>
          </div>
       </form>
+      <?php endif; ?>
+
+      <div class="ingredients-section-label" style="margin-top:24px;">
+         <i class="fa-solid fa-mug-hot"></i> Packaging Used by Size
+      </div>
+      <div class="help-text" style="margin-bottom:12px;">
+         Link a packaging inventory item to the matching product size. Only that size's orders deduct this amount; regular consumable recipes above still apply to every size.
+      </div>
+
+      <?php if (!empty($size_packaging)): ?>
+         <div class="linked-ingredients-list">
+            <?php foreach ($size_packaging as $link): ?>
+               <div class="ingredient-item-row">
+                  <div class="ingredient-item-info">
+                     <span class="ingredient-item-name"><?php echo htmlspecialchars($link['size']); ?> — <?php echo htmlspecialchars($link['ingredient_name']); ?></span>
+                     <span class="ingredient-item-meta">Uses <?php echo number_format((float)$link['quantity_used'], 2); ?> <?php echo htmlspecialchars($link['unit']); ?> per item sold</span>
+                  </div>
+                  <a href="admin_products.php?remove_size_packaging=<?php echo (int)$link['id']; ?>&manage_ingredients=<?php echo (int)$mi_product_id; ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
+                     class="remove-ingredient-btn" onclick="return confirm('Remove this size-specific packaging link?');" title="Remove">
+                     <i class="fa-solid fa-trash"></i> Remove
+                  </a>
+               </div>
+            <?php endforeach; ?>
+         </div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">No size-specific packaging has been linked yet.</div>
+      <?php endif; ?>
+
+      <?php if (!empty($product_size_options) && !empty($packaging_inventory)): ?>
+      <form action="" method="post" novalidate>
+         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+         <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
+
+         <div class="field">
+            <label><i class="fa-solid fa-ruler"></i> Product Size</label>
+            <div class="input-wrapper">
+               <select name="product_size_id" required>
+                  <option value="">Choose a size...</option>
+                  <?php foreach ($product_size_options as $size_option): ?>
+                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
+                  <?php endforeach; ?>
+               </select>
+            </div>
+         </div>
+
+         <div class="field">
+            <label><i class="fa-solid fa-box"></i> Packaging Inventory Item</label>
+            <div class="input-wrapper">
+               <select name="size_ingredient_id" required>
+                  <option value="">Choose packaging...</option>
+                  <?php foreach ($packaging_inventory as $packaging_item): ?>
+                     <option value="<?php echo (int)$packaging_item['id']; ?>">
+                        <?php echo htmlspecialchars($packaging_item['ingredient_name']); ?> (<?php echo htmlspecialchars($packaging_item['unit']); ?>, <?php echo number_format((float)$packaging_item['quantity'], 2); ?> in stock)
+                     </option>
+                  <?php endforeach; ?>
+               </select>
+            </div>
+         </div>
+
+         <div class="field">
+            <label><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold</label>
+            <div class="input-wrapper">
+               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 1 cup" required>
+            </div>
+         </div>
+
+         <div class="modal-actions">
+            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Link Packaging to Size</button>
+         </div>
+      </form>
+      <?php elseif (empty($product_size_options)): ?>
+         <div class="no-ingredients-msg">Add an active size to this product before linking size-specific packaging.</div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">Add packaging entries in Inventory before linking packaging to a size.</div>
       <?php endif; ?>
    </div>
 </div>
@@ -3398,6 +3701,26 @@ if (isset($_GET['remove_extra_group'])) {
       }else{
          alert('Keep at least one size option.');
       }
+   }
+
+   function addNewSizeFields() {
+      const container = document.getElementById('newSizeFields');
+      const index = container.querySelectorAll('.new-size-row').length;
+      if (index >= 10) {
+         alert('Maximum 10 new sizes can be added at once.');
+         return;
+      }
+      const row = document.createElement('div');
+      row.className = 'field-row new-size-row';
+      row.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+      row.style.marginTop = '10px';
+      row.innerHTML = `
+         <div class="input-wrapper"><input type="text" name="new_size[${index}]" maxlength="20" placeholder="Size name"></div>
+         <div class="input-wrapper"><input type="number" name="new_size_price[${index}]" min="1" step="1" placeholder="Price"></div>
+         <div class="input-wrapper"><input type="number" name="new_size_stock[${index}]" min="0" step="1" placeholder="Starting stock"></div>
+      `;
+      container.appendChild(row);
+      row.querySelector('input').focus();
    }
 
    // ==================== STOCK UPDATE MODAL ====================

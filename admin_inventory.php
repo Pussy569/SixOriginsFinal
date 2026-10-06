@@ -18,7 +18,7 @@ if (isset($_POST['add_ingredient'])) {
         $unit = $_POST['unit'] ?? '';
         $min_stock = floatval($_POST['min_stock_level'] ?? 0);
 
-        if (empty($ingredient_name) || empty($category) || empty($unit)) {
+        if (empty($ingredient_name) || !in_array($category, ['consumable', 'packaging'], true) || empty($unit)) {
             throw new Exception('Please fill in all required fields');
         }
 
@@ -769,7 +769,7 @@ $inventory_stmt->close();
                             <label>Category <span style="color:var(--red)">*</span></label>
                             <select name="category" required>
                                 <option value="">-- Select --</option>
-                                <option value="drinks">Drinks</option>
+                                <option value="consumable">Consumable</option>
                                 <option value="packaging">Packaging</option>
                             </select>
                         </div>
@@ -816,7 +816,7 @@ $inventory_stmt->close();
                     </div>
                     <select class="filter-select" id="categoryFilter" onchange="filterTable()">
                         <option value="">All Categories</option>
-                        <option value="drinks">Drinks</option>
+                        <option value="consumable">Consumable</option>
                         <option value="packaging">Packaging</option>
                     </select>
                     <select class="filter-select" id="statusFilter" onchange="filterTable()">
@@ -851,15 +851,17 @@ $inventory_stmt->close();
                         $status_class = $is_low ? 'badge-low' : 'badge-ok';
                         $status_label = $is_low ? 'Low Stock' : 'Available';
                         $status_icon  = $is_low ? 'fa-triangle-exclamation' : 'fa-circle-check';
+                        $category_key = strtolower($item['category']) === 'drinks' ? 'consumable' : strtolower($item['category']);
+                        $display_category = $category_key === 'consumable' ? 'Consumable' : ucfirst($item['category']);
                     ?>
                     <tr data-name="<?= strtolower(htmlspecialchars($item['ingredient_name'])) ?>"
-                        data-category="<?= strtolower(htmlspecialchars($item['category'])) ?>"
+                        data-category="<?= htmlspecialchars($category_key) ?>"
                         data-status="<?= $is_low ? 'low' : 'ok' ?>">
                         <td>
                             <span class="item-name"><?= htmlspecialchars($item['ingredient_name']) ?></span>
                             <div class="item-unit"><?= htmlspecialchars($item['unit']) ?></div>
                         </td>
-                        <td><span class="badge badge-cat"><?= htmlspecialchars(ucfirst($item['category'])) ?></span></td>
+                        <td><span class="badge badge-cat"><?= htmlspecialchars($display_category) ?></span></td>
                         <td>
                             <div class="qty-value <?= $is_low ? 'qty-low' : 'qty-ok' ?>">
                                 <?= number_format($qty, 2) ?>

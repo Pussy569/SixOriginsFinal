@@ -38,9 +38,7 @@ if (!function_exists('getOrderIngredientsUsage')) {
 
             $prod_name   = trim($m[1]);
             $qty_ordered = intval($m[2]);
-            // $m[3] holds the size label (e.g. "Regular") — recipes are
-            // defined per-product (not per-size) in product_ingredients,
-            // so it isn't needed for the lookup, only kept for clarity.
+            $size_name   = trim($m[3]);
 
             if ($prod_name === '' || $qty_ordered <= 0) {
                 continue;
@@ -70,12 +68,18 @@ if (!function_exists('getOrderIngredientsUsage')) {
                 "SELECT i.ingredient_name, i.unit, i.category, pi.quantity_used
                  FROM `product_ingredients` pi
                  JOIN `inventory` i ON pi.ingredient_id = i.id
-                 WHERE pi.product_id = ?"
+                 WHERE pi.product_id = ?
+                 UNION ALL
+                 SELECT i.ingredient_name, i.unit, i.category, psi.quantity_used
+                 FROM `product_size_ingredients` psi
+                 JOIN `product_sizes` ps ON psi.product_size_id = ps.id
+                 JOIN `inventory` i ON psi.ingredient_id = i.id
+                 WHERE ps.product_id = ? AND ps.size = ?"
             );
             if (!$ing_stmt) {
                 continue;
             }
-            $ing_stmt->bind_param("i", $product_id);
+            $ing_stmt->bind_param("iis", $product_id, $product_id, $size_name);
             $ing_stmt->execute();
             $ing_result = $ing_stmt->get_result();
 
