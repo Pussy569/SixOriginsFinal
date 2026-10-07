@@ -118,17 +118,29 @@ if (!function_exists('getUserIP')) {
 
 if (!function_exists('logSecurityEvent')) {
     function logSecurityEvent($event_type, $details = []) {
-        $log_file = __DIR__ . '/logs/security.log';
-        if (!is_dir(__DIR__ . '/logs')) {
-            mkdir(__DIR__ . '/logs', 0755, true);
-        }
+        $log_directory = dirname(__DIR__, 2) . '/logs';
+        $log_file = $log_directory . '/security.log';
         $log_entry = [
             'timestamp' => date('Y-m-d H:i:s'),
             'event_type' => $event_type,
             'ip_address' => getUserIP(),
             'details' => $details
         ];
-        file_put_contents($log_file, json_encode($log_entry) . PHP_EOL, FILE_APPEND);
+        $encoded_entry = json_encode($log_entry, JSON_INVALID_UTF8_SUBSTITUTE);
+
+        if ($encoded_entry === false) {
+            error_log('Security event could not be encoded: ' . (string)$event_type);
+            return;
+        }
+
+        if (!is_dir($log_directory) && !@mkdir($log_directory, 0755, true) && !is_dir($log_directory)) {
+            error_log('Security event log directory is unavailable; event=' . $encoded_entry);
+            return;
+        }
+
+        if (@file_put_contents($log_file, $encoded_entry . PHP_EOL, FILE_APPEND | LOCK_EX) === false) {
+            error_log('Security event could not be written to ' . $log_file . '; event=' . $encoded_entry);
+        }
     }
 }
 

@@ -36,6 +36,9 @@ link_persistent_dir() {
 }
 
 mkdir -p /data/sessions /data/topup_proofs
+mkdir -p /var/www/html/logs
+chown -R www-data:www-data /var/www/html/logs
+chmod 750 /var/www/html/logs
 link_persistent_dir /var/www/html/images/user_uploads /data/user_uploads
 link_persistent_dir /var/www/html/images/admin_uploads /data/admin_uploads
 link_persistent_dir /var/www/html/uploads /data/verification_uploads

@@ -18,7 +18,7 @@ The database connection uses `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`.
 
 On first initialization of an empty Docker database volume, Compose imports the single local SQL file, `database/database.sql`, which contains the schema, audit triggers, and the existing Head Admin account. This file is ignored by Git because it contains the private admin email and password hash. Keep it in your local project folder and never commit or publish it; restore it from a secure backup before initializing Compose from a fresh checkout. To apply schema changes to an existing database, use an explicit reviewed migration; the container init script does not rerun for an existing volume. The ignored root-level `shop_db.sql` and `finalshopdatabase.sql` are local dumps and are not used by Compose or production.
 
-Docker persists sessions, private top-up proofs, private verification documents, and profile/product uploads under `/data`. The entrypoint links the public image folders to the durable volume while leaving bundled images untouched. `docker compose down` stops and removes the containers but keeps the data. `docker compose down -v` also deletes the volumes and all stored application/database data.
+Docker persists sessions, private top-up proofs, private verification documents, and profile/product uploads under `/data`. The entrypoint links the public image folders to the durable volume while leaving bundled images untouched. Security events are written to `logs/security.log` in the separate `app_logs` volume. `docker compose down` stops and removes the containers but keeps the data. `docker compose down -v` also deletes the volumes and all stored application/database data.
 
 The old `auto_tasks.php` endpoint and the unused waste-management feature have been removed. Preparing-order transitions and expiry automation are not run automatically; use the admin order workflows for order status changes.
 
@@ -43,6 +43,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 ```
 
 Enter the password at the prompt. Fresh databases should be initialized from the current `database/schema.sql` instead of running this migration.
+
+Existing databases should also apply `database/migrations/20261007_cart_size_length.sql` to allow the cart to store the full product option labels supported by `product_sizes`. Back up the database first, then run:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261007_cart_size_length.sql
+```
+
+Enter the password at the prompt. Fresh databases initialized from the current `database/schema.sql` already have the matching cart column size.
 
 To inspect container output, run `docker compose logs -f web db`.
 
