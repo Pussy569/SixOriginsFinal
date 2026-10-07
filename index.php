@@ -1404,7 +1404,7 @@ img, video { max-width: 100%; }
    </section>
 
    <div class="cta-row">
-      <a href="Item.php">Coffee</a>
+      <a href="Item.php">Coffeee</a>
       <a href="Item.php">Drinks</a>
       <a href="Item.php">Sweets</a>
    </div>
