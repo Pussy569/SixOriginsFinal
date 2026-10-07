@@ -825,9 +825,25 @@ if (isset($_POST['submit'])) {
             <?php
             if(isset($_SESSION['message'])){
                $raw = $_SESSION['message'];
-               $msg = htmlspecialchars($raw);
-               $isError = stripos($raw, 'incorrect') !== false || stripos($raw, 'please') !== false || stripos($raw, 'pending') !== false;
-               $isLocked = stripos($raw, 'locked') !== false || stripos($raw, 'try again') !== false;
+               $messageType = '';
+               if (is_array($raw)) {
+                  $messageType = strtolower(is_string($raw['type'] ?? null) ? $raw['type'] : '');
+                  $rawText = $raw['text'] ?? $raw['message'] ?? '';
+                  $raw = is_scalar($rawText) ? (string)$rawText : '';
+               } elseif (is_scalar($raw)) {
+                  $raw = (string)$raw;
+               } else {
+                  $raw = '';
+               }
+               $msg = htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+               $lowerMessage = strtolower($raw);
+               $isError = in_array($messageType, ['error', 'danger'], true)
+                  || stripos($lowerMessage, 'incorrect') !== false
+                  || stripos($lowerMessage, 'please') !== false
+                  || stripos($lowerMessage, 'pending') !== false;
+               $isLocked = in_array($messageType, ['warning', 'locked'], true)
+                  || stripos($lowerMessage, 'locked') !== false
+                  || stripos($lowerMessage, 'try again') !== false;
                $cls = $isLocked ? 'message warning' : ($isError ? 'message error' : 'message success');
                $icon = $isLocked ? 'fa-lock' : ($isError ? 'fa-circle-exclamation' : 'fa-check-circle');
                echo '<div class="'. $cls .'"><i class="fa-solid ' . $icon . '"></i><div>'.$msg.'</div></div>';
@@ -902,6 +918,7 @@ if (isset($_POST['submit'])) {
       const loadingScreen = document.getElementById('loadingScreen');
       const loaderMsg = document.getElementById('loaderMsg');
       const loadStart = Date.now();
+      let isSubmittingLogin = false;
 
       function hideLoading() {
          loadingScreen.classList.add('hidden');
@@ -915,12 +932,19 @@ if (isset($_POST['submit'])) {
       // Hide the page-load screen once everything is ready (shown at least ~0.9s so it doesn't flash)
       window.addEventListener('load', () => {
          const wait = Math.max(0, 900 - (Date.now() - loadStart));
-         setTimeout(hideLoading, wait);
+         setTimeout(() => {
+            if (!isSubmittingLogin) hideLoading();
+         }, wait);
       });
-      // Safety net: never leave the loader stuck if an asset is slow
-      setTimeout(hideLoading, 6000);
-      // Back/forward button (cached page) - make sure the loader is gone
-      window.addEventListener('pageshow', (e) => { if (e.persisted) hideLoading(); });
+      // Only guard the initial page-load screen; keep the sign-in overlay visible
+      // while the authentication request is being processed.
+      setTimeout(() => {
+         if (!isSubmittingLogin) hideLoading();
+      }, 6000);
+      window.addEventListener('pageshow', () => {
+         isSubmittingLogin = false;
+         hideLoading();
+      });
 
       // Guide overlay
       document.getElementById('guideBtn').addEventListener('click', () => {
@@ -958,14 +982,21 @@ if (isset($_POST['submit'])) {
       // Form validation (+ loading screen once validation passes)
       document.getElementById('loginForm').addEventListener('submit', function(e) {
          const email = document.getElementById('email').value.trim();
+         const password = document.getElementById('password').value;
          if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
             document.getElementById('emailError').style.display = 'flex';
             e.preventDefault();
             return false;
          }
+         if (!password) {
+            e.preventDefault();
+            document.getElementById('password').focus();
+            return false;
+         }
          document.getElementById('emailError').style.display = 'none';
 
          // Do NOT disable the submit button here - PHP checks $_POST['submit']
+         isSubmittingLogin = true;
          showLoading('Signing you in');
       });
 

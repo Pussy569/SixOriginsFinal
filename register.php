@@ -1184,8 +1184,24 @@ if(isset($_POST['submit'])){
             <?php
             if(isset($_SESSION['message'])){
                $raw = $_SESSION['message'];
-               $msg = htmlspecialchars($raw);
-               $isError = stripos($raw, 'not match') !== false || stripos($raw, 'already') !== false || stripos($raw, 'required') !== false || stripos($raw, 'failed') !== false || stripos($raw, 'please') !== false;
+               $messageType = '';
+               if (is_array($raw)) {
+                  $messageType = strtolower(is_string($raw['type'] ?? null) ? $raw['type'] : '');
+                  $rawText = $raw['text'] ?? $raw['message'] ?? '';
+                  $raw = is_scalar($rawText) ? (string)$rawText : '';
+               } elseif (is_scalar($raw)) {
+                  $raw = (string)$raw;
+               } else {
+                  $raw = '';
+               }
+               $msg = htmlspecialchars($raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+               $lowerMessage = strtolower($raw);
+               $isError = in_array($messageType, ['error', 'danger'], true)
+                  || stripos($lowerMessage, 'not match') !== false
+                  || stripos($lowerMessage, 'already') !== false
+                  || stripos($lowerMessage, 'required') !== false
+                  || stripos($lowerMessage, 'failed') !== false
+                  || stripos($lowerMessage, 'please') !== false;
                $cls = $isError ? 'message error' : 'message success';
                $icon = $isError ? 'fa-circle-exclamation' : 'fa-check-circle';
                echo '<div class="'. $cls .'"><i class="fa-solid ' . $icon . '"></i><div>'.$msg.'</div></div>';
