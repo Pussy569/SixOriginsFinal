@@ -82,6 +82,14 @@ function write_admin_activity($admin_id, $action, $description = '', $result = '
 
 function is_head_admin(): bool
 {
+    $configured_email = getenv('HEAD_ADMIN_EMAIL');
+    $head_admin_email = is_string($configured_email) && $configured_email !== ''
+        ? $configured_email
+        : 'shammahpanot@gmail.com';
+    if (isset($_SESSION['admin_email']) && is_string($_SESSION['admin_email'])) {
+        return hash_equals(strtolower($head_admin_email), strtolower($_SESSION['admin_email']));
+    }
+
     $configured_id = getenv('HEAD_ADMIN_ID');
     if ($configured_id === false || $configured_id === '') {
         $head_admin_id = 1;

@@ -18,6 +18,7 @@ services:
       TOPUP_PROOF_DIR: /data/topup_proofs
       VERIFICATION_UPLOAD_DIR: /data/verification_uploads
       HEAD_ADMIN_ID: ${HEAD_ADMIN_ID:-1}
+      HEAD_ADMIN_EMAIL: ${HEAD_ADMIN_EMAIL:-shammahpanot@gmail.com}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Six Origins}

@@ -396,11 +396,6 @@ html { -webkit-text-size-adjust: 100%; }
             <a href="admin_chatbot_kb.php" class="nav-link <?php echo $current_page === 'admin_chatbot_kb.php' ? 'active' : ''; ?>">
                 <i class="fa-solid fa-robot"></i> User Chatbot
             </a>
-            <?php if ($show_admin_activity): ?>
-                <a href="admin_activity.php" class="nav-link <?php echo $current_page === 'admin_activity.php' ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-clipboard-list"></i> Overseeing Admin Activity
-                </a>
-            <?php endif; ?>
         </nav>
         <!-- Header Actions -->
         <div class="admin-header-actions" role="group" aria-label="Header actions">
@@ -480,6 +475,11 @@ html { -webkit-text-size-adjust: 100%; }
                         <a href="admin_inventory.php" class="icon-btn <?php echo $current_page === 'admin_inventory.php' ? 'active' : ''; ?>">
                             <i class="fa-solid fa-boxes"></i> Inventory Management
                         </a>
+                        <?php if ($show_admin_activity): ?>
+                            <a href="admin_activity.php" class="icon-btn <?php echo $current_page === 'admin_activity.php' ? 'active' : ''; ?>">
+                                <i class="fa-solid fa-clipboard-list"></i> Overseeing Admin Activity
+                            </a>
+                        <?php endif; ?>
                         <a href="logout.php" class="icon-btn">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
