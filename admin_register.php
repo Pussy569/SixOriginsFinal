@@ -29,13 +29,13 @@ if(isset($_POST['submit'])){
    // Verify Custom CAPTCHA
    if($captcha_verified !== 'true'){
       $_SESSION['message'] = 'Please complete the CAPTCHA verification!';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
    if($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($pass) < 8){
       $_SESSION['message'] = 'Please fill in all fields correctly (password must be 8+ characters).';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
@@ -49,20 +49,20 @@ if(isset($_POST['submit'])){
 
    if($exists){
       $_SESSION['message'] = 'Email already registered!';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
    if($pass !== $cpass){
       $_SESSION['message'] = 'Passwords do not match!';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
    // Verification document is REQUIRED for admin accounts
    if(!isset($_FILES['verification_image']) || $_FILES['verification_image']['error'] !== UPLOAD_ERR_OK){
       $_SESSION['message'] = 'Verification document required for Admin accounts!';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
@@ -74,7 +74,7 @@ if(isset($_POST['submit'])){
 
    if(!in_array($ext, $allowed_ext, true) || ($mime !== '' && !in_array($mime, $allowed_mime, true)) || $file['size'] > 5 * 1024 * 1024){
       $_SESSION['message'] = 'Verification upload failed: use a JPG or PNG image up to 5MB.';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
@@ -83,7 +83,7 @@ if(isset($_POST['submit'])){
    if(!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)){
       error_log('Could not create admin registration upload directory.');
       $_SESSION['message'] = 'Verification image could not be saved. Please try again.';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
@@ -91,7 +91,7 @@ if(isset($_POST['submit'])){
    $verify_path = $upload_dir . DIRECTORY_SEPARATOR . $verify_img;
    if(!move_uploaded_file($file['tmp_name'], $verify_path)){
       $_SESSION['message'] = 'Failed to upload verification image!';
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 
@@ -110,7 +110,7 @@ if(isset($_POST['submit'])){
       mysqli_stmt_close($ins);
       @unlink($verify_path);
       $_SESSION['message'] = 'Registration failed: ' . $err;
-      header('location:register_admin.php');
+      header('Location: admin_register.php');
       exit();
    }
 }
@@ -1367,7 +1367,7 @@ if(isset($_POST['submit'])){
             }
             ?>
 
-            <form method="post" enctype="multipart/form-data" id="registerForm" novalidate>
+            <form action="admin_register.php" method="post" enctype="multipart/form-data" id="registerForm" novalidate>
                <div class="field">
                   <label for="name"><i class="fas fa-user"></i> Full Name</label>
                   <div class="control">
