@@ -16,6 +16,7 @@ services:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-false}
       TOPUP_PROOF_DIR: /data/topup_proofs
+      VERIFICATION_UPLOAD_DIR: /data/verification_uploads
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Six Origins}

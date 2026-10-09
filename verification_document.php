@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/helpers/verification_uploads.php';
 
 if (empty($_SESSION['admin_id'])) {
     http_response_code(403);
@@ -34,8 +35,8 @@ if (!$found || !is_string($document_name) || !preg_match('/\A[A-Za-z0-9][A-Za-z0
     exit('Not found');
 }
 
-$uploads_root = realpath(__DIR__ . '/uploads');
-$document_path = realpath(__DIR__ . '/uploads/' . $document_name);
+$uploads_root = realpath(verificationUploadDirectory());
+$document_path = realpath(verificationUploadDirectory() . DIRECTORY_SEPARATOR . $document_name);
 if ($uploads_root === false || $document_path === false || !str_starts_with($document_path, $uploads_root . DIRECTORY_SEPARATOR) || !is_readable($document_path)) {
     http_response_code(404);
     exit('Not found');

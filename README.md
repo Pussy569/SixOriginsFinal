@@ -89,7 +89,7 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/schem
 
 Enter the database password at the prompt. Add an administrator through your trusted, private provisioning process; do not use or publish the private seed from `database/database.sql`.
 
-Configure `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `APP_BASE_URL`, `APP_ENV=production`, `APP_DEBUG=false`, and `TOPUP_PROOF_DIR=/data/topup_proofs` in Railway. `.env.example` documents local Compose settings and optional integrations (`OLLAMA_URL`, Resend (`RESEND_API_KEY` and `MAIL_FROM_*`), and `TEXTBEE_*`); do not use its local database passwords for Railway. Attach a persistent Railway Volume at `/data`.
+Configure `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `APP_BASE_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `TOPUP_PROOF_DIR=/data/topup_proofs`, and `VERIFICATION_UPLOAD_DIR=/data/verification_uploads` in Railway. `.env.example` documents local Compose settings and optional integrations (`OLLAMA_URL`, Resend (`RESEND_API_KEY` and `MAIL_FROM_*`), and `TEXTBEE_*`); do not use its local database passwords for Railway. Attach a persistent Railway Volume at `/data`.
 
 Set `TOPUP_PROOF_DIR=/data/topup_proofs` and attach a persistent Railway Volume at `/data`. The entrypoint keeps sessions at `/data/sessions`, proofs at `/data/topup_proofs`, verification documents at `/data/verification_uploads`, and public user-uploaded images at `/data/user_uploads` and `/data/admin_uploads`. Copy existing uploads and proofs into those paths before switching traffic. Top-up proofs and verification documents are served only to signed-in admins.
 

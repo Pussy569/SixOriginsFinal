@@ -14,6 +14,7 @@
 
 session_start();
 include 'config.php';
+require_once __DIR__ . '/app/helpers/verification_uploads.php';
 
 if(isset($_POST['submit'])){
    $name  = trim($_POST['name'] ?? '');
@@ -78,10 +79,8 @@ if(isset($_POST['submit'])){
       exit();
    }
 
-   // Ensure the uploads folder exists, including when another request creates it concurrently.
-   $upload_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
-   if(!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)){
-      error_log('Could not create admin registration upload directory.');
+   $upload_dir = ensureVerificationUploadDirectory();
+   if($upload_dir === null){
       $_SESSION['message'] = 'Verification image could not be saved. Please try again.';
       header('Location: admin_register.php');
       exit();
@@ -90,6 +89,7 @@ if(isset($_POST['submit'])){
    $verify_img = uniqid('verify_') . '.' . $ext;
    $verify_path = $upload_dir . DIRECTORY_SEPARATOR . $verify_img;
    if(!move_uploaded_file($file['tmp_name'], $verify_path)){
+      error_log('Could not move admin verification upload into: ' . $verify_path);
       $_SESSION['message'] = 'Failed to upload verification image!';
       header('Location: admin_register.php');
       exit();

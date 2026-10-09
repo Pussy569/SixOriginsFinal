@@ -1,6 +1,7 @@
 <?php
 include 'config.php';
 require_once 'mail_helper.php';
+require_once __DIR__ . '/app/helpers/verification_uploads.php';
 
 $admin_id = $_SESSION['admin_id'] ?? null;
 
@@ -68,7 +69,7 @@ if (isset($_GET['reject_user'])) {
    if ($res && mysqli_num_rows($res) == 1) {
        $user = mysqli_fetch_assoc($res);
        if (!empty($user['verification_image'])) {
-           $file = 'uploads/' . $user['verification_image'];
+           $file = verificationUploadDirectory() . DIRECTORY_SEPARATOR . $user['verification_image'];
            if (file_exists($file)) {
                unlink($file);
            }
@@ -102,7 +103,7 @@ if (isset($_GET['reject_verification'])) {
        $user = mysqli_fetch_assoc($res);
        if (in_array($user['user_type'], ['Senior', 'PWD'])) {
            if (!empty($user['verification_image'])) {
-               $file = 'uploads/' . $user['verification_image'];
+               $file = verificationUploadDirectory() . DIRECTORY_SEPARATOR . $user['verification_image'];
                if (file_exists($file)) {
                    unlink($file);
                }
