@@ -78,13 +78,18 @@ if(isset($_POST['submit'])){
       exit();
    }
 
-   // Ensure uploads folder exists
-   if(!is_dir('uploads')){
-      mkdir('uploads', 0755, true);
+   // Ensure the uploads folder exists, including when another request creates it concurrently.
+   $upload_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
+   if(!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)){
+      error_log('Could not create admin registration upload directory.');
+      $_SESSION['message'] = 'Verification image could not be saved. Please try again.';
+      header('location:register_admin.php');
+      exit();
    }
 
    $verify_img = uniqid('verify_') . '.' . $ext;
-   if(!move_uploaded_file($file['tmp_name'], 'uploads/' . $verify_img)){
+   $verify_path = $upload_dir . DIRECTORY_SEPARATOR . $verify_img;
+   if(!move_uploaded_file($file['tmp_name'], $verify_path)){
       $_SESSION['message'] = 'Failed to upload verification image!';
       header('location:register_admin.php');
       exit();
@@ -103,7 +108,7 @@ if(isset($_POST['submit'])){
    } else {
       $err = mysqli_stmt_error($ins);
       mysqli_stmt_close($ins);
-      @unlink('uploads/' . $verify_img);
+      @unlink($verify_path);
       $_SESSION['message'] = 'Registration failed: ' . $err;
       header('location:register_admin.php');
       exit();
