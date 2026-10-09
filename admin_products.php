@@ -191,9 +191,6 @@ if (isset($_POST['add_product'])) {
         $product_id = $stmt->insert_id;
         $stmt->close();
 
-        // LOG THE ACTIVITY
-        log_admin_activity($admin_id, 'Add Product', 'Added new product: ' . $name);
-
         // Move uploaded file
         if (!move_uploaded_file($file_tmp, $image_path)) {
             // Rollback: Delete the inserted product
@@ -217,6 +214,7 @@ if (isset($_POST['add_product'])) {
         }
         $size_stmt->close();
 
+        log_admin_activity($admin_id, 'Add Product', 'Added new product: ' . $name, 'success', 'product', $product_id, null, ['name' => $name, 'price' => $price]);
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($name) . '" added successfully! You can now add Preferences and Extras from its card. 🎉'];
 
     } catch (Exception $e) {
@@ -247,12 +245,15 @@ if (isset($_POST['update_stock'])) {
         }
 
         // Get product and size info for message
-        $info_stmt = $conn->prepare("SELECT ps.size, p.name FROM `product_sizes` ps JOIN products p ON ps.product_id = p.id WHERE ps.id = ?");
+        $info_stmt = $conn->prepare("SELECT ps.size, ps.stock, p.name FROM `product_sizes` ps JOIN products p ON ps.product_id = p.id WHERE ps.id = ?");
         $info_stmt->bind_param("i", $size_id);
         $info_stmt->execute();
         $info_result = $info_stmt->get_result();
         $info_row = $info_result->fetch_assoc();
         $info_stmt->close();
+        if (!$info_row) {
+            throw new Exception('Product size not found');
+        }
 
         // Update stock by ID
         $stmt = $conn->prepare("UPDATE `product_sizes` SET stock = ? WHERE id = ?");
@@ -266,6 +267,7 @@ if (isset($_POST['update_stock'])) {
         }
         $stmt->close();
 
+        log_admin_activity($admin_id, 'Update Product Stock', 'Updated stock for ' . ($info_row['name'] ?? 'Product') . ' (' . ($info_row['size'] ?? '') . ')', 'success', 'product size', $size_id, ['stock' => (int)($info_row['stock'] ?? 0)], ['stock' => $new_stock]);
         $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($info_row['name'] ?? 'Product') . ' (' . htmlspecialchars($info_row['size'] ?? '') . ') stock updated to ' . $new_stock . ' units! 📦'];
 
     } catch (Exception $e) {
@@ -388,7 +390,7 @@ if (isset($_GET['delete'])) {
         $stmt->bind_param("i", $delete_id);
         if ($stmt->execute()) {
             // LOG THE ACTIVITY
-            log_admin_activity($admin_id, 'Delete Product', 'Deleted product: ' . $product_name);
+            log_admin_activity($admin_id, 'Delete Product', 'Deleted product: ' . $product_name, 'success', 'product', $delete_id, ['name' => $product_name], null);
 
             $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($product_name) . '" deleted successfully with all related carts/orders cancelled and refunds processed! 🗑️'];
         } else {
@@ -567,7 +569,15 @@ if (isset($_POST['update_product'])) {
         $update_transaction_started = false;
 
         // LOG THE ACTIVITY
-        log_admin_activity($admin_id, 'Update Product', 'Updated product: ' . $update_name);
+        log_admin_activity($admin_id, 'Update Product', 'Updated product: ' . $update_name, 'success', 'product', $update_p_id, [
+            'name' => $previous_product['name'],
+            'price' => $previous_product['price'],
+            'details' => $previous_product['details'],
+        ], [
+            'name' => $update_name,
+            'price' => $update_price,
+            'details' => $update_details,
+        ]);
 
         // Handle image upload if provided
         if (isset($_FILES['update_image']) && $_FILES['update_image']['error'] === UPLOAD_ERR_OK) {

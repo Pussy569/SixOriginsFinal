@@ -12,6 +12,7 @@ include 'send_receipt_email.php';
 include 'send_sms_notification.php';
 include 'inventory_functions.php';
 include 'order_ingredients_helper.php'; // computes ingredients/packaging used per order
+include_once 'admin_log_activity.php';
 
 // Small helper: turn the newline-separated "Item: note" blob saved by
 // cart.php into a clean array of lines, filtering out empties.
@@ -89,9 +90,9 @@ function notifyOrderStatusByEmail(array $orderInfo, string $status): bool {
 
 // ==================== MARK ORDER AS "DONE PREPARING" (ADMIN QUICK ACTION) ====================
 if (isset($_POST['mark_done_now'])) {
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $previous_status = null;
     try {
-        $order_id = intval($_POST['order_id'] ?? 0);
-
         if ($order_id <= 0) {
             throw new Exception('Invalid order ID');
         }
@@ -123,6 +124,7 @@ if (isset($_POST['mark_done_now'])) {
             throw new Exception('Failed to update order');
         }
         $update_stmt->close();
+        log_admin_activity((int)$admin_id, 'Update Order Status', 'Marked order as done preparing.', 'success', 'order', $order_id, ['payment_status' => $order['payment_status']], ['payment_status' => 'done preparing']);
 
         $email_sent = notifyOrderStatusByEmail($order, 'done preparing');
         $_SESSION['message'] = [
@@ -133,6 +135,7 @@ if (isset($_POST['mark_done_now'])) {
         ];
 
     } catch (Exception $e) {
+        log_admin_activity((int)$admin_id, 'Update Order Status', 'Could not mark order as done preparing: ' . $e->getMessage(), 'failure', 'order', $order_id > 0 ? $order_id : null, isset($order['payment_status']) ? ['payment_status' => $order['payment_status']] : null, null);
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
@@ -148,18 +151,31 @@ if (isset($_POST['update_order'])) {
 
     if ($order_update_id <= 0) {
         $message[] = 'Invalid order.';
+        log_admin_activity((int)$admin_id, 'Update Order Status', 'Invalid order id submitted for status update.', 'failure', 'order');
     } elseif ($submitted_status === '' ) {
         $message[] = 'Please select a payment status before updating.';
+        log_admin_activity((int)$admin_id, 'Update Order Status', 'No order status was selected.', 'failure', 'order', $order_update_id);
     } elseif (!in_array($submitted_status_lower, $allowed_order_statuses, true)) {
         // ✅ Reject anything outside the known status list instead of writing it straight to the DB
         $message[] = 'Invalid status selected.';
+        log_admin_activity((int)$admin_id, 'Update Order Status', 'Invalid order status submitted.', 'failure', 'order', $order_update_id, null, ['payment_status' => $submitted_status]);
     } else {
         $new_status = $submitted_status_lower;
+        $previous_stmt = $conn->prepare('SELECT payment_status FROM orders WHERE id = ? LIMIT 1');
+        $previous_stmt->bind_param('i', $order_update_id);
+        $previous_stmt->execute();
+        $previous_stmt->bind_result($previous_status);
+        $previous_found = $previous_stmt->fetch();
+        $previous_stmt->close();
+        if (!$previous_found) {
+            $message[] = 'Order not found.';
+            $previous_status = null;
+        }
 
         // ==================== INVENTORY DEDUCTION LOGIC ====================
         // Inventory is now deducted only when the order is marked COMPLETED,
         // not when it enters "preparing" anymore.
-        if ($new_status === 'completed') {
+        if ($previous_found && $new_status === 'completed') {
             $deduct_result = deductInventoryForOrder($conn, $order_update_id, $admin_id);
             if (!$deduct_result['success']) {
                 $message[] = '⚠️ Warning: ' . htmlspecialchars($deduct_result['message']);
@@ -169,14 +185,20 @@ if (isset($_POST['update_order'])) {
         }
         // ==================== END INVENTORY DEDUCTION ====================
 
-        $update_stmt = $conn->prepare("UPDATE `orders` SET payment_status = ?, prepared_at = NOW() WHERE id = ?");
-        $update_stmt->bind_param("si", $new_status, $order_update_id);
-        $update_ok = $update_stmt->execute();
-        $update_stmt->close();
+        if ($previous_found) {
+            $update_stmt = $conn->prepare("UPDATE `orders` SET payment_status = ?, prepared_at = NOW() WHERE id = ?");
+            $update_stmt->bind_param("si", $new_status, $order_update_id);
+            $update_ok = $update_stmt->execute();
+            $update_stmt->close();
+        } else {
+            $update_ok = false;
+        }
 
         if (!$update_ok) {
             $message[] = 'Failed to update order.';
+            log_admin_activity((int)$admin_id, 'Update Order Status', 'Failed to change order status.', 'failure', 'order', $order_update_id, $previous_status !== null ? ['payment_status' => $previous_status] : null, ['payment_status' => $new_status]);
         } else {
+            log_admin_activity((int)$admin_id, 'Update Order Status', 'Changed order status.', 'success', 'order', $order_update_id, ['payment_status' => $previous_status], ['payment_status' => $new_status]);
             $info_stmt = $conn->prepare("SELECT * FROM `orders` WHERE id = ?");
             $info_stmt->bind_param("i", $order_update_id);
             $info_stmt->execute();
@@ -235,12 +257,20 @@ if (isset($_GET['delete'])) {
     $delete_id = intval($_GET['delete']);
 
     if ($delete_id > 0) {
+        $record_stmt = $conn->prepare('SELECT payment_status FROM orders WHERE id = ? LIMIT 1');
+        $record_stmt->bind_param('i', $delete_id);
+        $record_stmt->execute();
+        $record_stmt->bind_result($deleted_status);
+        $record_found = $record_stmt->fetch();
+        $record_stmt->close();
         $delete_stmt = $conn->prepare("DELETE FROM `orders` WHERE id = ?");
         $delete_stmt->bind_param("i", $delete_id);
-        if (!$delete_stmt->execute()) {
+        $delete_ok = $delete_stmt->execute();
+        if (!$delete_ok) {
             $_SESSION['message'] = ['type' => 'error', 'text' => 'Failed to delete order.'];
         }
         $delete_stmt->close();
+        log_admin_activity((int)$admin_id, 'Delete Order', $delete_ok ? 'Deleted order #' . $delete_id : 'Failed to delete order #' . $delete_id, $delete_ok ? 'success' : 'failure', 'order', $delete_id, $record_found ? ['payment_status' => $deleted_status] : null, null);
     }
 
     header('location:admin_orders.php');
@@ -289,6 +319,7 @@ if (isset($_GET['cancel_order'])) {
                 $cancel_stmt->close();
 
                 if ($cancel_update) {
+                    log_admin_activity((int)$admin_id, 'Cancel Order', 'Cancelled order #' . $order_id, 'success', 'order', $order_id, ['payment_status' => $current_status], ['payment_status' => 'cancelled']);
                     $email_sent = notifyOrderStatusByEmail($order, 'cancelled');
                     $message[] = $email_sent
                         ? '✅ Customer notified of the cancellation by email.'
@@ -325,6 +356,7 @@ if (isset($_GET['cancel_order'])) {
                         $message[] = '✅ Order cancelled successfully! (No refund - Cash on Delivery)';
                     }
                 } else {
+                    log_admin_activity((int)$admin_id, 'Cancel Order', 'Failed to cancel order #' . $order_id, 'failure', 'order', $order_id, ['payment_status' => $current_status], ['payment_status' => 'cancelled']);
                     $message[] = 'Failed to cancel order';
                 }
             }

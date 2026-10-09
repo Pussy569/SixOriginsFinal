@@ -31,12 +31,14 @@ if (isset($_POST['add_ingredient'])) {
         if (!$insert_stmt->execute()) {
             throw new Exception("Failed to add ingredient");
         }
+        $ingredient_id = $insert_stmt->insert_id;
         $insert_stmt->close();
 
-        log_admin_activity($admin_id, 'Add Ingredient', "Added new ingredient: $ingredient_name");
+        log_admin_activity($admin_id, 'Add Ingredient', "Added new ingredient: $ingredient_name", 'success', 'ingredient', $ingredient_id, null, ['name' => $ingredient_name, 'quantity' => $quantity, 'unit' => $unit]);
         $_SESSION['message'] = ['type' => 'success', 'text' => "$ingredient_name added successfully!"];
 
     } catch (Exception $e) {
+        log_admin_activity((int)$admin_id, 'Add Ingredient', 'Failed to add ingredient: ' . $e->getMessage(), 'failure', 'ingredient');
         $_SESSION['message'] = ['type' => 'error', 'text' => $e->getMessage()];
     }
 
@@ -55,11 +57,14 @@ if (isset($_POST['update_inventory'])) {
             throw new Exception('Invalid ingredient selected');
         }
 
-        $info_stmt = $conn->prepare("SELECT ingredient_name FROM inventory WHERE id = ?");
+        $info_stmt = $conn->prepare("SELECT ingredient_name, quantity, min_stock_level FROM inventory WHERE id = ?");
         $info_stmt->bind_param("i", $ingredient_id);
         $info_stmt->execute();
         $info_result = $info_stmt->get_result();
         $info_row = $info_result->fetch_assoc();
+        if (!$info_row) {
+            throw new Exception('Ingredient not found');
+        }
         $ingredient_name = $info_row['ingredient_name'] ?? 'Unknown';
         $info_stmt->close();
 
@@ -71,10 +76,11 @@ if (isset($_POST['update_inventory'])) {
         }
         $update_stmt->close();
 
-        log_admin_activity($admin_id, 'Update Inventory', "Updated $ingredient_name: qty=$new_quantity");
+        log_admin_activity($admin_id, 'Update Inventory', "Updated $ingredient_name: qty=$new_quantity", 'success', 'ingredient', $ingredient_id, ['quantity' => $info_row['quantity'], 'min_stock_level' => $info_row['min_stock_level']], ['quantity' => $new_quantity, 'min_stock_level' => $min_stock]);
         $_SESSION['message'] = ['type' => 'success', 'text' => "$ingredient_name updated successfully!"];
 
     } catch (Exception $e) {
+        log_admin_activity((int)$admin_id, 'Update Inventory', 'Failed to update inventory: ' . $e->getMessage(), 'failure', 'ingredient', isset($ingredient_id) ? $ingredient_id : null);
         $_SESSION['message'] = ['type' => 'error', 'text' => $e->getMessage()];
     }
 
@@ -86,6 +92,12 @@ if (isset($_POST['update_inventory'])) {
 if (isset($_GET['delete'])) {
     try {
         $ingredient_id = intval($_GET['delete']);
+        $record_stmt = $conn->prepare('SELECT ingredient_name, quantity, unit FROM inventory WHERE id = ? LIMIT 1');
+        $record_stmt->bind_param('i', $ingredient_id);
+        $record_stmt->execute();
+        $record_stmt->bind_result($deleted_ingredient_name, $deleted_quantity, $deleted_unit);
+        $record_found = $record_stmt->fetch();
+        $record_stmt->close();
         
         $delete_stmt = $conn->prepare("DELETE FROM inventory WHERE id = ?");
         $delete_stmt->bind_param("i", $ingredient_id);
@@ -95,9 +107,10 @@ if (isset($_GET['delete'])) {
         }
         $delete_stmt->close();
 
-        log_admin_activity($admin_id, 'Delete Ingredient', "Deleted ingredient ID: $ingredient_id");
+        log_admin_activity($admin_id, 'Delete Ingredient', "Deleted ingredient: " . ($deleted_ingredient_name ?? "ID $ingredient_id"), 'success', 'ingredient', $ingredient_id, $record_found ? ['name' => $deleted_ingredient_name, 'quantity' => $deleted_quantity, 'unit' => $deleted_unit] : null, null);
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Ingredient deleted successfully'];
     } catch (Exception $e) {
+        log_admin_activity((int)$admin_id, 'Delete Ingredient', 'Failed to delete ingredient: ' . $e->getMessage(), 'failure', 'ingredient', isset($ingredient_id) ? $ingredient_id : null);
         $_SESSION['message'] = ['type' => 'error', 'text' => $e->getMessage()];
     }
 

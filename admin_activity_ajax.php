@@ -1,17 +1,20 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
-// Auto-delete activities older than 24 hours
-mysqli_query($conn, "DELETE FROM admin_activity WHERE timestamp < DATE_SUB(NOW(), INTERVAL 24 HOUR)");
+if (empty($_SESSION['admin_id']) || !is_head_admin()) {
+    http_response_code(empty($_SESSION['admin_id']) ? 401 : 403);
+    exit('Forbidden');
+}
 
-// Get recent admin activities (last 24 hours)
+// Keep the notification preview recent without deleting the full audit history.
 $result = mysqli_query($conn, "
     SELECT 
         aa.id,
         aa.action,
         aa.description,
         aa.timestamp,
-        u.name as admin_name
+        COALESCE(NULLIF(aa.admin_name_snapshot, ''), u.name, 'Admin') as admin_name
     FROM admin_activity aa
     LEFT JOIN users u ON aa.admin_id = u.id
     WHERE aa.timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
@@ -19,8 +22,8 @@ $result = mysqli_query($conn, "
     LIMIT 8
 ");
 
-if(!$result || mysqli_num_rows($result) === 0) { 
-    echo '<div style="padding: 16px; color: #664C47; font-weight: 600; text-align: center; font-size: 0.9em;">No recent activity in the last 24 hours.</div>';
+if(!$result || mysqli_num_rows($result) === 0) {
+    echo '<div style="padding: 16px; color: #664C47; font-weight: 600; text-align: center; font-size: 0.9em;">No activity in the last 24 hours.</div>';
 } else {
     while($r = mysqli_fetch_assoc($result)){
         $timestamp = new DateTime($r['timestamp']);

@@ -2,6 +2,7 @@
 include 'config.php';
 require_once 'mail_helper.php';
 require_once __DIR__ . '/app/helpers/verification_uploads.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
 $admin_id = $_SESSION['admin_id'] ?? null;
 
@@ -29,6 +30,7 @@ function approve_and_notify($conn, $user_id, $allowed_types = null) {
    $was_approved = ($u['status'] === 'approved');
 
    mysqli_query($conn, "UPDATE `users` SET `status` = 'approved' WHERE id = $user_id") or die('query failed');
+   log_admin_activity((int)($_SESSION['admin_id'] ?? 0), 'Approve Account', 'Approved ' . $u['user_type'] . ' account: ' . $u['name'], 'success', $u['user_type'], $user_id, ['status' => $u['status']], ['status' => 'approved']);
 
    // Send the email only on a real status change (prevents duplicate emails)
    if (!$was_approved) {
@@ -45,6 +47,7 @@ function approve_and_notify($conn, $user_id, $allowed_types = null) {
 if (isset($_GET['unlock_account'])) {
    $user_id = intval($_GET['unlock_account']);
    $result = mysqli_query($conn, "UPDATE `users` SET `failed_attempts` = 0, `lockout_until` = NULL WHERE id = $user_id");
+   log_admin_activity((int)$admin_id, 'Unlock Account', $result ? 'Reset login lockout for account #' . $user_id : 'Could not reset login lockout for account #' . $user_id, $result ? 'success' : 'failure', 'user', $user_id);
    if ($result) {
       $_SESSION['unlock_message'] = '✅ Account unlocked successfully!';
    } else {
@@ -65,17 +68,23 @@ if (isset($_GET['approve_user'])) {
 // --- Reject any user (for Head Admin) ---
 if (isset($_GET['reject_user'])) {
    $user_id = intval($_GET['reject_user']);
-   $res = mysqli_query($conn, "SELECT verification_image FROM `users` WHERE id = '$user_id' LIMIT 1");
+   $res = mysqli_query($conn, "SELECT name, user_type, status, verification_image FROM `users` WHERE id = '$user_id' LIMIT 1");
+   $rejected_user = $res ? mysqli_fetch_assoc($res) : null;
    if ($res && mysqli_num_rows($res) == 1) {
-       $user = mysqli_fetch_assoc($res);
-       if (!empty($user['verification_image'])) {
-           $file = verificationUploadDirectory() . DIRECTORY_SEPARATOR . $user['verification_image'];
+       if (!empty($rejected_user['verification_image'])) {
+           $file = verificationUploadDirectory() . DIRECTORY_SEPARATOR . $rejected_user['verification_image'];
            if (file_exists($file)) {
                unlink($file);
            }
        }
    }
-   mysqli_query($conn, "UPDATE `users` SET `status` = 'rejected', verification_image = NULL WHERE id = '$user_id'") or die('query failed');
+   $rejection_ok = mysqli_query($conn, "UPDATE `users` SET `status` = 'rejected', verification_image = NULL WHERE id = '$user_id'");
+   if (!$rejection_ok) {
+      die('query failed');
+   }
+   if ($rejected_user) {
+      log_admin_activity((int)$admin_id, 'Reject Account', 'Rejected ' . $rejected_user['user_type'] . ' account: ' . $rejected_user['name'], 'success', $rejected_user['user_type'], $user_id, ['status' => $rejected_user['status']], ['status' => 'rejected']);
+   }
    header('location:admin_users.php');
    exit;
 }
@@ -83,7 +92,15 @@ if (isset($_GET['reject_user'])) {
 // Handle deleting user
 if (isset($_GET['delete'])) {
    $delete_id = intval($_GET['delete']);
-   mysqli_query($conn, "DELETE FROM `users` WHERE id = '$delete_id'") or die('query failed');
+   $deleted_user_result = mysqli_query($conn, "SELECT name, email, user_type, status FROM users WHERE id = '$delete_id' LIMIT 1");
+   $deleted_user = $deleted_user_result ? mysqli_fetch_assoc($deleted_user_result) : null;
+   $delete_ok = mysqli_query($conn, "DELETE FROM `users` WHERE id = '$delete_id'");
+   if (!$delete_ok) {
+      die('query failed');
+   }
+   if ($deleted_user) {
+      log_admin_activity((int)$admin_id, 'Delete Account', 'Deleted ' . $deleted_user['user_type'] . ' account: ' . $deleted_user['name'] . ' (' . $deleted_user['email'] . ')', 'success', $deleted_user['user_type'], $delete_id, ['status' => $deleted_user['status']], null);
+   }
    header('location:admin_users.php');
    exit;
 }
@@ -98,7 +115,7 @@ if (isset($_GET['approve_verification'])) {
 
 if (isset($_GET['reject_verification'])) {
    $user_id = intval($_GET['reject_verification']);
-   $res = mysqli_query($conn, "SELECT verification_image, user_type FROM `users` WHERE id = '$user_id' LIMIT 1");
+   $res = mysqli_query($conn, "SELECT name, verification_image, user_type, status FROM `users` WHERE id = '$user_id' LIMIT 1");
    if ($res && mysqli_num_rows($res) == 1) {
        $user = mysqli_fetch_assoc($res);
        if (in_array($user['user_type'], ['Senior', 'PWD'])) {
@@ -108,7 +125,11 @@ if (isset($_GET['reject_verification'])) {
                    unlink($file);
                }
            }
-           mysqli_query($conn, "UPDATE `users` SET `status` = 'rejected', verification_image = NULL WHERE id = '$user_id'") or die('query failed');
+           $reject_ok = mysqli_query($conn, "UPDATE `users` SET `status` = 'rejected', verification_image = NULL WHERE id = '$user_id'");
+           if (!$reject_ok) {
+               die('query failed');
+           }
+           log_admin_activity((int)$admin_id, 'Reject Verification', 'Rejected verification for ' . $user['user_type'] . ' account: ' . $user['name'], 'success', $user['user_type'], $user_id, ['status' => $user['status']], ['status' => 'rejected']);
        }
    }
    header('location:admin_users.php');

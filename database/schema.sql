@@ -5,7 +5,14 @@ CREATE TABLE `admin_activity` (`id` int NOT NULL,
   `action` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `timestamp` datetime DEFAULT current_timestamp(),
-  `ip_address` varchar(45) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `ip_address` varchar(45) DEFAULT NULL,
+  `result` varchar(20) NOT NULL DEFAULT 'success',
+  `record_type` varchar(80) DEFAULT NULL,
+  `record_id` int DEFAULT NULL,
+  `before_values` text DEFAULT NULL,
+  `after_values` text DEFAULT NULL,
+  `admin_name_snapshot` varchar(100) DEFAULT NULL,
+  `admin_email_snapshot` varchar(100) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `audit_log` (`id` int NOT NULL,
   `action_performed` varchar(100) DEFAULT NULL,
@@ -210,7 +217,8 @@ CREATE TABLE `user_discounts` (`id` int NOT NULL,
 -- Primary keys, indexes, AUTO_INCREMENT attributes, and foreign keys.
 ALTER TABLE `admin_activity` ADD PRIMARY KEY (`id`),
   ADD KEY `admin_id` (`admin_id`),
-  ADD KEY `timestamp` (`timestamp`);
+  ADD KEY `timestamp` (`timestamp`),
+  ADD KEY `idx_admin_activity_filters` (`admin_id`,`action`,`timestamp`);
 ALTER TABLE `audit_log` ADD PRIMARY KEY (`id`);
 ALTER TABLE `cart` ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `guest_session_id` (`guest_session_id`),

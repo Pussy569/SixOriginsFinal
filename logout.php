@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (isset($_SESSION['admin_id'])) {
+    require_once __DIR__ . '/app/services/admin_log_activity.php';
+    log_admin_activity((int)$_SESSION['admin_id'], 'Admin Logout', 'Admin signed out.', 'success', 'admin', (int)$_SESSION['admin_id']);
+}
 session_unset();
 session_destroy();
 ?>

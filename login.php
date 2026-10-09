@@ -12,6 +12,7 @@ error_reporting(E_ALL);
 
 include 'config.php';
 require_once __DIR__ . '/mail_helper.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
 function dbg($m){
     global $DEBUG;
@@ -265,6 +266,7 @@ if (isset($_POST['submit'])) {
                         $_SESSION['admin_email'] = $db_email;
                         $_SESSION['admin_id'] = $id;
                         $_SESSION['just_logged_in'] = true; // ✅ ADD WELCOME MESSAGE FLAG
+                        write_admin_activity($id, 'Admin Login', 'Admin signed in successfully.', 'success', 'admin', $id, null, null, $name, $db_email);
                         session_write_close();
                         dbg("✅ ADMIN LOGIN SUCCESSFUL - REDIRECTING TO admin_page.php");
                         header('Location: admin_page.php');
@@ -292,6 +294,9 @@ if (isset($_POST['submit'])) {
                     }
                 } else {
                     $type_label = $type === 'delivery_rider' ? 'Delivery Rider' : ucfirst($type);
+                    if ($type === 'admin') {
+                        write_admin_activity($id, 'Admin Login Blocked', 'Admin account is not approved.', 'failure', 'admin', $id, ['status' => $status], null, $name, $db_email);
+                    }
                     $_SESSION['message'] = "Your {$type_label} account is pending approval. Please wait for admin confirmation.";
                     dbg("Account pending approval ({$type})");
                 }
@@ -373,6 +378,9 @@ if (isset($_POST['submit'])) {
             }
         } else {
             dbg("❌ PASSWORD VERIFICATION FAILED FOR USER {$id}");
+            if (strtolower($user_type) === 'admin') {
+                write_admin_activity($id, 'Admin Login Failed', 'Incorrect password supplied for admin account.', 'failure', 'admin', $id, null, null, $name, $db_email);
+            }
 
             // ✅ UPDATED: count the failure; only lock on the 5th wrong attempt
             $result = increment_failed_attempts($id, $email);

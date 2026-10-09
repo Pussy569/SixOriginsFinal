@@ -2,6 +2,7 @@
 require_once __DIR__ . '/mail_helper.php';
 
 include 'config.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
 /**
  * SIX ORIGINS CAFE - ADMINISTRATIVE MESSAGE MANAGEMENT SYSTEM
@@ -32,12 +33,18 @@ if(isset($_GET['delete'])){
    $delete_id = mysqli_real_escape_string($conn, $_GET['delete']);
    
    // Check if record exists before deletion
-   $check_exists = mysqli_query($conn, "SELECT id FROM `message` WHERE id = '$delete_id'");
+   $check_exists = mysqli_query($conn, "SELECT id, email FROM `message` WHERE id = '$delete_id'");
    
    if(mysqli_num_rows($check_exists) > 0) {
-       mysqli_query($conn, "DELETE FROM `message` WHERE id = '$delete_id'") or die('query failed');
+       $deleted_message = mysqli_fetch_assoc($check_exists);
+       $delete_ok = mysqli_query($conn, "DELETE FROM `message` WHERE id = '$delete_id'");
+       if (!$delete_ok) {
+           log_admin_activity((int)$admin_id, 'Delete Contact Message', 'Failed to delete contact ticket #' . $delete_id, 'failure', 'message', (int)$delete_id);
+           die('query failed');
+       }
        // Also clean up replies associated with this message
        mysqli_query($conn, "DELETE FROM `message_replies` WHERE message_id = '$delete_id'");
+       log_admin_activity((int)$admin_id, 'Delete Contact Message', 'Deleted contact ticket #' . $delete_id . ' for ' . ($deleted_message['email'] ?? 'unknown contact'), 'success', 'message', (int)$delete_id);
        
        $_SESSION['admin_msg'] = 'Message and conversation history deleted successfully.';
        $_SESSION['admin_msg_type'] = 'success';
@@ -92,6 +99,7 @@ if(isset($_POST['send_reply'])){
 
     // Redirect with Status
     if ($insert) {
+        log_admin_activity((int)$admin_id, 'Reply to Message', 'Replied to contact ticket #' . $message_id . ($email_sent ? ' and email notification was sent.' : '; email notification failed.'), 'success', 'message', $message_id, null, ['reply_length' => strlen($reply_text)]);
         if ($email_sent) {
             $_SESSION['admin_msg'] = 'Reply successfully saved and emailed to ' . $to;
             $_SESSION['admin_msg_type'] = 'success';

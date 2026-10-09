@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
 
 if (!isset($_SESSION['admin_id'])) {
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   || hash_equals(md5($old_password), $stored_password);
 
                if (!$password_matches) {
+                  log_admin_activity((int)$admin_id, 'Change Admin Password', 'Admin password update failed because the current password was incorrect.', 'failure', 'admin', (int)$admin_id);
                   $message[] = 'Old password is incorrect!';
                } elseif ($new_password !== $confirm_password) {
                   $message[] = 'New passwords do not match!';
@@ -58,9 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      $update->bind_param('si', $new_hash, $admin_id);
                      if ($update->execute()) {
                         session_regenerate_id(true);
+                        log_admin_activity((int)$admin_id, 'Change Admin Password', 'Admin changed their account password.', 'success', 'admin', (int)$admin_id);
                         $message[] = 'Password changed successfully!';
                      } else {
                         error_log('Could not update admin password: ' . $update->error);
+                        log_admin_activity((int)$admin_id, 'Change Admin Password', 'Admin password update failed.', 'failure', 'admin', (int)$admin_id);
                         $message[] = 'Unable to change your password right now.';
                      }
                      $update->close();
@@ -134,8 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log('Could not prepare admin profile update: ' . $conn->error);
             $message[] = 'Unable to update your profile right now.';
          } elseif ($stmt->execute()) {
+            $previous_admin_name = $_SESSION['admin_name'] ?? '';
+            $previous_admin_email = $_SESSION['admin_email'] ?? '';
             $_SESSION['admin_email'] = $new_email;
             $_SESSION['admin_name'] = $new_name;
+            log_admin_activity((int)$admin_id, 'Update Admin Profile', 'Updated admin profile details.', 'success', 'admin', (int)$admin_id, ['name' => $previous_admin_name, 'email' => $previous_admin_email], ['name' => $new_name, 'email' => $new_email]);
             $message[] = 'Profile updated successfully!';
             $stmt->close();
          } else {

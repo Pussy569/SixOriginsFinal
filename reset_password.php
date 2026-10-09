@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
 
 $error = null;
 $success = null;
@@ -27,8 +28,14 @@ if (isset($_GET['token'])) {
                     $update = mysqli_query($conn, "UPDATE `users` SET password = '$hashed_password', reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = '$token'");
 
                     if ($update) {
+                        if (strtolower((string)$row['user_type']) === 'admin') {
+                            write_admin_activity((int)$row['id'], 'Reset Admin Password', 'Admin password was reset through the account recovery flow.', 'success', 'admin', (int)$row['id'], null, null, $row['name'], $row['email']);
+                        }
                         $success = "Password changed successfully! <a href='login.php' style='color:var(--primary-red); text-decoration:underline;'>Login now</a>.";
                     } else {
+                        if (strtolower((string)$row['user_type']) === 'admin') {
+                            write_admin_activity((int)$row['id'], 'Reset Admin Password', 'Admin password reset failed.', 'failure', 'admin', (int)$row['id'], null, null, $row['name'], $row['email']);
+                        }
                         $error = "Something went wrong. Please try again.";
                     }
                 } else {

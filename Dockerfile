@@ -35,6 +35,7 @@ RUN mkdir -p uploads logs images/user_uploads images/admin_uploads /data/session
 
 ENV PORT=80
 ENV VERIFICATION_UPLOAD_DIR=/data/verification_uploads
+ENV HEAD_ADMIN_ID=1
 EXPOSE 80
 
 CMD ["six-origins-entrypoint"]

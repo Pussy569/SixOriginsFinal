@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 include dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__) . '/services/admin_log_activity.php';
+$show_admin_activity = is_head_admin();
 $profile_image = 'default.png';
 if (isset($_SESSION['admin_email'])) {
     $admin_email = $_SESSION['admin_email'];
@@ -394,6 +396,11 @@ html { -webkit-text-size-adjust: 100%; }
             <a href="admin_chatbot_kb.php" class="nav-link <?php echo $current_page === 'admin_chatbot_kb.php' ? 'active' : ''; ?>">
                 <i class="fa-solid fa-robot"></i> User Chatbot
             </a>
+            <?php if ($show_admin_activity): ?>
+                <a href="admin_activity.php" class="nav-link <?php echo $current_page === 'admin_activity.php' ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-clipboard-list"></i> Overseeing Admin Activity
+                </a>
+            <?php endif; ?>
         </nav>
         <!-- Header Actions -->
         <div class="admin-header-actions" role="group" aria-label="Header actions">
@@ -425,12 +432,14 @@ html { -webkit-text-size-adjust: 100%; }
                         </div>
                     </div>
 
+                    <?php if ($show_admin_activity): ?>
                     <!-- Activity Section -->
                     <div class="notif-section">
                         <div class="notif-title"><i class="fa-solid fa-history"></i> Recent Activity</div>
                         <div id="activityList" class="notif-list">
                             <div class="notif-empty"><i class="fa-solid fa-spinner fa-spin"></i></div>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -569,10 +578,12 @@ if (profileBtn && profileMenu) {
             .then(html => { lowStockList.innerHTML = html || '<div class="notif-empty">All items well stocked</div>'; })
             .catch(() => { lowStockList.innerHTML = '<div class="notif-empty" style="color: #dc2626;">Error loading</div>'; });
 
-        fetch("admin_activity_ajax.php")
-            .then(res => res.text())
-            .then(html => { activityList.innerHTML = html || '<div class="notif-empty">No recent activity</div>'; })
-            .catch(() => { activityList.innerHTML = '<div class="notif-empty" style="color: #dc2626;">Error loading</div>'; });
+        if (activityList) {
+            fetch("admin_activity_ajax.php")
+                .then(res => res.text())
+                .then(html => { activityList.innerHTML = html || '<div class="notif-empty">No recent activity</div>'; })
+                .catch(() => { activityList.innerHTML = '<div class="notif-empty" style="color: #dc2626;">Error loading</div>'; });
+        }
     }
 
     bell.addEventListener("click", function(e){
