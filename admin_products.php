@@ -434,7 +434,7 @@ if (isset($_POST['update_product'])) {
             throw new Exception('Product name is too long (max 100 characters)');
         }
 
-        $previous_stmt = $conn->prepare("SELECT name, price FROM `products` WHERE id = ?");
+        $previous_stmt = $conn->prepare("SELECT name, price, details FROM `products` WHERE id = ?");
         if (!$previous_stmt) {
             throw new Exception("Database error: " . $conn->error);
         }
