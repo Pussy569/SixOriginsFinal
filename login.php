@@ -13,6 +13,16 @@ error_reporting(E_ALL);
 include 'config.php';
 require_once __DIR__ . '/mail_helper.php';
 require_once __DIR__ . '/app/services/admin_log_activity.php';
+require_once __DIR__ . '/app/services/login_session_security.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($_SESSION['message'])) {
+    $sessionNotice = (string)($_GET['session'] ?? '');
+    if (in_array($sessionNotice, ['revoked', 'replaced'], true)) {
+        $_SESSION['message'] = 'For your security, this device was signed out after another sign-in was approved.';
+    } elseif ($sessionNotice === 'denied') {
+        $_SESSION['message'] = 'The sign-in request was not approved. Please try again.';
+    }
+}
 
 function dbg($m){
     global $DEBUG;
@@ -259,13 +269,8 @@ if (isset($_POST['submit'])) {
             // ✅ 'delivery_rider' is included in the approval-gated branch.
             if (in_array($type, ['admin', 'delivery_rider', 'senior', 'pwd'])) {
                 if ($stat === 'approved') {
-                    session_regenerate_id(true);
-
                     if ($type === 'admin') {
-                        $_SESSION['admin_name'] = $name;
-                        $_SESSION['admin_email'] = $db_email;
-                        $_SESSION['admin_id'] = $id;
-                        $_SESSION['just_logged_in'] = true; // ✅ ADD WELCOME MESSAGE FLAG
+                        require_account_login_approval((int)$id, (string)$name, (string)$db_email, (string)$user_type);
                         write_admin_activity($id, 'Admin Login', 'Admin signed in successfully.', 'success', 'admin', $id, null, null, $name, $db_email);
                         session_write_close();
                         dbg("✅ ADMIN LOGIN SUCCESSFUL - REDIRECTING TO admin_page.php");
@@ -273,20 +278,14 @@ if (isset($_POST['submit'])) {
                         exit();
                     } elseif ($type === 'delivery_rider') {
                         // ✅ dedicated rider session + redirect to the rider dashboard
-                        $_SESSION['rider_name']  = $name;
-                        $_SESSION['rider_email'] = $db_email;
-                        $_SESSION['rider_id']    = $id;
-                        $_SESSION['just_logged_in'] = true;
+                        require_account_login_approval((int)$id, (string)$name, (string)$db_email, (string)$user_type);
                         session_write_close();
                         dbg("✅ DELIVERY RIDER LOGIN SUCCESSFUL - REDIRECTING TO rider_dashboard.php");
                         header('Location: rider_dashboard.php');
                         exit();
                     } else {
                         // senior / pwd
-                        $_SESSION['user_name']  = $name;
-                        $_SESSION['user_email'] = $db_email;
-                        $_SESSION['user_id']    = $id;
-                        $_SESSION['just_logged_in'] = true; // ✅ ADD WELCOME MESSAGE FLAG
+                        require_account_login_approval((int)$id, (string)$name, (string)$db_email, (string)$user_type);
                         session_write_close();
                         dbg("✅ SENIOR/PWD LOGIN SUCCESSFUL - REDIRECTING TO index.php");
                         header('Location: index.php');
@@ -365,11 +364,7 @@ if (isset($_POST['submit'])) {
                     exit();
                 } else {
                     // Regular user, no 2FA
-                    session_regenerate_id(true);
-                    $_SESSION['user_name']  = $name;
-                    $_SESSION['user_email'] = $db_email;
-                    $_SESSION['user_id']    = $id;
-                    $_SESSION['just_logged_in'] = true; // ✅ ADD WELCOME MESSAGE FLAG
+                    require_account_login_approval((int)$id, (string)$name, (string)$db_email, (string)$user_type);
                     session_write_close();
                     dbg("✅ REGULAR USER LOGIN SUCCESSFUL - REDIRECTING TO index.php");
                     header('Location: index.php');
@@ -1062,5 +1057,11 @@ if (isset($_POST['submit'])) {
          }, 7000);
       });
    </script>
+   <?php if (!empty($_SESSION['user_id']) || !empty($_SESSION['admin_id']) || !empty($_SESSION['rider_id']) || !empty($_SESSION['pending_login_request_id'])): ?>
+   <script src="Js/account-session-security.js"
+      data-csrf-token="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+      data-pending-login="<?php echo !empty($_SESSION['pending_login_request_id']) ? 'true' : 'false'; ?>"
+      defer></script>
+   <?php endif; ?>
 </body>
 </html>

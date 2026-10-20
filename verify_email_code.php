@@ -2,6 +2,7 @@
 session_start();
 include 'config.php';
 require_once __DIR__ . '/mail_helper.php';
+require_once __DIR__ . '/app/services/login_session_security.php';
 
 function dbg($m){
     // uncomment to debug: file_put_contents(__DIR__.'/debug.log', date('[Y-m-d H:i:s] ').$m.PHP_EOL, FILE_APPEND);
@@ -94,12 +95,8 @@ if (isset($_POST['verify_code'])) {
                     $u = mysqli_query($conn, "SELECT id, name, email, user_type FROM users WHERE id = '$user_id' LIMIT 1") or die('query failed');
                     $user = mysqli_fetch_assoc($u);
 
-                    session_regenerate_id(true);
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_name'] = $user['name'];
-                    $_SESSION['user_email'] = $user['email'];
-
                     unset($_SESSION['pending_2fa_user_id'], $_SESSION['pending_2fa_expires'], $_SESSION['2fa_attempts'], $_SESSION['last_2fa_sent']);
+                    require_account_login_approval((int)$user['id'], (string)$user['name'], (string)$user['email'], (string)$user['user_type']);
                     header('Location: index.php');
                     exit();
                 } else {

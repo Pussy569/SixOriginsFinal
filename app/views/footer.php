@@ -534,3 +534,6 @@
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 </script>
+<?php if (!empty($_SESSION['user_id']) || !empty($_SESSION['admin_id']) || !empty($_SESSION['rider_id'])): ?>
+<script src="Js/account-session-security.js" data-csrf-token="<?php echo escapeOutput($_SESSION['csrf_token']); ?>" defer></script>
+<?php endif; ?>

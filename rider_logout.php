@@ -9,12 +9,17 @@
  */
 
 session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/services/login_session_security.php';
+
+clear_active_account_session((int)($_SESSION['rider_id'] ?? 0), (string)($_SESSION['account_session_token'] ?? ''));
 
 // Only clear rider-related session keys so this never accidentally
 // logs out an admin/user session sharing the same PHP session.
 unset($_SESSION['rider_id']);
 unset($_SESSION['rider_name']);
 unset($_SESSION['rider_email']);
+unset($_SESSION['account_session_token']);
 unset($_SESSION['just_logged_in']);
 
 session_regenerate_id(true);

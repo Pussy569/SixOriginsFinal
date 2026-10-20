@@ -1,5 +1,12 @@
 <?php
 session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/services/login_session_security.php';
+
+$account_user_id = current_account_session_user_id();
+$account_session_token = (string)($_SESSION['account_session_token'] ?? '');
+clear_active_account_session($account_user_id, $account_session_token);
+
 if (isset($_SESSION['admin_id'])) {
     require_once __DIR__ . '/app/services/admin_log_activity.php';
     log_admin_activity((int)$_SESSION['admin_id'], 'Admin Logout', 'Admin signed out.', 'success', 'admin', (int)$_SESSION['admin_id']);

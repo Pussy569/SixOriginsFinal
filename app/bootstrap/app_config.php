@@ -71,6 +71,61 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+// The approval endpoint checks session revocation itself so it can return JSON.
+$is_account_session_endpoint = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'account_session_security.php';
+$account_session_user_id = 0;
+foreach (['admin_id', 'rider_id', 'user_id'] as $account_session_key) {
+    if (!empty($_SESSION[$account_session_key])) {
+        $account_session_user_id = (int)$_SESSION[$account_session_key];
+        break;
+    }
+}
+
+if ($account_session_user_id > 0 && !$is_account_session_endpoint) {
+    $session_lookup = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+    $session_lookup->bind_param('i', $account_session_user_id);
+    $session_lookup->execute();
+    $session_lookup->bind_result($stored_session_token);
+    $session_user_found = $session_lookup->fetch();
+    $session_lookup->close();
+
+    $stored_session_token = (string)($stored_session_token ?? '');
+    $account_session_token = (string)($_SESSION['account_session_token'] ?? '');
+
+    if ($session_user_found && $stored_session_token === '' && $account_session_token === '') {
+        $account_session_token = bin2hex(random_bytes(32));
+        $session_update = $conn->prepare('UPDATE users SET active_session_token = ? WHERE id = ? AND active_session_token IS NULL');
+        $session_update->bind_param('si', $account_session_token, $account_session_user_id);
+        $session_update->execute();
+        $initialized_session = $session_update->affected_rows === 1;
+        $session_update->close();
+
+        if ($initialized_session) {
+            $_SESSION['account_session_token'] = $account_session_token;
+            $stored_session_token = $account_session_token;
+        } else {
+            $session_lookup = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+            $session_lookup->bind_param('i', $account_session_user_id);
+            $session_lookup->execute();
+            $session_lookup->bind_result($stored_session_token);
+            $session_user_found = $session_lookup->fetch();
+            $session_lookup->close();
+            $stored_session_token = (string)($stored_session_token ?? '');
+        }
+    }
+
+    if (!$session_user_found || $account_session_token === '' || $stored_session_token === '' || !hash_equals($stored_session_token, $account_session_token)) {
+        session_unset();
+        session_destroy();
+        if (!headers_sent()) {
+            header('Location: login.php?session=revoked');
+        } else {
+            http_response_code(401);
+        }
+        exit();
+    }
+}
+
 // ============= HELPER FUNCTIONS =============
 
 if (!function_exists('escapeOutput')) {

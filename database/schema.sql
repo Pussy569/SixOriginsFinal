@@ -206,13 +206,25 @@ CREATE TABLE `users` (`id` int NOT NULL,
   `discount_status` varchar(10) DEFAULT NULL,
   `twofa_email_enabled` tinyint NOT NULL DEFAULT 0,
   `failed_attempts` int DEFAULT 0,
-  `lockout_until` datetime DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `lockout_until` datetime DEFAULT NULL,
+  `active_session_token` char(64) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `user_discounts` (`id` int NOT NULL,
   `user_id` int NOT NULL,
   `discount_id` int NOT NULL,
   `used` tinyint NOT NULL DEFAULT 0,
   `assigned_at` timestamp NOT NULL DEFAULT current_timestamp()) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `login_session_requests` (
+  `request_id` char(64) NOT NULL,
+  `user_id` int NOT NULL,
+  `new_session_token` char(64) NOT NULL,
+  `status` enum('pending','approved','rejected','expired') NOT NULL DEFAULT 'pending',
+  `expires_at` datetime NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`request_id`),
+  KEY `idx_login_session_request_user_status` (`user_id`,`status`,`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Primary keys, indexes, AUTO_INCREMENT attributes, and foreign keys.
 ALTER TABLE `admin_activity` ADD PRIMARY KEY (`id`),
@@ -298,6 +310,7 @@ ALTER TABLE `topup_requests` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `users` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `user_discounts` MODIFY `id` int NOT NULL AUTO_INCREMENT;
 ALTER TABLE `email_verifications` ADD CONSTRAINT `email_verifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+ALTER TABLE `login_session_requests` ADD CONSTRAINT `login_session_requests_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 ALTER TABLE `inventory_usage_log` ADD CONSTRAINT `inventory_usage_log_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `inventory_usage_log_ibfk_2` FOREIGN KEY (`ingredient_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 ALTER TABLE `message_replies` ADD CONSTRAINT `message_replies_ibfk_1` FOREIGN KEY (`message_id`) REFERENCES `message` (`id`) ON DELETE CASCADE;

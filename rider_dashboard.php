@@ -14,6 +14,7 @@ include 'config.php';
 include 'inventory_functions.php';
 include 'send_receipt_email.php';
 include 'send_sms_notification.php';
+require_once __DIR__ . '/app/services/login_session_security.php';
 
 $rider_id = $_SESSION['rider_id'] ?? null;
 
@@ -27,6 +28,7 @@ $rider_check = mysqli_query($conn, "SELECT * FROM users WHERE id = " . intval($r
 $rider_info = $rider_check ? mysqli_fetch_assoc($rider_check) : null;
 
 if (!$rider_info || $rider_info['user_type'] !== 'delivery_rider' || $rider_info['status'] !== 'approved') {
+   clear_active_account_session((int)$rider_id, (string)($_SESSION['account_session_token'] ?? ''));
    session_unset();
    session_destroy();
    header('location:login.php');
@@ -596,5 +598,6 @@ if ($completed_result) {
    </div>
 </div>
 
+<script src="Js/account-session-security.js" data-csrf-token="<?php echo escapeOutput($_SESSION['csrf_token']); ?>" defer></script>
 </body>
 </html>
