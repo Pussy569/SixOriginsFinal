@@ -6,6 +6,7 @@ finalshopdatabase.sql
 !/database/schema.sql
 !/database/migrations/20261007_cart_size_length.sql
 !/database/migrations/20261007_size_packaging_inventory.sql
+!/database/migrations/20261021_login_session_email_approval.sql
 *.sqlite
 *.sqlite3
 *.db

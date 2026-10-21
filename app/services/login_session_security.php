@@ -126,8 +126,8 @@ function begin_account_login(int $userId, string $name, string $email, string $t
 
     $requestId = bin2hex(random_bytes(32));
     $newSessionToken = bin2hex(random_bytes(32));
-    $create = $conn->prepare("INSERT INTO login_session_requests (request_id, user_id, new_session_token, status, expires_at) VALUES (?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL 60 SECOND))");
-    $create->bind_param('sis', $requestId, $userId, $newSessionToken);
+    $create = $conn->prepare("INSERT INTO login_session_requests (request_id, user_id, new_session_token, previous_session_token, status, expires_at) VALUES (?, ?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL 60 SECOND))");
+    $create->bind_param('siss', $requestId, $userId, $newSessionToken, $activeToken);
     $create->execute();
     $create->close();
 

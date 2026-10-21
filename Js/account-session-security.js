@@ -29,7 +29,10 @@
     .account-security-actions button{flex:1;min-width:140px;padding:12px 16px;border:0;border-radius:10px;font:700 15px Montserrat,Arial,sans-serif;cursor:pointer}
     .account-security-approve{background:#2d5a3d;color:#fff}
     .account-security-reject{background:#f0e6d8;color:#421b13}
+    .account-security-email{background:#C6453E;color:#fff}
     .account-security-actions button:disabled{opacity:.6;cursor:wait}
+    .account-security-code{width:100%;margin:0 0 16px;padding:13px 14px;border:1px solid #d8c9b8;border-radius:10px;font:600 20px Montserrat,Arial,sans-serif;letter-spacing:.25em;text-align:center}
+    .account-security-status{min-height:24px;font-size:14px}
   `;
   document.head.append(style);
 
@@ -146,9 +149,115 @@
 
   if (!pendingLogin) return;
 
+  function showEmailCodeForm() {
+    const overlay = showOverlay(
+      'Check your email',
+      'Enter the six-digit code we sent to the email address on your account. The code expires in 10 minutes.'
+    );
+    const card = overlay.querySelector('.account-security-card');
+    const input = document.createElement('input');
+    input.className = 'account-security-code';
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.autocomplete = 'one-time-code';
+    input.maxLength = 6;
+    input.pattern = '[0-9]{6}';
+    input.setAttribute('aria-label', 'Six-digit email code');
+    input.placeholder = '000000';
+
+    const status = document.createElement('p');
+    status.className = 'account-security-status';
+    status.setAttribute('aria-live', 'polite');
+
+    const actions = document.createElement('div');
+    actions.className = 'account-security-actions';
+    const resend = document.createElement('button');
+    resend.type = 'button';
+    resend.className = 'account-security-reject';
+    resend.textContent = 'Resend code';
+    resend.addEventListener('click', async () => {
+      resend.disabled = true;
+      status.textContent = 'Sending another code…';
+      try {
+        const { response, result } = await request('send_email_code');
+        status.textContent = response.ok && result.status === 'sent'
+          ? 'A new code has been sent.'
+          : result.message || result.error || 'Could not resend the code.';
+      } catch (error) {
+        console.error('Could not resend the email sign-in code.', error);
+        status.textContent = 'Could not resend the code. Check your connection and try again.';
+      } finally {
+        window.setTimeout(() => { resend.disabled = false; }, 30000);
+      }
+    });
+    const verify = document.createElement('button');
+    verify.type = 'button';
+    verify.className = 'account-security-email';
+    verify.textContent = 'Verify code';
+    verify.addEventListener('click', async () => {
+      verify.disabled = true;
+      status.textContent = 'Verifying code…';
+      try {
+        const { response, result } = await request('verify_email_code', { code: input.value.trim() });
+        if (result.status === 'approved') {
+          status.textContent = 'Code accepted. Signing you in…';
+          await pollPendingLogin();
+        } else if (['expired', 'locked', 'revoked'].includes(result.status)) {
+          showOverlay('Sign-in not completed', result.message || 'Please sign in again.', [
+            { label: 'Back to login', className: 'account-security-reject', handler: async () => { window.location.href = 'login.php?session=denied'; } }
+          ]);
+        } else {
+          status.textContent = result.message || (response.ok ? 'Unable to verify the code.' : 'Unable to verify the code. Please try again.');
+          input.value = '';
+          input.focus();
+          verify.disabled = false;
+        }
+      } catch (error) {
+        console.error('Could not verify the email sign-in code.', error);
+        status.textContent = 'Could not verify the code. Check your connection and try again.';
+        verify.disabled = false;
+      }
+    });
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'account-security-reject';
+    back.textContent = 'Back to login';
+    back.addEventListener('click', () => { window.location.href = 'login.php?session=denied'; });
+    actions.append(resend, verify, back);
+    card.append(input, status, actions);
+    input.focus();
+  }
+
+  function requestEmailCode() {
+    showOverlay(
+      'Sending a code',
+      'We are sending a confirmation code to the email address on your account.'
+    );
+    request('send_email_code').then(({ response, result }) => {
+      if (response.ok && result.status === 'sent') {
+        showEmailCodeForm();
+        return;
+      }
+      const message = result.message || result.error || 'We could not send the code. Please try again.';
+      showOverlay('Email code unavailable', message, [
+        { label: 'Try again', className: 'account-security-email', handler: requestEmailCode },
+        { label: 'Back to login', className: 'account-security-reject', handler: async () => { window.location.href = 'login.php?session=denied'; } }
+      ]);
+    }).catch(error => {
+      console.error('Could not send the email sign-in code.', error);
+      showOverlay('Email code unavailable', 'Could not send the code. Check your connection and try again.', [
+        { label: 'Try again', className: 'account-security-email', handler: requestEmailCode },
+        { label: 'Back to login', className: 'account-security-reject', handler: async () => { window.location.href = 'login.php?session=denied'; } }
+      ]);
+    });
+  }
+
   showOverlay(
     'Waiting for approval',
-    'Approve this sign-in from the device that is already signed in. For your security, this request expires after 60 seconds.'
+    'Approve this sign-in from the device that is already signed in, or confirm your identity by email.',
+    [
+      { label: 'Use email code instead', className: 'account-security-email', handler: requestEmailCode }
+    ]
   );
 
   let pendingPollInProgress = false;
