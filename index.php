@@ -804,54 +804,6 @@ img, video { max-width: 100%; }
   animation: fadeIn 0.5s ease-out;
 }
 
-/* CTA Row */
-.cta-row {
-  text-align: center;
-  margin-top: 48px;
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  animation: fadeInUp 0.6s ease-out 0.6s both;
-}
-
-.cta-row a, .cta-row button {
-  display: inline-block;
-  padding: 13px 28px;
-  background: linear-gradient(135deg, var(--primary-red) 0%, #B83A34 100%);
-  color: #fff;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 800;
-  border: none;
-  cursor: pointer;
-  font-size: 1.05em;
-  transition: var(--transition);
-  box-shadow: 0 6px 16px rgba(198, 69, 62, 0.25);
-  position: relative;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.cta-row a::before, .cta-row button::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.cta-row a:hover::before, .cta-row button:hover::before { left: 100%; }
-
-.cta-row a:hover, .cta-row button:hover {
-  background: linear-gradient(135deg, var(--dark-brown) 0%, #3D1608 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(94, 31, 19, 0.25);
-}
-
-.cta-row button { background: linear-gradient(135deg, var(--dark-brown) 0%, #3D1608 100%); }
-.cta-row button:hover { background: linear-gradient(135deg, var(--gray-brown) 0%, var(--dark-brown) 100%); }
-
 /* ============================================
    COFFEE MOMENT
    ============================================ */
@@ -883,9 +835,12 @@ img, video { max-width: 100%; }
   position: relative;
   left: 50%; right: 50%;
   margin-left: -50vw; margin-right: -50vw;
-  margin-top: 56px; margin-bottom: 8px;
-  padding: 80px 24px;
-  background: radial-gradient(circle at 50% 20%, #3D1E13 0%, var(--dark-brown) 45%, #2A0F08 100%);
+  margin-top: 56px; margin-bottom: 0;
+  padding: clamp(64px, 8vw, 112px) 24px;
+  background:
+    radial-gradient(ellipse at 78% 48%, rgba(198, 69, 62, 0.24), transparent 38%),
+    radial-gradient(circle at 14% 16%, rgba(255, 210, 142, 0.09), transparent 27%),
+    linear-gradient(120deg, #2A0F08 0%, #5E1F13 54%, #35140D 100%);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -899,29 +854,60 @@ img, video { max-width: 100%; }
 .coffee-moment-inner {
   position: relative;
   z-index: 2;
-  max-width: 1100px;
+  max-width: 1240px;
   width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: clamp(42px, 7vw, 96px);
+}
+
+.coffee-moment-visual {
+  position: relative;
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 56px;
-  flex-wrap: wrap;
+  perspective: 1200px;
+  isolation: isolate;
 }
 
-.coffee-moment-visual { position: relative; width: 380px; max-width: 90vw; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.coffee-moment-visual::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 8% -4% -8% 8%;
+  border: 1px solid rgba(255, 231, 184, 0.24);
+  border-radius: 26px;
+  transform: rotate(3deg);
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease;
+}
 
 .coffee-moment-frame {
   position: relative;
   z-index: 2;
   width: 100%;
-  border-radius: 20px;
+  aspect-ratio: 1.55;
+  border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.4s ease;
+  transform: rotateX(var(--coffee-tilt-y, 0deg)) rotateY(var(--coffee-tilt-x, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
   animation: pourReveal 1.15s cubic-bezier(0.65, 0, 0.35, 1) both, cardGlowPulse 4.5s ease-in-out 1.15s infinite;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.4);
 }
 
-.coffee-moment-img { width: 100%; display: block; border-radius: 20px; transition: transform 0.4s ease; animation: kenBurns 9s ease-in-out 1.15s infinite; }
+.coffee-moment-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 24px;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: kenBurns 9s ease-in-out 1.15s infinite;
+}
 
 .coffee-moment-shine {
   position: absolute; top: -25%; left: 0; width: 35%; height: 150%;
@@ -931,8 +917,9 @@ img, video { max-width: 100%; }
   pointer-events: none; z-index: 3;
 }
 
-.coffee-moment-visual:hover .coffee-moment-frame { transform: scale(1.02); }
-.coffee-moment-visual:hover .coffee-moment-img { transform: scale(1.1); }
+.coffee-moment-visual:hover::before { transform: rotate(0deg) translateY(-4px); border-color: rgba(255, 231, 184, 0.52); }
+.coffee-moment-visual:hover .coffee-moment-frame { box-shadow: 0 34px 90px rgba(0, 0, 0, 0.52); }
+.coffee-moment-visual:hover .coffee-moment-img { transform: scale(1.06); }
 
 .coffee-steam {
   position: absolute; top: 32%; width: 16px; height: 16px; border-radius: 50%;
@@ -953,7 +940,7 @@ img, video { max-width: 100%; }
 .coffee-moment-sparkle:nth-child(5) { top: 16%; left: 66%; width: 4px; height: 4px; animation-delay: 1s; }
 .coffee-moment-sparkle:nth-child(6) { top: 28%; left: 70%; width: 5px; height: 5px; animation-delay: 1.7s; }
 
-.coffee-moment-text { position: relative; z-index: 2; max-width: 440px; text-align: left; min-width: 0; }
+.coffee-moment-text { position: relative; z-index: 2; max-width: 540px; text-align: left; min-width: 0; }
 
 .coffee-moment-tag {
   display: inline-flex; align-items: center; gap: 8px;
@@ -963,11 +950,11 @@ img, video { max-width: 100%; }
 }
 
 .coffee-moment-text h2 {
-  font-family: 'Romelio Sans', serif; color: #fff; font-size: clamp(1.7rem, 5vw, 2.4rem); font-weight: 900;
-  letter-spacing: -0.5px; line-height: 1.15; margin-bottom: 16px; text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-family: 'Romelio Sans', serif; color: #fff; font-size: clamp(2.35rem, 5vw, 4.8rem); font-weight: 900;
+  letter-spacing: -1.4px; line-height: 1.04; margin-bottom: 22px; text-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
 }
 
-.coffee-moment-text p { color: rgba(255, 255, 255, 0.9); font-size: 1.05rem; font-weight: 500; line-height: 1.75; margin-bottom: 28px; }
+.coffee-moment-text p { color: rgba(255, 255, 255, 0.88); font-size: clamp(1rem, 1.3vw, 1.15rem); font-weight: 500; line-height: 1.8; margin-bottom: 30px; max-width: 520px; }
 
 .coffee-moment-text .CTA-wrap {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -980,7 +967,9 @@ img, video { max-width: 100%; }
   color: #fff; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 1rem;
   transition: var(--transition); box-shadow: 0 8px 24px rgba(198, 69, 62, 0.4);
   position: relative; overflow: hidden; border: 1px solid transparent;
+  min-height: 54px;
 }
+.coffee-moment-text .cta-btn:focus-visible { outline: 3px solid #FFE7B8; outline-offset: 4px; }
 
 .coffee-moment-text .cta-btn::before {
   content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
@@ -1109,8 +1098,10 @@ img, video { max-width: 100%; }
 }
 
 @media (max-width: 900px) {
-  .coffee-moment-inner { flex-direction: column; text-align: center; gap: 36px; }
-  .coffee-moment-text { text-align: center; max-width: 520px; width: 100%; }
+  .coffee-moment-inner { grid-template-columns: minmax(0, 1fr); text-align: center; gap: 42px; }
+  .coffee-moment-text { text-align: center; max-width: 640px; width: 100%; margin: 0 auto; }
+  .coffee-moment-text p { margin-left: auto; margin-right: auto; }
+  .coffee-moment-visual { max-width: 680px; margin: 0 auto; }
   .coffee-moment-text .CTA-wrap { justify-content: center; }
 }
 
@@ -1147,7 +1138,6 @@ img, video { max-width: 100%; }
   .contact-card a { padding: 12px 28px; font-size: 0.95rem; }
   .guest-badge { padding: 14px 16px; font-size: 0.9rem; flex-direction: column; text-align: center; }
   .guest-badge a { margin-left: 0; margin-top: 8px; }
-  .cta-row { margin-top: 36px; }
 }
 
 /* Phones */
@@ -1157,10 +1147,7 @@ img, video { max-width: 100%; }
   .product { padding: 16px; }
   .product .img-wrap { height: 220px; }
   .coffee-moment { padding: 56px 18px; margin-top: 40px; }
-  .coffee-moment-visual { width: 280px; }
   .coffee-moment-text p { font-size: 0.95rem; }
-  .cta-row { flex-direction: column; align-items: stretch; }
-  .cta-row a, .cta-row button { text-align: center; }
 }
 
 @media (max-width: 480px) {
@@ -1203,7 +1190,20 @@ img, video { max-width: 100%; }
   .contact-card p { font-size: 0.9rem; }
   .guest-badge { flex-direction: column; gap: 8px; }
   .product .img-wrap { height: 190px; }
-  .coffee-moment-visual { width: 240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coffee-moment,
+  .coffee-moment-frame,
+  .coffee-moment-img,
+  .coffee-moment-shine,
+  .coffee-steam,
+  .coffee-moment-sparkle,
+  .coffee-moment-visual::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .coffee-moment { opacity: 1; transform: none; }
 }
 
 /* Short landscape phones: keep the hero from eating the whole screen */
@@ -1379,6 +1379,15 @@ img, video { max-width: 100%; }
    <!-- Coffee Moment -->
    <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring">
       <div class="coffee-moment-inner">
+         <div class="coffee-moment-text">
+            <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> For the Coffee Lovers</span>
+            <h2>Every Cup Starts with a Smile.</h2>
+            <p>From the first pour to the final sip, every cup is made to feel warm, easy, and worth slowing down for.</p>
+            <div class="CTA-wrap">
+               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-mug-saucer"></i> Grab Your Cup</a>
+               <a href="Menu1P.php" class="cta-btn secondary-btn"><i class="fa-solid fa-book-open"></i> Explore Menu</a>
+            </div>
+         </div>
          <div class="coffee-moment-visual">
             <span class="coffee-steam"></span>
             <span class="coffee-steam"></span>
@@ -1391,23 +1400,8 @@ img, video { max-width: 100%; }
                <span class="coffee-moment-shine"></span>
             </div>
          </div>
-         <div class="coffee-moment-text">
-            <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> For the Coffee Lovers</span>
-            <h2>Every Cup Starts with a Smile.</h2>
-            <p>From the first pour to the final sip, every cup is made to feel warm, easy, and worth slowing down for.</p>
-            <div class="CTA-wrap">
-               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-mug-saucer"></i> Grab Your Cup</a>
-               <a href="Menu1P.php" class="cta-btn secondary-btn"><i class="fa-solid fa-book-open"></i> Explore Menu</a>
-            </div>
-         </div>
       </div>
    </section>
-
-   <div class="cta-row">
-      <a href="Item.php">Coffee</a>
-      <a href="Item.php">Drinks</a>
-      <a href="Item.php">Sweets</a>
-   </div>
 
    <!-- About Section -->
    <section class="about-section">
@@ -1530,6 +1524,23 @@ document.addEventListener('touchstart', function () {
 (function () {
    var coffeeMoment = document.getElementById('coffeeMoment');
    if (!coffeeMoment) return;
+   var coffeeVisual = coffeeMoment.querySelector('.coffee-moment-visual');
+   var coffeeFrame = coffeeMoment.querySelector('.coffee-moment-frame');
+   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+   if (coffeeVisual && coffeeFrame && finePointer && !reduceMotion) {
+      coffeeVisual.addEventListener('pointermove', function (event) {
+         var bounds = coffeeVisual.getBoundingClientRect();
+         var offsetX = (event.clientX - bounds.left) / bounds.width - 0.5;
+         var offsetY = (event.clientY - bounds.top) / bounds.height - 0.5;
+         coffeeFrame.style.setProperty('--coffee-tilt-x', (offsetX * 8).toFixed(2) + 'deg');
+         coffeeFrame.style.setProperty('--coffee-tilt-y', (offsetY * -8).toFixed(2) + 'deg');
+      });
+      coffeeVisual.addEventListener('pointerleave', function () {
+         coffeeFrame.style.setProperty('--coffee-tilt-x', '0deg');
+         coffeeFrame.style.setProperty('--coffee-tilt-y', '0deg');
+      });
+   }
    if (!('IntersectionObserver' in window)) { coffeeMoment.classList.add('in-view'); return; }
    var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
