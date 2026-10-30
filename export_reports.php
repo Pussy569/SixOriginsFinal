@@ -8,8 +8,11 @@ if(!isset($admin_id)){
    exit;
 }
 
-// Get export type
-$export_type = isset($_GET['type']) ? $_GET['type'] : 'pdf';
+// Only spreadsheet exports are supported.
+if (($_GET['type'] ?? '') !== 'excel') {
+    http_response_code(404);
+    exit('Report format not found.');
+}
 
 // --- Fetch Data ---
 // Top 5 Best Sellers
@@ -92,20 +95,7 @@ $result = mysqli_query($conn, "SELECT COUNT(*) as total_orders FROM orders");
 $row = mysqli_fetch_assoc($result);
 $kpi['total_orders'] = $row && $row['total_orders'] ? intval($row['total_orders']) : 0;
 
-// --- Export Handler ---
-if($export_type === 'pdf') {
-    // Check if TCPDF exists
-    if(!file_exists('vendor/autoload.php')) {
-        // Fallback: Generate HTML that can be printed as PDF
-        generateHTMLPDF($kpi, $best_products, $sales_data, $status_data, $low_stock_data);
-    } else {
-        // Use TCPDF
-        require_once('vendor/autoload.php');
-        generateTCPDFReport($kpi, $best_products, $sales_data, $status_data, $low_stock_data);
-    }
-} else if($export_type === 'excel') {
-    generateExcelReport($kpi, $best_products, $sales_data, $status_data, $low_stock_data);
-}
+generateExcelReport($kpi, $best_products, $sales_data, $status_data, $low_stock_data);
 
 // --- PDF Generation Function (HTML Fallback) ---
 function generateHTMLPDF($kpi, $best_products, $sales_data, $status_data, $low_stock_data) {

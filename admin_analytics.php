@@ -647,9 +647,6 @@ $kpi['total_orders'] = $row && $row['total_orders'] ? intval($row['total_orders'
               <i class="fa-solid fa-download"></i> Export Reports
             </button>
             <div class="export-menu">
-              <a href="export_reports.php?type=pdf" target="_blank">
-                <i class="fa-solid fa-file-pdf"></i> Export as PDF
-              </a>
               <a href="export_reports.php?type=excel" target="_blank">
                 <i class="fa-solid fa-file-excel"></i> Export as Excel
               </a>

@@ -739,8 +739,6 @@ $open_checkout_on_load = isset($_GET['checkout']);
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
    <style>
      :root {
        --primary-red: #C6453E;
@@ -1405,7 +1403,6 @@ $open_checkout_on_load = isset($_GET['checkout']);
     </div>
 
     <div class="receipt-modal-actions">
-      <button class="btn btn-primary" id="downloadReceiptBtn" onclick="downloadReceiptPDF()"><i class="fas fa-download"></i> Download PDF</button>
       <a href="orders.php" class="btn btn-ghost"><i class="fas fa-list"></i> My Orders</a>
       <button class="btn btn-close-modal" onclick="closeReceiptModal()"><i class="fas fa-times"></i> Close</button>
     </div>
@@ -1537,36 +1534,6 @@ $open_checkout_on_load = isset($_GET['checkout']);
     });
   });
 
-  async function downloadReceiptPDF() {
-    var btn = document.getElementById('downloadReceiptBtn');
-    var original = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
-    btn.disabled = true;
-    try {
-      var jsPDFLib = window.jspdf.jsPDF;
-      var element = document.getElementById('receipt-printable');
-      var canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, allowTaint: true });
-      var imgData = canvas.toDataURL('image/png');
-      var pdf = new jsPDFLib({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      var pdfWidth = pdf.internal.pageSize.getWidth();
-      var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      var pageH = pdf.internal.pageSize.getHeight();
-      if (pdfHeight <= pageH) {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      } else {
-        var scaleFactor = pageH / pdfHeight;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight * scaleFactor);
-      }
-      var orderId = "<?php echo isset($r) ? str_pad($r['order_id'], 6, '0', STR_PAD_LEFT) : '000000'; ?>";
-      pdf.save('SixOrigins_Receipt_' + orderId + '.pdf');
-    } catch (err) {
-      alert('Could not generate PDF. Please try printing the page instead.');
-      console.error(err);
-    } finally {
-      btn.innerHTML = original;
-      btn.disabled = false;
-    }
-  }
 </script>
 
 <?php include 'footer.php'; ?>
