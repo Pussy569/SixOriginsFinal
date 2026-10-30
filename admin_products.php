@@ -290,9 +290,6 @@ if (isset($_POST['add_product'])) {
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Product "' . htmlspecialchars($name) . '" added successfully! You can now add Preferences and Extras from its card. 🎉'];
 
     } catch (Exception $e) {
-        if ($update_transaction_started) {
-            $conn->rollback();
-        }
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
