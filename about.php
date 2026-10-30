@@ -1086,17 +1086,17 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
       <div class="team-grid" role="list" aria-label="Team members">
         <?php
           $members = [
-            ['name' => 'Dag-ay, Victor', 'role' => 'Founder & Visionary', 'bio' => 'Started Six Origins with one goal: coffee worth gathering around.'],
-            ['name' => 'Camiller, Antonette', 'role' => 'Operations Lead', 'bio' => 'Keeps every shift, order, and detail running smoothly.'],
-            ['name' => 'Velasco, Mark Jazper', 'role' => 'Head Barista', 'bio' => 'Pulls every shot with the same care as the first.'],
-            ['name' => 'Zafran, Michaella', 'role' => 'Creative Director', 'bio' => 'Shapes how Six Origins looks, feels, and sounds.'],
-            ['name' => 'Biscocho, Dan Samuel', 'role' => 'Supply Manager', 'bio' => 'Sources every bean, keeping quality and freshness consistent.'],
-            ['name' => 'Jacinto, Emerson', 'role' => 'Customer Care', 'bio' => 'The friendly face making sure every visit feels right.'],
+            ['name' => 'Dag-ay, Victor', 'image' => 'vic.jpg', 'role' => 'Founder & Visionary', 'bio' => 'Started Six Origins with one goal: coffee worth gathering around.'],
+            ['name' => 'Camiller, Antonette', 'image' => 'ton.jpg', 'role' => 'Operations Lead', 'bio' => 'Keeps every shift, order, and detail running smoothly.'],
+            ['name' => 'Velasco, Mark Jazper', 'image' => 'mjj.jpg', 'role' => 'Head Barista', 'bio' => 'Pulls every shot with the same care as the first.'],
+            ['name' => 'Zafran, Michaella', 'image' => 'miks.jpg', 'role' => 'Creative Director', 'bio' => 'Shapes how Six Origins looks, feels, and sounds.'],
+            ['name' => 'Biscocho, Dan Samuel', 'image' => 'dan.jpg', 'role' => 'Supply Manager', 'bio' => 'Sources every bean, keeping quality and freshness consistent.'],
+            ['name' => 'Jacinto, Emerson', 'image' => 'eme.jpg', 'role' => 'Customer Care', 'bio' => 'The friendly face making sure every visit feels right.'],
           ];
           foreach ($members as $m):
         ?>
         <div class="member" role="listitem" aria-label="<?php echo htmlspecialchars($m['name']); ?>">
-          <img src="images/no_profile.jpg" alt="<?php echo htmlspecialchars($m['name']); ?>" loading="lazy">
+          <img src="images/<?php echo htmlspecialchars($m['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
           <h4><?php echo htmlspecialchars($m['name']); ?></h4>
           <span class="role"><?php echo htmlspecialchars($m['role']); ?></span>
           <p class="bio"><?php echo htmlspecialchars($m['bio']); ?></p>
