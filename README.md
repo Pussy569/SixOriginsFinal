@@ -119,6 +119,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 The inactivity timer signs out users, admins, and delivery riders after 10 minutes without interaction. Fresh databases initialized from `database/schema.sql` already include the required column.
 
+To enable the admin-managed Special Product of the Week announcement on an existing database or one initialized from the private seed, back up the database and apply `database/migrations/20261031_weekly_special.sql` before deploying this version:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261031_weekly_special.sql
+```
+
+Admins can enable one product at a time and optionally add a 500-character announcement description from Product Management. Fresh databases initialized from `database/schema.sql` already include the required settings table.
+
 This file-based session setup assumes a single application replica. Before scaling the web service to multiple replicas, move sessions to a shared session store and media to shared object storage.
 
 Set optional `OLLAMA_URL`, `OLLAMA_BASIC_AUTH_USERNAME`, `OLLAMA_BASIC_AUTH_PASSWORD`, `RESEND_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, `TEXTBEE_API_KEY`, and `TEXTBEE_DEVICE_ID` variables in Railway for integrations you use. For an ngrok tunnel protected with HTTP Basic Auth, set `OLLAMA_URL` to the tunnel's HTTPS URL ending in `/api/chat`, and set both Basic Auth variables to the credentials configured on that tunnel. Do not expose an unauthenticated Ollama API publicly. The laptop running Ollama and ngrok must stay on and connected for the tunnel to work. Verify the sender domain with Resend before using its address. Rotate any credentials that were ever committed or otherwise exposed before deployment. Removing a key from current files does not revoke it or remove it from Git history; revoke/rotate it in its provider and consider repository history cleanup if this repository was shared publicly.

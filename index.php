@@ -536,6 +536,59 @@ img, video { max-width: 100%; }
   box-shadow: 0 8px 20px rgba(94, 31, 19, 0.25);
 }
 
+.weekly-special-announcement {
+  display: grid;
+  grid-template-columns: minmax(120px, 190px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin-top: 30px;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1.5px solid rgba(198, 69, 62, 0.25);
+  border-radius: 18px;
+  background: linear-gradient(120deg, #fff5e8, #fffaf5 65%, #fff);
+  box-shadow: 0 10px 26px rgba(94, 31, 19, 0.08);
+}
+
+.weekly-special-announcement img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.weekly-special-announcement .announcement-label {
+  color: var(--primary-red);
+  font-size: .82rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.weekly-special-announcement h3 {
+  margin: 8px 0;
+  color: var(--dark-brown);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+}
+
+.weekly-special-announcement p {
+  margin: 0 0 16px;
+  color: var(--gray-brown);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.weekly-special-announcement a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--primary-red);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 /* Product Grid */
 .grid {
   display: grid;
@@ -1146,6 +1199,8 @@ img, video { max-width: 100%; }
   .section-header .section-filters a { text-align: center; padding: 11px 10px; white-space: normal; }
   .product { padding: 16px; }
   .product .img-wrap { height: 220px; }
+  .weekly-special-announcement { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .weekly-special-announcement img { width: min(100%, 220px); justify-self: center; }
   .coffee-moment { padding: 56px 18px; margin-top: 40px; }
   .coffee-moment-text p { font-size: 0.95rem; }
 }
@@ -1374,6 +1429,31 @@ img, video { max-width: 100%; }
             }
          ?>
       </div>
+      <?php
+         $weekly_special_stmt = $conn->prepare(
+            'SELECT p.id, p.name, p.image, ws.description
+             FROM `weekly_special_settings` ws
+             JOIN `products` p ON p.id = ws.product_id
+             WHERE ws.id = 1
+             LIMIT 1'
+         );
+         $weekly_special_stmt->execute();
+         $weekly_special = $weekly_special_stmt->get_result()->fetch_assoc();
+         $weekly_special_stmt->close();
+      ?>
+      <?php if ($weekly_special): ?>
+         <aside class="weekly-special-announcement" aria-labelledby="weeklySpecialTitle">
+            <img src="images/<?php echo htmlspecialchars((string)$weekly_special['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string)$weekly_special['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+            <div>
+               <div class="announcement-label"><i class="fa-solid fa-star"></i> Special Product of the Week</div>
+               <h3 id="weeklySpecialTitle"><?php echo htmlspecialchars((string)$weekly_special['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
+               <?php if (!empty($weekly_special['description'])): ?>
+                  <p><?php echo htmlspecialchars((string)$weekly_special['description'], ENT_QUOTES, 'UTF-8'); ?></p>
+               <?php endif; ?>
+               <a href="product.php?id=<?php echo (int)$weekly_special['id']; ?>">Discover this week's special <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+         </aside>
+      <?php endif; ?>
    </section>
 
    <!-- Coffee Moment -->
