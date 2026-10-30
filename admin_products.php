@@ -46,7 +46,7 @@ if (isset($_POST['set_weekly_special'])) {
             throw new Exception('The weekly special announcement must be plain text.');
         }
         $special_description = trim($raw_special_description);
-        if (mb_strlen($special_description) > 500) {
+        if ($special_action === 'enable' && mb_strlen($special_description) > 500) {
             throw new Exception('The weekly special announcement must be 500 characters or fewer.');
         }
 
@@ -61,38 +61,28 @@ if (isset($_POST['set_weekly_special'])) {
 
         $conn->begin_transaction();
         $special_transaction_started = true;
-        $seed_settings = $conn->prepare('INSERT IGNORE INTO `weekly_special_settings` (id) VALUES (1)');
-        $seed_settings->execute();
-        $seed_settings->close();
-
-        $current_stmt = $conn->prepare('SELECT product_id FROM `weekly_special_settings` WHERE id = 1 FOR UPDATE');
-        $current_stmt->execute();
-        $current_special = $current_stmt->get_result()->fetch_assoc();
-        $current_stmt->close();
-        if (!$current_special) {
-            throw new Exception('Could not load weekly special settings.');
-        }
 
         if ($special_action === 'disable') {
-            $disable_stmt = $conn->prepare('UPDATE `weekly_special_settings` SET product_id = NULL, description = NULL WHERE id = 1 AND product_id = ?');
+            $disable_stmt = $conn->prepare('DELETE FROM `weekly_special_products` WHERE product_id = ?');
             $disable_stmt->bind_param('i', $special_product_id);
             $disable_stmt->execute();
             $disabled = $disable_stmt->affected_rows === 1;
             $disable_stmt->close();
             if (!$disabled) {
-                throw new Exception('This product is no longer the active weekly special. Refresh the page and try again.');
+                throw new Exception('This product is not an active weekly special. Refresh the page and try again.');
             }
             $activity_description = 'Disabled the weekly special product: ' . $special_product['name'];
             $success_message = 'Weekly special disabled.';
         } else {
             $enable_stmt = $conn->prepare(
-                'UPDATE `weekly_special_settings` SET product_id = ?, description = ? WHERE id = 1'
+                'INSERT INTO `weekly_special_products` (product_id, description) VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE description = VALUES(description)'
             );
             $enable_stmt->bind_param('is', $special_product_id, $special_description);
             $enable_stmt->execute();
             $enable_stmt->close();
-            $activity_description = 'Set the weekly special product: ' . $special_product['name'];
-            $success_message = 'Special Product of the Week updated.';
+            $activity_description = 'Enabled or updated the weekly special product: ' . $special_product['name'];
+            $success_message = 'Special Product of the Week saved.';
         }
 
         $conn->commit();
@@ -2906,11 +2896,14 @@ if (isset($_GET['remove_extra_group'])) {
          </div>
 
          <?php
-            $weekly_special_stmt = $conn->prepare('SELECT product_id, description FROM `weekly_special_settings` WHERE id = 1');
+            $weekly_special_stmt = $conn->prepare('SELECT product_id, description FROM `weekly_special_products`');
             $weekly_special_stmt->execute();
-            $weekly_special = $weekly_special_stmt->get_result()->fetch_assoc() ?: null;
+            $weekly_special_result = $weekly_special_stmt->get_result();
+            $weekly_specials_by_product = [];
+            while ($weekly_special = $weekly_special_result->fetch_assoc()) {
+               $weekly_specials_by_product[(int)$weekly_special['product_id']] = (string)($weekly_special['description'] ?? '');
+            }
             $weekly_special_stmt->close();
-            $weekly_special_product_id = (int)($weekly_special['product_id'] ?? 0);
 
             $stmt = $conn->prepare("SELECT * FROM `products` ORDER BY id DESC");
             $stmt->execute();
@@ -3016,14 +3009,14 @@ if (isset($_GET['remove_extra_group'])) {
                      <i class="fa-solid fa-comment-dots"></i> <?php echo !empty($product['allow_special_instructions']) ? 'Instructions on' : 'Instructions off'; ?>
                   </div>
 
-                  <?php $is_weekly_special = $weekly_special_product_id === (int)$product['id']; ?>
+                  <?php $is_weekly_special = array_key_exists((int)$product['id'], $weekly_specials_by_product); ?>
                   <form method="post" class="weekly-special-admin" style="display:grid;gap:8px;margin:12px 0;padding:12px;border:1px solid #f0e6d8;border-radius:10px;background:#fffbf7;">
                      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                      <input type="hidden" name="weekly_special_product_id" value="<?php echo (int)$product['id']; ?>">
                      <label for="weekly-special-description-<?php echo (int)$product['id']; ?>" style="font-weight:700;color:#5e1f13;">
                         <i class="fa-solid fa-star"></i> Special Product of the Week
                      </label>
-                     <textarea id="weekly-special-description-<?php echo (int)$product['id']; ?>" name="weekly_special_description" maxlength="500" rows="3" placeholder="Optional announcement description (up to 500 characters)" style="width:100%;padding:9px;border:1px solid #e3d5c8;border-radius:8px;font:inherit;resize:vertical;"><?php echo $is_weekly_special ? htmlspecialchars((string)($weekly_special['description'] ?? ''), ENT_QUOTES, 'UTF-8') : ''; ?></textarea>
+                     <textarea id="weekly-special-description-<?php echo (int)$product['id']; ?>" name="weekly_special_description" maxlength="500" rows="3" placeholder="Optional announcement description (up to 500 characters)" style="width:100%;padding:9px;border:1px solid #e3d5c8;border-radius:8px;font:inherit;resize:vertical;"><?php echo $is_weekly_special ? htmlspecialchars($weekly_specials_by_product[(int)$product['id']], ENT_QUOTES, 'UTF-8') : ''; ?></textarea>
                      <button type="submit" name="set_weekly_special" value="enable" class="btn" style="width:100%;">
                         <i class="fa-solid <?php echo $is_weekly_special ? 'fa-floppy-disk' : 'fa-toggle-on'; ?>"></i>
                         <?php echo $is_weekly_special ? 'Update Weekly Special' : 'Enable as Weekly Special'; ?>
@@ -3033,7 +3026,7 @@ if (isset($_GET['remove_extra_group'])) {
                            <i class="fa-solid fa-toggle-off"></i> Disable Weekly Special
                         </button>
                      <?php else: ?>
-                        <small style="color:#664c47;">Enabling this product replaces the current weekly special.</small>
+                        <small style="color:#664c47;">You can enable multiple weekly specials at the same time.</small>
                      <?php endif; ?>
                   </form>
 

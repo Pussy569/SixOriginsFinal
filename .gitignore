@@ -9,6 +9,7 @@ finalshopdatabase.sql
 !/database/migrations/20261021_login_session_email_approval.sql
 !/database/migrations/20261031_session_inactivity_timeout.sql
 !/database/migrations/20261031_weekly_special.sql
+!/database/migrations/20261031_weekly_special_products.sql
 *.sqlite
 *.sqlite3
 *.db

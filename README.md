@@ -125,7 +125,9 @@ To enable the admin-managed Special Product of the Week announcement on an exist
 mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261031_weekly_special.sql
 ```
 
-Admins can enable one product at a time and optionally add a 500-character announcement description from Product Management. Fresh databases initialized from `database/schema.sql` already include the required settings table.
+Admins can enable multiple products at the same time and add a separate 500-character announcement description for each from Product Management. Fresh databases initialized from `database/schema.sql` already include the required table.
+
+To upgrade an installation that already applied the single-special migration, back up the database and apply `database/migrations/20261031_weekly_special_products.sql`. It preserves the currently selected special and its description, then allows multiple weekly specials.
 
 This file-based session setup assumes a single application replica. Before scaling the web service to multiple replicas, move sessions to a shared session store and media to shared object storage.
 

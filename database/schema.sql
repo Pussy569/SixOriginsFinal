@@ -335,14 +335,12 @@ ALTER TABLE `product_size_ingredients` ADD CONSTRAINT `product_size_ingredients_
   ADD CONSTRAINT `product_size_ingredients_ibfk_2` FOREIGN KEY (`ingredient_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 ALTER TABLE `user_discounts` ADD CONSTRAINT `user_discounts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `user_discounts_ibfk_2` FOREIGN KEY (`discount_id`) REFERENCES `discounts` (`id`) ON DELETE CASCADE;
-CREATE TABLE `weekly_special_settings` (
-  `id` tinyint unsigned NOT NULL DEFAULT 1,
-  `product_id` int DEFAULT NULL,
+CREATE TABLE `weekly_special_products` (
+  `product_id` int NOT NULL,
   `description` varchar(500) DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  CONSTRAINT `weekly_special_settings_singleton` CHECK (`id` = 1),
-  CONSTRAINT `weekly_special_settings_product_fk` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL
+  PRIMARY KEY (`product_id`),
+  CONSTRAINT `weekly_special_products_product_fk` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Audit triggers
