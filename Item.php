@@ -347,6 +347,12 @@ unset($_SESSION['message']);
     .product-card:hover .img-wrap img { transform: scale(1.08); }
 
     .product-details { padding: 20px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .product-details .special-product-label {
+      display: inline-flex; align-items: center; gap: 6px; width: fit-content; margin-bottom: 10px;
+      padding: 6px 11px; border: 1px solid rgba(198, 69, 62, 0.22); border-radius: 999px;
+      background: #fff0e8; color: var(--primary-red); font-size: .78rem; font-weight: 900;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
     .product-details .name { font-weight: 900; font-size: 1.15rem; color: var(--dark-brown); margin-bottom: 8px; font-family: 'Montserrat', sans-serif; line-height: 1.3; overflow-wrap: anywhere; }
 
     .product-details .desc {
@@ -568,7 +574,12 @@ unset($_SESSION['message']);
          <section class="products-section">
             <div class="grid" role="list">
                <?php
-                  $prod_stmt = $conn->prepare("SELECT id, name, price, image, details, size_type FROM `products` ORDER BY id DESC");
+                  $prod_stmt = $conn->prepare(
+                     "SELECT p.id, p.name, p.price, p.image, p.details, p.size_type,
+                             EXISTS(SELECT 1 FROM `weekly_special_products` wsp WHERE wsp.product_id = p.id) AS is_weekly_special
+                      FROM `products` p
+                      ORDER BY p.id DESC"
+                  );
                   $prod_stmt->execute();
                   $select_products = $prod_stmt->get_result();
 
@@ -598,7 +609,7 @@ unset($_SESSION['message']);
 
                         [$preference_groups, $extra_groups] = fetch_customizations($conn, $product_id);
                ?>
-               <form action="" method="post" class="product-card<?php echo $product_out_of_stock ? ' out-of-stock' : ''; ?>" role="listitem" aria-labelledby="prod-<?php echo $product_id; ?>">
+               <form action="" method="post" id="product-<?php echo $product_id; ?>" class="product-card<?php echo $product_out_of_stock ? ' out-of-stock' : ''; ?>" role="listitem" aria-labelledby="prod-<?php echo $product_id; ?>">
                   <div class="img-wrap">
                      <?php $starting_price = !empty($sizes) ? min(array_column($sizes, 'price')) : (float)$fetch_products['price']; ?>
                      <div class="price-badge">From ₱<?php echo number_format($starting_price, 2); ?></div>
@@ -609,6 +620,9 @@ unset($_SESSION['message']);
                   </div>
 
                   <div class="product-details">
+                     <?php if (!empty($fetch_products['is_weekly_special'])): ?>
+                        <span class="special-product-label"><i class="fa-solid fa-star"></i> Special</span>
+                     <?php endif; ?>
                      <div id="prod-<?php echo $product_id; ?>" class="name"><?php echo htmlspecialchars($fetch_products['name']); ?></div>
 
                      <span class="size-type-tag"><i class="fa-solid <?php echo $type_meta['icon']; ?>"></i> <?php echo htmlspecialchars($type_meta['label']); ?></span>

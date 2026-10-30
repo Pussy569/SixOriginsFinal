@@ -565,6 +565,23 @@ img, video { max-width: 100%; }
   object-fit: cover;
 }
 .weekly-special-card-content { padding: 18px; }
+.weekly-special-card .special-product-label,
+.product-details .special-product-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 6px 11px;
+  border: 1px solid rgba(198, 69, 62, 0.22);
+  border-radius: 999px;
+  background: #fff0e8;
+  color: var(--primary-red);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
 .weekly-special-card .announcement-label {
   color: var(--primary-red);
   font-size: .82rem;
@@ -1468,12 +1485,13 @@ img, video { max-width: 100%; }
                <article class="weekly-special-card">
                   <img src="images/<?php echo htmlspecialchars((string)$weekly_special['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string)$weekly_special['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
                   <div class="weekly-special-card-content">
-                     <div class="announcement-label"><i class="fa-solid fa-star"></i> Special Product of the Week</div>
+                     <span class="special-product-label"><i class="fa-solid fa-star"></i> Special</span>
+                     <div class="announcement-label">Special Product of the Week</div>
                      <h3><?php echo htmlspecialchars((string)$weekly_special['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
                      <?php if (!empty($weekly_special['description'])): ?>
                         <p><?php echo htmlspecialchars((string)$weekly_special['description'], ENT_QUOTES, 'UTF-8'); ?></p>
                      <?php endif; ?>
-                     <a href="product.php?id=<?php echo (int)$weekly_special['id']; ?>">View product <i class="fa-solid fa-arrow-right"></i></a>
+                     <a href="Item.php#product-<?php echo (int)$weekly_special['id']; ?>">View product <i class="fa-solid fa-arrow-right"></i></a>
                   </div>
                </article>
             <?php endforeach; ?>
