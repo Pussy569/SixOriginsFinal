@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($_SESSION['message'])) {
         $_SESSION['message'] = 'For your security, this device was signed out after another sign-in was approved.';
     } elseif ($sessionNotice === 'denied') {
         $_SESSION['message'] = 'The sign-in request was not approved. Please try again.';
+    } elseif ($sessionNotice === 'timeout') {
+        $_SESSION['message'] = 'You have been signed out after 10 minutes of inactivity.';
     }
 }
 
@@ -1058,6 +1060,12 @@ if (isset($_POST['submit'])) {
       });
    </script>
    <?php if (!empty($_SESSION['user_id']) || !empty($_SESSION['admin_id']) || !empty($_SESSION['rider_id']) || !empty($_SESSION['pending_login_request_id'])): ?>
+   <?php if (!empty($_SESSION['user_id']) || !empty($_SESSION['admin_id']) || !empty($_SESSION['rider_id'])): ?>
+   <script src="Js/session-timeout.js"
+      data-session-key="<?php echo htmlspecialchars($_SESSION['inactivity_session_key'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+      data-csrf-token="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+      defer></script>
+   <?php endif; ?>
    <script src="Js/account-session-security.js"
       data-csrf-token="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
       data-pending-login="<?php echo !empty($_SESSION['pending_login_request_id']) ? 'true' : 'false'; ?>"

@@ -207,7 +207,8 @@ CREATE TABLE `users` (`id` int NOT NULL,
   `twofa_email_enabled` tinyint NOT NULL DEFAULT 0,
   `failed_attempts` int DEFAULT 0,
   `lockout_until` datetime DEFAULT NULL,
-  `active_session_token` char(64) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `active_session_token` char(64) DEFAULT NULL,
+  `active_session_last_activity` datetime DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `user_discounts` (`id` int NOT NULL,
   `user_id` int NOT NULL,

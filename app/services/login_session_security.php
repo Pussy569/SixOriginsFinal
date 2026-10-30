@@ -19,7 +19,7 @@ function clear_active_account_session(int $userId, string $sessionToken): void
         return;
     }
 
-    $stmt = $conn->prepare('UPDATE users SET active_session_token = NULL WHERE id = ? AND active_session_token = ?');
+    $stmt = $conn->prepare('UPDATE users SET active_session_token = NULL, active_session_last_activity = NULL WHERE id = ? AND active_session_token = ?');
     $stmt->bind_param('is', $userId, $sessionToken);
     $stmt->execute();
     $stmt->close();
@@ -39,10 +39,12 @@ function establish_account_login(array $user, string $sessionToken): void
         $_SESSION['user_id'],
         $_SESSION['user_name'],
         $_SESSION['user_email'],
-        $_SESSION['pending_login_request_id']
+        $_SESSION['pending_login_request_id'],
+        $_SESSION['inactivity_session_key']
     );
 
     $_SESSION['account_session_token'] = $sessionToken;
+    $_SESSION['inactivity_session_key'] = bin2hex(random_bytes(16));
     $_SESSION['just_logged_in'] = true;
 
     $type = strtolower((string)$user['user_type']);
@@ -70,10 +72,14 @@ function begin_account_login(int $userId, string $name, string $email, string $t
         return 'blocked';
     }
 
-    $stmt = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+    $stmt = $conn->prepare(
+        'SELECT active_session_token,
+                (active_session_last_activity IS NOT NULL AND active_session_last_activity <= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+         FROM users WHERE id = ? LIMIT 1'
+    );
     $stmt->bind_param('i', $userId);
     $stmt->execute();
-    $stmt->bind_result($activeToken);
+    $stmt->bind_result($activeToken, $sessionTimedOut);
     $found = $stmt->fetch();
     $stmt->close();
 
@@ -83,6 +89,33 @@ function begin_account_login(int $userId, string $name, string $email, string $t
     }
 
     $activeToken = (string)($activeToken ?? '');
+    if ($activeToken !== '' && (int)$sessionTimedOut === 1) {
+        $expire = $conn->prepare(
+            'UPDATE users SET active_session_token = NULL, active_session_last_activity = NULL
+             WHERE id = ? AND active_session_token = ? AND active_session_last_activity <= DATE_SUB(NOW(), INTERVAL 10 MINUTE)'
+        );
+        $expire->bind_param('is', $userId, $activeToken);
+        $expire->execute();
+        $expired = $expire->affected_rows === 1;
+        $expire->close();
+
+        if ($expired) {
+            $activeToken = '';
+        } else {
+            $stmt = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+            $stmt->bind_param('i', $userId);
+            $stmt->execute();
+            $stmt->bind_result($activeToken);
+            $found = $stmt->fetch();
+            $stmt->close();
+            if (!$found) {
+                error_log('Login session security: account disappeared while checking session activity.');
+                return 'blocked';
+            }
+            $activeToken = (string)($activeToken ?? '');
+        }
+    }
+
     $currentToken = (string)($_SESSION['account_session_token'] ?? '');
     if ($activeToken !== '' && $currentUserId === $userId && $currentToken !== '' && hash_equals($activeToken, $currentToken)) {
         establish_account_login(['id' => $userId, 'name' => $name, 'email' => $email, 'user_type' => $type], $activeToken);
@@ -91,7 +124,7 @@ function begin_account_login(int $userId, string $name, string $email, string $t
 
     if ($activeToken === '') {
         $sessionToken = bin2hex(random_bytes(32));
-        $activate = $conn->prepare('UPDATE users SET active_session_token = ? WHERE id = ? AND active_session_token IS NULL');
+        $activate = $conn->prepare('UPDATE users SET active_session_token = ?, active_session_last_activity = NOW() WHERE id = ? AND active_session_token IS NULL');
         $activate->bind_param('si', $sessionToken, $userId);
         $activate->execute();
         $activated = $activate->affected_rows === 1;

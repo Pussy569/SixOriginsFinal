@@ -88,6 +88,23 @@ if ($action === 'send_email_code') {
     account_session_reply(['status' => 'sent']);
 }
 
+if ($action === 'touch_activity') {
+    $stmt = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $stmt->bind_result($activeToken);
+    $found = $stmt->fetch();
+    $stmt->close();
+
+    if (!$found || !is_string($activeToken) || !hash_equals($activeToken, $sessionToken)) {
+        session_unset();
+        session_destroy();
+        account_session_reply(['status' => 'revoked'], 401);
+    }
+
+    account_session_reply(['status' => 'active']);
+}
+
 if ($action === 'verify_email_code') {
     $requestId = (string)($_SESSION['pending_login_request_id'] ?? '');
     $code = trim((string)($_POST['code'] ?? ''));
@@ -129,7 +146,7 @@ if ($action === 'verify_email_code') {
         ], 400);
     }
 
-    $activate = $conn->prepare('UPDATE users SET active_session_token = ? WHERE id = ? AND active_session_token = ?');
+    $activate = $conn->prepare('UPDATE users SET active_session_token = ?, active_session_last_activity = NOW() WHERE id = ? AND active_session_token = ?');
     $activate->bind_param('sis', $newSessionToken, $accountId, $previousSessionToken);
     $activate->execute();
     $activated = $activate->affected_rows === 1;
@@ -228,7 +245,7 @@ if ($action === 'approve' || $action === 'reject') {
         account_session_reply(['status' => 'expired']);
     }
 
-    $activate = $conn->prepare('UPDATE users SET active_session_token = ? WHERE id = ? AND active_session_token = ?');
+    $activate = $conn->prepare('UPDATE users SET active_session_token = ?, active_session_last_activity = NOW() WHERE id = ? AND active_session_token = ?');
     $activate->bind_param('sis', $newSessionToken, $userId, $sessionToken);
     $activate->execute();
     $activated = $activate->affected_rows === 1;

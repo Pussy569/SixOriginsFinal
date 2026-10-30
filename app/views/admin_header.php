@@ -628,6 +628,7 @@ if (profileBtn && profileMenu) {
     setInterval(() => { if (isOpen) loadNotifications(); }, 20000);
 })();
 </script>
+<script src="Js/session-timeout.js" data-session-key="<?php echo escapeOutput($_SESSION['inactivity_session_key'] ?? ''); ?>" data-csrf-token="<?php echo escapeOutput($_SESSION['csrf_token'] ?? ''); ?>" defer></script>
 <script src="Js/account-session-security.js" data-csrf-token="<?php echo escapeOutput($_SESSION['csrf_token']); ?>" defer></script>
 </body>
 </html>

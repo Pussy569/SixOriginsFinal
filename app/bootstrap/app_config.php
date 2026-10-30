@@ -81,20 +81,23 @@ foreach (['admin_id', 'rider_id', 'user_id'] as $account_session_key) {
     }
 }
 
-if ($account_session_user_id > 0 && !$is_account_session_endpoint) {
-    $session_lookup = $conn->prepare('SELECT active_session_token FROM users WHERE id = ? LIMIT 1');
+if ($account_session_user_id > 0) {
+    $session_lookup = $conn->prepare(
+        'SELECT active_session_token,
+                (active_session_last_activity IS NOT NULL AND active_session_last_activity <= DATE_SUB(NOW(), INTERVAL 10 MINUTE))
+         FROM users WHERE id = ? LIMIT 1'
+    );
     $session_lookup->bind_param('i', $account_session_user_id);
     $session_lookup->execute();
-    $session_lookup->bind_result($stored_session_token);
+    $session_lookup->bind_result($stored_session_token, $session_timed_out);
     $session_user_found = $session_lookup->fetch();
     $session_lookup->close();
 
     $stored_session_token = (string)($stored_session_token ?? '');
     $account_session_token = (string)($_SESSION['account_session_token'] ?? '');
-
     if ($session_user_found && $stored_session_token === '' && $account_session_token === '') {
         $account_session_token = bin2hex(random_bytes(32));
-        $session_update = $conn->prepare('UPDATE users SET active_session_token = ? WHERE id = ? AND active_session_token IS NULL');
+        $session_update = $conn->prepare('UPDATE users SET active_session_token = ?, active_session_last_activity = NOW() WHERE id = ? AND active_session_token IS NULL');
         $session_update->bind_param('si', $account_session_token, $account_session_user_id);
         $session_update->execute();
         $initialized_session = $session_update->affected_rows === 1;
@@ -114,15 +117,57 @@ if ($account_session_user_id > 0 && !$is_account_session_endpoint) {
         }
     }
 
-    if (!$session_user_found || $account_session_token === '' || $stored_session_token === '' || !hash_equals($stored_session_token, $account_session_token)) {
+    $session_token_matches = $session_user_found
+        && $account_session_token !== ''
+        && $stored_session_token !== ''
+        && hash_equals($stored_session_token, $account_session_token);
+
+    if ($session_token_matches && (int)$session_timed_out === 1) {
+        $expire_session = $conn->prepare(
+            'UPDATE users SET active_session_token = NULL, active_session_last_activity = NULL
+             WHERE id = ? AND active_session_token = ? AND active_session_last_activity <= DATE_SUB(NOW(), INTERVAL 10 MINUTE)'
+        );
+        $expire_session->bind_param('is', $account_session_user_id, $account_session_token);
+        $expire_session->execute();
+        $expire_session->close();
+
         session_unset();
         session_destroy();
-        if (!headers_sent()) {
-            header('Location: login.php?session=revoked');
+        if ($is_account_session_endpoint) {
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-store, private');
+            echo json_encode(['status' => 'timed_out']);
+        } elseif (!headers_sent()) {
+            header('Location: login.php?session=timeout');
         } else {
             http_response_code(401);
         }
         exit();
+    }
+
+    if ($session_token_matches) {
+        $touch_session = $conn->prepare('UPDATE users SET active_session_last_activity = NOW() WHERE id = ? AND active_session_token = ?');
+        $touch_session->bind_param('is', $account_session_user_id, $account_session_token);
+        $touch_session->execute();
+        $touch_session->close();
+
+        if (empty($_SESSION['inactivity_session_key'])) {
+            $_SESSION['inactivity_session_key'] = bin2hex(random_bytes(16));
+        }
+    }
+
+    if (!$session_user_found || $account_session_token === '' || $stored_session_token === '' || !hash_equals($stored_session_token, $account_session_token)) {
+        if (!$is_account_session_endpoint) {
+            session_unset();
+            session_destroy();
+            if (!headers_sent()) {
+                header('Location: login.php?session=revoked');
+            } else {
+                http_response_code(401);
+            }
+            exit();
+        }
     }
 }
 
