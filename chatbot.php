@@ -431,9 +431,8 @@ function formatProduct($product, $conn) {
 
 <!-- ===== Six Origins Chatbot ===== -->
 <div id="chatbot-root">
-  <button id="chatbot-launcher" type="button" title="Chat with us" aria-label="Open chat" aria-expanded="false" aria-controls="chatbot-box">
-    <img src="images/logos.png" alt="Six Origins Logo" />
-    <span class="cb-launch-tip" id="cb-tip">Hi!</span>
+  <button id="chatbot-launcher" type="button" title="Need some help?" aria-label="Need some help? Open chat" aria-expanded="false" aria-controls="chatbot-box">
+    Need some help?
   </button>
 
   <section id="chatbot-box" role="dialog" aria-label="Six Origins chat">
@@ -504,44 +503,32 @@ function formatProduct($product, $conn) {
 
 /* ---------- Launcher ---------- */
 #chatbot-launcher {
-  width: 62px;
-  height: 62px;
+  width: auto;
+  max-width: calc(100vw - 28px);
+  min-height: 52px;
+  padding: 0 18px;
   background: linear-gradient(135deg, var(--cb-red) 0%, var(--cb-red-deep) 100%);
-  border-radius: 50%;
+  border-radius: 999px;
   box-shadow: 0 8px 24px rgba(94, 31, 19, 0.28);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
   position: relative;
-  padding: 0;
   transition: var(--cb-ease);
   -webkit-tap-highlight-color: transparent;
 }
-
-#chatbot-launcher img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 @media (hover: hover) {
   #chatbot-launcher:hover { box-shadow: 0 12px 36px rgba(94, 31, 19, 0.35); transform: scale(1.06); }
 }
 
 #chatbot-launcher:active { transform: scale(0.95); }
-
-.cb-launch-tip {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  background: var(--cb-cream);
-  color: var(--cb-brown);
-  border-radius: 13px 0 13px 13px;
-  font-size: 11.5px;
-  font-weight: 800;
-  padding: 3px 10px 2px 8px;
-  box-shadow: 0 4px 12px rgba(94, 31, 19, 0.18);
-}
-
-.cb-launch-tip.gone { display: none; }
 
 /* ---------- Panel ---------- */
 #chatbot-box {
@@ -985,7 +972,7 @@ function formatProduct($product, $conn) {
 @media (max-width: 510px) {
   #chatbot-root { right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); }
 
-  #chatbot-launcher { width: 56px; height: 56px; }
+  #chatbot-launcher { min-height: 48px; padding: 0 15px; font-size: 0.85rem; }
 
   #chatbot-root.cb-is-open #chatbot-launcher { display: none; }
 

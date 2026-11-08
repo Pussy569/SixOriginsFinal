@@ -1700,15 +1700,18 @@ if (!isset($_SESSION['admin_id'])) {
         position: fixed;
         bottom: 24px;
         right: 24px;
-        width: 60px;
-        height: 60px;
-        padding: 0;
-        border-radius: 50%;
+        width: auto;
+        max-width: calc(100vw - 32px);
+        min-height: 52px;
+        padding: 0 18px;
+        border-radius: 999px;
         background: linear-gradient(135deg, #C6453E 0%, #B83A34 100%);
         color: #fff;
         border: none;
         cursor: pointer;
-        font-size: 1.8rem;
+        font-size: 0.92rem;
+        font-weight: 800;
+        white-space: nowrap;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2081,8 +2084,9 @@ if (!isset($_SESSION['admin_id'])) {
         .chatbot-fab {
             bottom: 16px;
             right: 16px;
-            width: 56px;
-            height: 56px;
+            min-height: 48px;
+            padding: 0 15px;
+            font-size: 0.85rem;
         }
 
         .chatbot-window {
@@ -2245,8 +2249,8 @@ if (!isset($_SESSION['admin_id'])) {
 </style>
 
 <!-- Chatbot HTML -->
-<button type="button" class="chatbot-fab" id="chatbotFab" title="Open Chat" aria-label="Open chat assistant" aria-expanded="false" aria-controls="chatbotWindow">
-    <i class="fa-solid fa-robot"></i>
+<button type="button" class="chatbot-fab" id="chatbotFab" title="Need some help?" aria-label="Need some help? Open admin chat" aria-expanded="false" aria-controls="chatbotWindow">
+    Need some help?
 </button>
 
 <div class="chatbot-window" id="chatbotWindow" role="dialog" aria-label="Admin Assistant">

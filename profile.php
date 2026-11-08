@@ -818,17 +818,29 @@ if (!empty($user['profile_image'])) {
 
       .wallet {
         font-weight: 800;
-        color: var(--primary-red);
+        color: var(--dark-brown);
         margin-top: 12px;
         font-size: 1.1em;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        flex-direction: column;
+        gap: 4px;
       }
 
       .wallet i {
         font-size: 0.95rem;
+        color: var(--primary-red);
+      }
+
+      .wallet-label {
+        color: var(--gray-brown);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .wallet-amount {
+        color: var(--primary-red);
       }
 
       .profile-summary .profile-actions {
@@ -1429,7 +1441,8 @@ if (!empty($user['profile_image'])) {
         <div class="profile-email"><?php echo escapeOutput($user['email']); ?></div>
         <div class="wallet">
           <i class="fa-solid fa-wallet"></i>
-          <span>₱<?php echo number_format((float)($user['wallet_balance'] ?? 0), 2); ?></span>
+          <span class="wallet-label">Wallet Balance</span>
+          <span class="wallet-amount">₱<?php echo number_format((float)($user['wallet_balance'] ?? 0), 2); ?></span>
         </div>
 
         <div class="profile-actions">
