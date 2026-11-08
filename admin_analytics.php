@@ -49,15 +49,41 @@ $top5 = array_slice($product_counts, 0, 5, true);
 $best_products_labels = array_keys($top5);
 $best_products_data = array_values($top5);
 
-// --- Sales per Day 7-DAYS ---
+// --- Sales trend: daily totals for the last 7 days ---
 $sales_labels = [];
 $sales_totals = [];
 for ($i = 6; $i >= 0; $i--) {
    $day = date('Y-m-d', strtotime("-$i days"));
    $sales_labels[] = date('M d', strtotime($day));
-   $result = mysqli_query($conn, "SELECT SUM(total_price) as total FROM `orders` WHERE payment_status = 'completed' AND DATE(placed_on) = '$day' ");
+   $result = mysqli_query(
+      $conn,
+      "SELECT SUM(total_price) AS total
+       FROM `orders`
+       WHERE payment_status = 'completed'
+         AND STR_TO_DATE(placed_on, '%d-%b-%Y') = '$day'"
+   ) or die(mysqli_error($conn));
    $row = mysqli_fetch_assoc($result);
    $sales_totals[] = $row && $row['total'] ? floatval($row['total']) : 0;
+}
+
+// Hourly sales are grouped by completion time; placed_on stores only a date.
+$today = date('Y-m-d');
+$hourly_sales_by_hour = array_fill(0, 24, 0.0);
+$hourly_sales_result = mysqli_query(
+   $conn,
+   "SELECT HOUR(completed_at) AS sale_hour, SUM(total_price) AS total
+    FROM `orders`
+    WHERE payment_status = 'completed'
+      AND completed_at IS NOT NULL
+      AND DATE(completed_at) = '$today'
+    GROUP BY HOUR(completed_at)"
+) or die(mysqli_error($conn));
+while ($hourly_sale = mysqli_fetch_assoc($hourly_sales_result)) {
+   $hourly_sales_by_hour[(int)$hourly_sale['sale_hour']] = (float)$hourly_sale['total'];
+}
+$hourly_sales_labels = [];
+for ($hour = 0; $hour < 24; $hour++) {
+   $hourly_sales_labels[] = date('g A', strtotime(sprintf('%02d:00', $hour)));
 }
 
 // --- Orders by Status Pie Data ---
@@ -86,8 +112,7 @@ $row = mysqli_fetch_assoc($result);
 $kpi['total_revenue'] = $row && $row['total_revenue'] ? floatval($row['total_revenue']) : 0;
 
 /* 2. Orders Today (completed) */
-$today = date('Y-m-d');
-$result = mysqli_query($conn, "SELECT COUNT(*) as orders_today FROM orders WHERE payment_status = 'completed' AND DATE(placed_on) = '$today'");
+$result = mysqli_query($conn, "SELECT COUNT(*) as orders_today FROM orders WHERE payment_status = 'completed' AND STR_TO_DATE(placed_on, '%d-%b-%Y') = '$today'");
 $row = mysqli_fetch_assoc($result);
 $kpi['orders_today'] = $row && $row['orders_today'] ? intval($row['orders_today']) : 0;
 
@@ -423,6 +448,48 @@ $kpi['total_orders'] = $row && $row['total_orders'] ? intval($row['total_orders'
         letter-spacing: -0.5px;
       }
 
+      .sales-trend-header {
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .sales-trend-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sales-range-toggle {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid #F0E6D8;
+        border-radius: 9px;
+        background: #fff2e0;
+      }
+
+      .sales-range-button {
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--dark-brown);
+        font: inherit;
+        font-size: .75rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .sales-range-button[aria-pressed="true"] {
+        background: var(--primary-red);
+        color: #fff;
+      }
+
+      .sales-range-button:focus-visible {
+        outline: 2px solid var(--dark-brown);
+        outline-offset: 2px;
+      }
+
       .chart-container {
         position: relative;
         flex: 1;
@@ -728,10 +795,19 @@ $kpi['total_orders'] = $row && $row['total_orders'] ? intval($row['total_orders'
     <div class="analytics-grid">
       <!-- Sales Trend -->
       <div class="chart-panel">
-        <div class="chart-header">
-          <i class="fa-solid fa-chart-line"></i>
-          <h3>Sales Trend (Last 7 Days)</h3>
+        <div class="chart-header sales-trend-header">
+          <div class="sales-trend-title">
+            <i class="fa-solid fa-chart-line"></i>
+            <h3 id="salesChartTitle">Sales Trend (Last 7 Days)</h3>
+          </div>
+          <div class="sales-range-toggle" role="group" aria-label="Sales trend range">
+            <button type="button" class="sales-range-button" data-sales-range="7days" aria-pressed="true">7 Days</button>
+            <button type="button" class="sales-range-button" data-sales-range="today" aria-pressed="false">Today</button>
+          </div>
         </div>
+        <p id="salesChartNote" style="margin:-6px 0 14px;color:var(--gray-brown);font-size:.78rem;">
+          Daily totals for completed orders.
+        </p>
         <div class="chart-container">
           <canvas id="salesChart"></canvas>
         </div>
@@ -921,8 +997,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ---------- Sales 7 days Line Chart ----------
-    new Chart(document.getElementById('salesChart').getContext('2d'), {
+    // ---------- Sales Trend Line Chart ----------
+    const salesChart = new Chart(document.getElementById('salesChart').getContext('2d'), {
         type: 'line',
         data: {
             labels: <?php echo json_encode($sales_labels); ?>,
@@ -976,6 +1052,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
+    });
+
+    const salesRangeButtons = document.querySelectorAll('[data-sales-range]');
+    const salesChartTitle = document.getElementById('salesChartTitle');
+    const salesChartNote = document.getElementById('salesChartNote');
+    salesRangeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const showToday = this.dataset.salesRange === 'today';
+            salesChart.data.labels = showToday
+                ? <?php echo json_encode($hourly_sales_labels); ?>
+                : <?php echo json_encode($sales_labels); ?>;
+            salesChart.data.datasets[0].data = showToday
+                ? <?php echo json_encode(array_values($hourly_sales_by_hour)); ?>
+                : <?php echo json_encode($sales_totals); ?>;
+            salesChart.options.scales.x.ticks.maxRotation = showToday ? 0 : (mqMobile.matches ? 45 : 0);
+            salesChart.options.scales.x.ticks.maxTicksLimit = showToday
+                ? (mqMobile.matches ? 6 : 12)
+                : (mqMobile.matches ? 4 : 7);
+            salesChartTitle.textContent = showToday
+                ? 'Sales Today by Hour (Completed Orders)'
+                : 'Sales Trend (Last 7 Days)';
+            salesChartNote.textContent = showToday
+                ? 'Hourly totals are grouped by the time each order was completed.'
+                : 'Daily totals for completed orders.';
+            salesRangeButtons.forEach(rangeButton => {
+                rangeButton.setAttribute('aria-pressed', rangeButton === this ? 'true' : 'false');
+            });
+            salesChart.update();
+        });
     });
 });
 </script>
