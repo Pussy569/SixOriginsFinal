@@ -10,8 +10,9 @@
  *   orders.total_products = "Latte (2 x Medium) [Preference: Oat Milk]||Croissant (1 x Regular)"
  * (items separated by '||', with optional trailing [Preference: ...] /
  * [Extras: ...] tags on each item) and the recipe linking a product to
- * inventory items lives in:
- *   product_ingredients (product_id, ingredient_id, quantity_used)
+ * inventory items lives in product_ingredients (product_id, ingredient_id,
+ * quantity_used) for product-wide recipes and product_size_ingredients
+ * (product_size_id, ingredient_id, quantity_used) for size-specific usage.
  * joined against:
  *   inventory (id, ingredient_name, unit, category, quantity, min_stock_level)
  *

@@ -833,10 +833,11 @@ if (isset($_POST['add_product_ingredient'])) {
     exit;
 }
 
-// ==================== LINK PACKAGING TO A PRODUCT SIZE ====================
+// ==================== LINK INVENTORY USAGE TO A PRODUCT SIZE ====================
 if (isset($_POST['add_size_packaging'])) {
     validate_csrf_token();
     $sp_product_id = (int)($_POST['sp_product_id'] ?? 0);
+    $option_recipe_only = isset($_POST['option_recipe_only']);
 
     try {
         $product_size_id = (int)($_POST['product_size_id'] ?? 0);
@@ -844,7 +845,7 @@ if (isset($_POST['add_size_packaging'])) {
         $quantity_used = (float)($_POST['size_quantity_used'] ?? 0);
 
         if ($sp_product_id <= 0 || $product_size_id <= 0 || $ingredient_id <= 0 || $quantity_used <= 0) {
-            throw new Exception('Choose a product size, packaging item, and positive quantity.');
+            throw new Exception('Choose a product size, inventory item, and positive quantity.');
         }
 
         $size_stmt = $conn->prepare(
@@ -860,13 +861,17 @@ if (isset($_POST['add_size_packaging'])) {
             throw new Exception('The selected product size is unavailable.');
         }
 
-        $item_stmt = $conn->prepare("SELECT ingredient_name, unit FROM inventory WHERE id = ?");
+        $item_stmt = $conn->prepare("SELECT ingredient_name, unit, category FROM inventory WHERE id = ?");
         $item_stmt->bind_param("i", $ingredient_id);
         $item_stmt->execute();
         $item_row = $item_stmt->get_result()->fetch_assoc();
         $item_stmt->close();
         if (!$item_row) {
             throw new Exception('Choose an existing inventory item.');
+        }
+        $is_packaging = strtolower((string)$item_row['category']) === 'packaging';
+        if ($option_recipe_only && $is_packaging) {
+            throw new Exception('Choose a recipe ingredient. Packaging is managed separately.');
         }
 
         $global_link_stmt = $conn->prepare(
@@ -892,21 +897,26 @@ if (isset($_POST['add_size_packaging'])) {
         $link_stmt->execute();
         $link_stmt->close();
 
+        $usage_type = $is_packaging ? 'packaging' : 'recipe ingredient';
         log_admin_activity(
             $admin_id,
             'Link Option Inventory',
-            $item_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $item_row['unit'] . ') linked to ' . $size_row['product_name'] . ' - ' . $size_row['size']
+            $item_row['ingredient_name'] . ' (' . $quantity_used . ' ' . $item_row['unit'] . ') linked as ' . $usage_type . ' to ' . $size_row['product_name'] . ' - ' . $size_row['size']
         );
-        $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($item_row['ingredient_name']) . ' will be deducted only when ' . htmlspecialchars($size_row['size']) . ' is purchased.'];
+        $_SESSION['message'] = [
+            'type' => 'success',
+            'text' => htmlspecialchars($item_row['ingredient_name']) . ' will be deducted only when the ' . htmlspecialchars($size_row['size']) . ' option is purchased.'
+        ];
     } catch (Exception $e) {
         $_SESSION['message'] = ['type' => 'error', 'text' => htmlspecialchars($e->getMessage())];
     }
 
-    header('location:admin_products.php' . ($sp_product_id > 0 ? '?manage_packaging=' . $sp_product_id : ''));
+    $return_view = $option_recipe_only ? 'manage_ingredients' : 'manage_packaging';
+    header('location:admin_products.php' . ($sp_product_id > 0 ? '?' . $return_view . '=' . $sp_product_id : ''));
     exit;
 }
 
-// ==================== REMOVE SIZE-SPECIFIC PACKAGING ====================
+// ==================== REMOVE SIZE-SPECIFIC INVENTORY USAGE ====================
 if (isset($_GET['remove_size_packaging'])) {
     validate_csrf_get();
     $back_product_id = (int)($_GET['manage_packaging'] ?? $_GET['manage_ingredients'] ?? 0);
@@ -3257,6 +3267,14 @@ if (isset($_GET['remove_extra_group'])) {
          $option_inventory_stmt->execute();
          $option_inventory = $option_inventory_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
          $option_inventory_stmt->close();
+         $option_recipe_inventory = array_values(array_filter(
+            $option_inventory,
+            static fn($item) => strtolower((string)$item['category']) !== 'packaging'
+         ));
+         $packaging_inventory = array_values(array_filter(
+            $option_inventory,
+            static fn($item) => strtolower((string)$item['category']) === 'packaging'
+         ));
 
          $size_stmt = $conn->prepare("SELECT id, size FROM product_sizes WHERE product_id = ? AND is_active = 1 ORDER BY id ASC");
          $size_stmt->bind_param("i", $mi_product_id);
@@ -3276,6 +3294,14 @@ if (isset($_GET['remove_extra_group'])) {
          $size_packaging_stmt->execute();
          $size_packaging = $size_packaging_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
          $size_packaging_stmt->close();
+         $size_recipe_ingredients = array_values(array_filter(
+            $size_packaging,
+            static fn($item) => strtolower((string)$item['category']) !== 'packaging'
+         ));
+         $size_packaging = array_values(array_filter(
+            $size_packaging,
+            static fn($item) => strtolower((string)$item['category']) === 'packaging'
+         ));
       } else {
          $mi_stmt->close();
       }
@@ -3295,7 +3321,7 @@ if (isset($_GET['remove_extra_group'])) {
       </div>
 
       <div class="ingredients-section-label">
-         <i class="fa-solid fa-link"></i> Inventory Currently Deducted for Every Option
+         <i class="fa-solid fa-link"></i> Product-Wide Ingredients (Every Option)
       </div>
       <div class="linked-ingredients-list">
          <?php if (!empty($linked_ingredients)): ?>
@@ -3323,6 +3349,95 @@ if (isset($_GET['remove_extra_group'])) {
             </div>
          <?php endif; ?>
       </div>
+
+      <div class="ingredients-section-label" style="margin-top:20px;">
+         <i class="fa-solid fa-scale-balanced"></i> Recipe Ingredients by Option
+      </div>
+      <div class="help-text" style="margin-bottom:12px;">
+         Set a separate amount for each size or piece option. These amounts are deducted only for matching purchases. If an ingredient has different amounts by option, remove its product-wide amount above so it is not added a second time.
+      </div>
+      <?php if (!empty($size_recipe_ingredients)): ?>
+         <div class="linked-ingredients-list">
+            <?php foreach ($size_recipe_ingredients as $link): ?>
+               <div class="ingredient-item-row">
+                  <div class="ingredient-item-info">
+                     <span class="ingredient-item-name"><?php echo htmlspecialchars($link['size']); ?> — <?php echo htmlspecialchars($link['ingredient_name']); ?></span>
+                     <span class="ingredient-item-meta">
+                        <span class="cat-tag"><?php echo htmlspecialchars(strtolower((string)$link['category']) === 'drinks' ? 'Consumable (legacy)' : ucfirst((string)$link['category'])); ?></span>
+                        Uses <?php echo number_format((float)$link['quantity_used'], 2); ?> <?php echo htmlspecialchars($link['unit']); ?> per matching item sold
+                     </span>
+                  </div>
+                  <a href="admin_products.php?remove_size_packaging=<?php echo (int)$link['id']; ?>&manage_ingredients=<?php echo (int)$mi_product_id; ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
+                     class="remove-ingredient-btn" onclick="return confirm('Remove this option-specific recipe ingredient?');" title="Remove">
+                     <i class="fa-solid fa-trash"></i> Remove
+                  </a>
+               </div>
+            <?php endforeach; ?>
+         </div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">No option-specific recipe ingredients are set yet.</div>
+      <?php endif; ?>
+
+      <?php if (!empty($product_size_options) && !empty($option_recipe_inventory)): ?>
+      <form action="" method="post" novalidate>
+         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+         <input type="hidden" name="sp_product_id" value="<?php echo (int)$mi_product_id; ?>">
+         <input type="hidden" name="option_recipe_only" value="1">
+         <div class="field">
+            <label><i class="fa-solid fa-cubes"></i> Recipe Ingredient</label>
+            <div class="input-wrapper">
+               <select name="size_ingredient_id" required>
+                  <option value="">Choose an ingredient...</option>
+                  <?php
+                     $current_cat = null;
+                     foreach ($option_recipe_inventory as $inventory_item) {
+                        $inventory_category = strtolower((string)$inventory_item['category']) === 'drinks'
+                           ? 'Consumable'
+                           : ucfirst((string)$inventory_item['category']);
+                        if ($inventory_category !== $current_cat) {
+                           if ($current_cat !== null) echo '</optgroup>';
+                           echo '<optgroup label="' . htmlspecialchars($inventory_category) . '">';
+                           $current_cat = $inventory_category;
+                        }
+                        $is_product_wide = in_array((int)$inventory_item['id'], $linked_ids, true);
+                        echo '<option value="' . (int)$inventory_item['id'] . '"' . ($is_product_wide ? ' disabled' : '') . '>'
+                           . htmlspecialchars($inventory_item['ingredient_name']) . ' ('
+                           . htmlspecialchars($inventory_item['unit']) . ', '
+                           . number_format((float)$inventory_item['quantity'], 2) . ' in stock)'
+                           . ($is_product_wide ? ' — already used by every option' : '') . '</option>';
+                     }
+                     if ($current_cat !== null) echo '</optgroup>';
+                  ?>
+               </select>
+            </div>
+         </div>
+         <div class="field">
+            <label><i class="fa-solid fa-ruler"></i> Product Size / Option</label>
+            <div class="input-wrapper">
+               <select name="product_size_id" required>
+                  <option value="">Choose the matching option...</option>
+                  <?php foreach ($product_size_options as $size_option): ?>
+                     <option value="<?php echo (int)$size_option['id']; ?>"><?php echo htmlspecialchars($size_option['size']); ?></option>
+                  <?php endforeach; ?>
+               </select>
+            </div>
+         </div>
+         <div class="field">
+            <label><i class="fa-solid fa-weight-scale"></i> Amount Used Per Item Sold</label>
+            <div class="input-wrapper">
+               <input type="number" name="size_quantity_used" min="0.01" step="0.01" placeholder="e.g. 100" required>
+            </div>
+            <div class="help-text">Use the inventory item's unit. Saving the same ingredient and option again updates its amount.</div>
+         </div>
+         <div class="modal-actions">
+            <button type="submit" name="add_size_packaging" class="btn"><i class="fa-solid fa-link"></i> Save Option Recipe</button>
+         </div>
+      </form>
+      <?php elseif (empty($product_size_options)): ?>
+         <div class="no-ingredients-msg">Add an active customer option to this product before setting option-specific ingredients.</div>
+      <?php else: ?>
+         <div class="no-ingredients-msg">Add non-packaging inventory items before setting option-specific ingredients.</div>
+      <?php endif; ?>
 
       <div class="ingredients-section-label">
          <i class="fa-solid fa-flask"></i> Add Recipe Ingredient to Every Option
@@ -3354,7 +3469,7 @@ if (isset($_GET['remove_extra_group'])) {
                   ?>
                </select>
             </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Recipe ingredients apply to each sale of every option. Add cups, containers, or other option-specific stock in the section below.</div>
+            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Recipe ingredients apply to every option. For ingredients with different amounts by size, use the option-specific recipe section above.</div>
          </div>
 
          <div class="field">
@@ -3429,7 +3544,7 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="no-ingredients-msg">No packaging has been assigned to this product's options yet.</div>
       <?php endif; ?>
 
-      <?php if (!empty($product_size_options) && !empty($option_inventory)): ?>
+      <?php if (!empty($product_size_options) && !empty($packaging_inventory)): ?>
       <div class="ingredients-section-label" style="margin-top:20px;">
          <i class="fa-solid fa-plus"></i> Add Packaging to an Option
       </div>
@@ -3443,7 +3558,7 @@ if (isset($_GET['remove_extra_group'])) {
                   <option value="">Choose from inventory...</option>
                   <?php
                      $current_cat = null;
-                     foreach ($option_inventory as $inventory_item) {
+                     foreach ($packaging_inventory as $inventory_item) {
                         $inventory_category = strtolower((string)$inventory_item['category']) === 'drinks'
                            ? 'Consumable'
                            : ucfirst((string)$inventory_item['category']);
