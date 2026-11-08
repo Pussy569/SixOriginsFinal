@@ -13,6 +13,7 @@ if (!empty($_SESSION['user_id'])) {
 
 $cart_count = 0;
 $profile_image = 'default.png';
+$wallet_balance = 0.0;
 
 // Get cart count for BOTH registered and guest users
 if ($user_id && isset($conn)) {
@@ -25,12 +26,13 @@ if ($user_id && isset($conn)) {
 // Get profile info only for registered users
 if (!$is_guest && $user_id && isset($conn)) {
     $user_id_escaped = mysqli_real_escape_string($conn, (string)$user_id);
-    $res = mysqli_query($conn, "SELECT profile_image, name, email FROM users WHERE id = '$user_id_escaped' LIMIT 1") or die('query failed');
+    $res = mysqli_query($conn, "SELECT profile_image, name, email, wallet_balance FROM users WHERE id = '$user_id_escaped' LIMIT 1") or die('query failed');
     if ($res && mysqli_num_rows($res) > 0) {
         $profile_row = mysqli_fetch_assoc($res);
         if (!empty($profile_row['profile_image'])) {
             $profile_image = $profile_row['profile_image'];
         }
+        $wallet_balance = (float)($profile_row['wallet_balance'] ?? 0);
         if (empty($_SESSION['user_name']) && !empty($profile_row['name'])) {
             $_SESSION['user_name'] = $profile_row['name'];
         }
@@ -465,6 +467,44 @@ body {
   font-size: 0.85em; 
   margin-top: 4px;
   word-break: break-all;
+}
+
+.profile-menu .wallet-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1.5px solid #F0E6D8;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #FFFAF5 0%, #FFF2E0 100%);
+  color: var(--dark-brown);
+  text-decoration: none;
+}
+
+.profile-menu .wallet-balance-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.9em;
+  font-weight: 700;
+}
+
+.profile-menu .wallet-balance-label i {
+  color: var(--primary-red);
+}
+
+.profile-menu .wallet-balance-amount {
+  color: var(--primary-red);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.profile-menu .wallet-balance:hover,
+.profile-menu .wallet-balance:focus-visible {
+  border-color: var(--primary-red);
+  outline: none;
 }
 
 .profile-menu .profile-actions {
@@ -1006,6 +1046,12 @@ html{-webkit-text-size-adjust:100%}
                     <div class="muted"><?php echo (!$is_guest && !empty($_SESSION['user_email'])) ? htmlspecialchars($_SESSION['user_email']) : ($is_guest ? 'Browsing as guest' : 'Not signed in'); ?></div>
                  </div>
               </div>
+              <?php if (!$is_guest && $user_id): ?>
+                 <a href="profile.php" class="wallet-balance" role="menuitem" aria-label="Wallet balance: ₱<?php echo number_format($wallet_balance, 2); ?>. Open profile">
+                    <span class="wallet-balance-label"><i class="fas fa-wallet" aria-hidden="true"></i> Wallet Balance</span>
+                    <span class="wallet-balance-amount">₱<?php echo number_format($wallet_balance, 2); ?></span>
+                 </a>
+              <?php endif; ?>
               <div class="profile-actions">
                  <?php if (!$is_guest && $user_id): ?>
                     <a href="profile.php" class="icon-btn" role="menuitem"><i class="fas fa-user"></i> My Profile</a>
