@@ -12,15 +12,25 @@ include 'admin_log_activity.php';
 // ==================== ADD NEW INGREDIENT ====================
 if (isset($_POST['add_ingredient'])) {
     try {
+        if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Security validation failed. Refresh the page and try again.');
+        }
+
         $ingredient_name = trim($_POST['ingredient_name'] ?? '');
         $category = $_POST['category'] ?? '';
-        $quantity = floatval($_POST['quantity'] ?? 0);
+        $quantity_input = $_POST['quantity'] ?? '0';
         $unit = $_POST['unit'] ?? '';
-        $min_stock = floatval($_POST['min_stock_level'] ?? 0);
+        $min_stock_input = $_POST['min_stock_level'] ?? '0';
 
         if (empty($ingredient_name) || !in_array($category, ['consumable', 'packaging'], true) || empty($unit)) {
             throw new Exception('Please fill in all required fields');
         }
+        if (!is_numeric($quantity_input) || !is_finite((float)$quantity_input) || (float)$quantity_input < 0
+            || !is_numeric($min_stock_input) || !is_finite((float)$min_stock_input) || (float)$min_stock_input < 0) {
+            throw new Exception('Stock and alert levels must be valid non-negative numbers.');
+        }
+        $quantity = (float)$quantity_input;
+        $min_stock = (float)$min_stock_input;
 
         $insert_stmt = $conn->prepare(
             "INSERT INTO inventory (ingredient_name, category, quantity, unit, min_stock_level) 
@@ -49,13 +59,23 @@ if (isset($_POST['add_ingredient'])) {
 // ==================== UPDATE INVENTORY ====================
 if (isset($_POST['update_inventory'])) {
     try {
+        if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Security validation failed. Refresh the page and try again.');
+        }
+
         $ingredient_id = intval($_POST['ingredient_id'] ?? 0);
-        $new_quantity = floatval($_POST['new_quantity'] ?? 0);
-        $min_stock = floatval($_POST['min_stock_level'] ?? 0);
+        $new_quantity_input = $_POST['new_quantity'] ?? '';
+        $min_stock_input = $_POST['min_stock_level'] ?? '';
 
         if ($ingredient_id <= 0) {
             throw new Exception('Invalid ingredient selected');
         }
+        if (!is_numeric($new_quantity_input) || !is_finite((float)$new_quantity_input) || (float)$new_quantity_input < 0
+            || !is_numeric($min_stock_input) || !is_finite((float)$min_stock_input) || (float)$min_stock_input < 0) {
+            throw new Exception('Stock and alert levels must be valid non-negative numbers.');
+        }
+        $new_quantity = (float)$new_quantity_input;
+        $min_stock = (float)$min_stock_input;
 
         $info_stmt = $conn->prepare("SELECT ingredient_name, quantity, min_stock_level FROM inventory WHERE id = ?");
         $info_stmt->bind_param("i", $ingredient_id);
@@ -88,16 +108,27 @@ if (isset($_POST['update_inventory'])) {
     exit;
 }
 
-// ==================== DELETE INGREDIENT ====================
-if (isset($_GET['delete'])) {
+// ==================== DELETE INVENTORY ITEM ====================
+if (isset($_POST['delete_inventory'])) {
     try {
-        $ingredient_id = intval($_GET['delete']);
+        if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Security validation failed. Refresh the page and try again.');
+        }
+
+        $ingredient_id = intval($_POST['ingredient_id'] ?? 0);
+        if ($ingredient_id <= 0) {
+            throw new Exception('Invalid inventory item selected.');
+        }
+
         $record_stmt = $conn->prepare('SELECT ingredient_name, quantity, unit FROM inventory WHERE id = ? LIMIT 1');
         $record_stmt->bind_param('i', $ingredient_id);
         $record_stmt->execute();
         $record_stmt->bind_result($deleted_ingredient_name, $deleted_quantity, $deleted_unit);
         $record_found = $record_stmt->fetch();
         $record_stmt->close();
+        if (!$record_found) {
+            throw new Exception('Inventory item not found.');
+        }
         
         $delete_stmt = $conn->prepare("DELETE FROM inventory WHERE id = ?");
         $delete_stmt->bind_param("i", $ingredient_id);
@@ -108,7 +139,7 @@ if (isset($_GET['delete'])) {
         $delete_stmt->close();
 
         log_admin_activity($admin_id, 'Delete Ingredient', "Deleted ingredient: " . ($deleted_ingredient_name ?? "ID $ingredient_id"), 'success', 'ingredient', $ingredient_id, $record_found ? ['name' => $deleted_ingredient_name, 'quantity' => $deleted_quantity, 'unit' => $deleted_unit] : null, null);
-        $_SESSION['message'] = ['type' => 'success', 'text' => 'Ingredient deleted successfully'];
+        $_SESSION['message'] = ['type' => 'success', 'text' => htmlspecialchars($deleted_ingredient_name) . ' deleted successfully.'];
     } catch (Exception $e) {
         log_admin_activity((int)$admin_id, 'Delete Ingredient', 'Failed to delete ingredient: ' . $e->getMessage(), 'failure', 'ingredient', isset($ingredient_id) ? $ingredient_id : null);
         $_SESSION['message'] = ['type' => 'error', 'text' => $e->getMessage()];
@@ -347,12 +378,21 @@ $inventory_stmt->close();
             box-shadow: 0 0 0 3px rgba(198,69,62,.1);
         }
         .field input::placeholder { color: #C4A898; font-weight: 500; }
-        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+        .field-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            align-items: start;
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .field-row > .field + .field { margin-top: 0; }
         .field-hint {
             font-size: .7rem;
             color: var(--brown-mid);
             opacity: .7;
             font-weight: 500;
+            line-height: 1.35;
+            min-height: 1.9em;
         }
 
         .btn-submit {
@@ -525,6 +565,7 @@ $inventory_stmt->close();
 
         /* ── ACTION BUTTONS ── */
         .actions { display: flex; gap: 6px; }
+        .inline-action-form { display: flex; }
         .btn-icon {
             width: 32px; height: 32px;
             border-radius: 7px;
@@ -771,6 +812,7 @@ $inventory_stmt->close();
             </div>
             <div class="form-body">
                 <form method="POST" novalidate id="addForm">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
 
                     <div class="field">
                         <label>Item Name <span style="color:var(--red)">*</span></label>
@@ -891,15 +933,23 @@ $inventory_stmt->close();
                         <td><span class="badge <?= $status_class ?>"><i class="fa-solid <?= $status_icon ?>"></i> <?= $status_label ?></span></td>
                         <td>
                             <div class="actions">
-                                <button class="btn-icon btn-edit-icon" title="Update stock"
-                                    onclick="openEdit(<?= intval($item['id']) ?>, <?= $qty ?>, <?= $min ?>, '<?= addslashes(htmlspecialchars($item['ingredient_name'])) ?>')">
+                                <button type="button" class="btn-icon btn-edit-icon" title="Update stock"
+                                    aria-label="Update stock for <?= htmlspecialchars($item['ingredient_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-item-id="<?= intval($item['id']) ?>"
+                                    data-quantity="<?= htmlspecialchars((string)$qty, ENT_QUOTES, 'UTF-8') ?>"
+                                    data-min-stock="<?= htmlspecialchars((string)$min, ENT_QUOTES, 'UTF-8') ?>"
+                                    data-item-name="<?= htmlspecialchars($item['ingredient_name'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-item-unit="<?= htmlspecialchars($item['unit'], ENT_QUOTES, 'UTF-8') ?>">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="admin_inventory.php?delete=<?= intval($item['id']) ?>"
-                                   class="btn-icon btn-delete-icon" title="Delete item"
-                                   onclick="return confirmDelete('<?= addslashes(htmlspecialchars($item['ingredient_name'])) ?>')">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </a>
+                                <form method="POST" class="inline-action-form" data-item-name="<?= htmlspecialchars($item['ingredient_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <input type="hidden" name="ingredient_id" value="<?= intval($item['id']) ?>">
+                                    <button type="submit" name="delete_inventory" class="btn-icon btn-delete-icon" title="Delete item"
+                                        aria-label="Delete <?= htmlspecialchars($item['ingredient_name'], ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -931,13 +981,14 @@ $inventory_stmt->close();
         </div>
         <div class="modal-body">
             <form method="POST" id="editForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" id="editId" name="ingredient_id">
                 <div class="modal-item-name" id="editItemName">
                     <i class="fa-solid fa-cube" style="color:var(--red);"></i>
                     <span id="editItemNameText">Item</span>
                 </div>
                 <div class="modal-field">
-                    <label>New Quantity</label>
+                    <label>New Stock Level (<span id="editUnitText">unit</span>)</label>
                     <input type="number" id="editQty" name="new_quantity" min="0" step="0.01" required>
                 </div>
                 <div class="modal-field">
@@ -948,9 +999,8 @@ $inventory_stmt->close();
         </div>
         <div class="modal-footer">
             <button type="button" class="btn-modal-cancel" onclick="closeEdit()">Cancel</button>
-            <button type="button" class="btn-modal-save" onclick="document.getElementById('editForm').querySelector('[name=update_inventory]').click()">
+            <button type="submit" name="update_inventory" form="editForm" class="btn-modal-save">
                 <i class="fa-solid fa-floppy-disk"></i> Save Changes
-                <button name="update_inventory" form="editForm" style="display:none;"></button>
             </button>
         </div>
     </div>
@@ -969,14 +1019,26 @@ function dismissToast(btn) {
 }
 
 // ── Modal ──
-function openEdit(id, qty, min, name) {
+function openEdit(id, qty, min, name, unit) {
     document.getElementById('editId').value = id;
     document.getElementById('editQty').value = qty;
     document.getElementById('editMin').value = min;
     document.getElementById('editItemNameText').textContent = name;
+    document.getElementById('editUnitText').textContent = unit;
     document.getElementById('editModal').classList.add('open');
     document.getElementById('editQty').focus();
 }
+document.querySelectorAll('.btn-edit-icon').forEach(button => {
+    button.addEventListener('click', () => {
+        openEdit(
+            button.dataset.itemId,
+            button.dataset.quantity,
+            button.dataset.minStock,
+            button.dataset.itemName,
+            button.dataset.itemUnit
+        );
+    });
+});
 function closeEdit() {
     document.getElementById('editModal').classList.remove('open');
 }
@@ -987,8 +1049,13 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEdit();
 
 // ── Delete confirm ──
 function confirmDelete(name) {
-    return confirm('Are you sure you want to delete "' + name + '"?\nThis action cannot be undone.');
+    return confirm('Are you sure you want to delete "' + name + '"?\nThis also removes its linked product recipes and inventory usage history. This action cannot be undone.');
 }
+document.querySelectorAll('.inline-action-form').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (!confirmDelete(form.dataset.itemName)) event.preventDefault();
+    });
+});
 
 // ── Table filter ──
 function filterTable() {
