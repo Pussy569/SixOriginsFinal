@@ -3236,33 +3236,6 @@ if (isset($_GET['remove_extra_group'])) {
          }
          $linked_stmt->close();
 
-         // Inventory items not yet linked to this product (available to add)
-         $inv_stmt = $conn->prepare("SELECT id, ingredient_name, category, unit, quantity FROM `inventory` ORDER BY category ASC, ingredient_name ASC");
-         $inv_stmt->execute();
-         $inv_result = $inv_stmt->get_result();
-         $available_inventory = [];
-         while ($row = $inv_result->fetch_assoc()) {
-            if (strtolower((string)$row['category']) !== 'packaging' && !in_array((int)$row['id'], $linked_ids, true)) {
-               $available_inventory[] = $row;
-            }
-         }
-         $inv_stmt->close();
-
-         $option_link_ids_stmt = $conn->prepare(
-            "SELECT DISTINCT psi.ingredient_id
-             FROM product_size_ingredients psi
-             JOIN product_sizes ps ON psi.product_size_id = ps.id
-             WHERE ps.product_id = ?"
-         );
-         $option_link_ids_stmt->bind_param("i", $mi_product_id);
-         $option_link_ids_stmt->execute();
-         $option_linked_ids = array_map('intval', array_column($option_link_ids_stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'ingredient_id'));
-         $option_link_ids_stmt->close();
-         $available_inventory = array_values(array_filter(
-            $available_inventory,
-            static fn($item) => !in_array((int)$item['id'], $option_linked_ids, true)
-         ));
-
          $option_inventory_stmt = $conn->prepare("SELECT id, ingredient_name, category, unit, quantity FROM inventory ORDER BY category ASC, ingredient_name ASC");
          $option_inventory_stmt->execute();
          $option_inventory = $option_inventory_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -3321,7 +3294,10 @@ if (isset($_GET['remove_extra_group'])) {
       </div>
 
       <div class="ingredients-section-label">
-         <i class="fa-solid fa-link"></i> Product-Wide Ingredients (Every Option)
+         <i class="fa-solid fa-link"></i> Existing Shared Recipe Entries
+      </div>
+      <div class="help-text" style="margin-bottom:12px;">
+         These existing entries apply to every option. For ingredients you configure separately below, remove any shared entry here to avoid deducting it twice.
       </div>
       <div class="linked-ingredients-list">
          <?php if (!empty($linked_ingredients)): ?>
@@ -3344,8 +3320,7 @@ if (isset($_GET['remove_extra_group'])) {
             <?php endforeach; ?>
          <?php else: ?>
             <div class="no-ingredients-msg">
-               <i class="fa-solid fa-flask" style="font-size:1.5rem; opacity:0.4; display:block; margin-bottom:8px;"></i>
-               No ingredients linked to this product yet. Stock won't be able to auto-deduct until you add some below.
+               No shared recipe entries. Add recipe ingredients by option below.
             </div>
          <?php endif; ?>
       </div>
@@ -3354,7 +3329,7 @@ if (isset($_GET['remove_extra_group'])) {
          <i class="fa-solid fa-scale-balanced"></i> Recipe Ingredients by Option
       </div>
       <div class="help-text" style="margin-bottom:12px;">
-         Set a separate amount for each size or piece option. These amounts are deducted only for matching purchases. If an ingredient has different amounts by option, remove its product-wide amount above so it is not added a second time.
+         Select an ingredient and the size or piece option, then enter the amount used for one item sold. The order quantity is multiplied automatically.
       </div>
       <?php if (!empty($size_recipe_ingredients)): ?>
          <div class="linked-ingredients-list">
@@ -3439,70 +3414,8 @@ if (isset($_GET['remove_extra_group'])) {
          <div class="no-ingredients-msg">Add non-packaging inventory items before setting option-specific ingredients.</div>
       <?php endif; ?>
 
-      <div class="ingredients-section-label">
-         <i class="fa-solid fa-flask"></i> Add Recipe Ingredient to Every Option
-      </div>
-
-      <?php if (!empty($available_inventory)): ?>
-      <form action="" method="post" novalidate>
-         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-         <input type="hidden" name="pi_product_id" value="<?php echo intval($mi_product_id); ?>">
-
-         <div class="field">
-            <label><i class="fa-solid fa-cubes"></i> Inventory Item</label>
-            <div class="input-wrapper">
-               <select name="ingredient_id" id="ingredientSelect" required onchange="updateIngredientUnit()">
-                  <option value="">Choose from inventory...</option>
-                  <?php
-                     $current_cat = null;
-                     foreach ($available_inventory as $inv) {
-                        if ($inv['category'] !== $current_cat) {
-                           if ($current_cat !== null) echo '</optgroup>';
-                           echo '<optgroup label="' . htmlspecialchars(ucfirst((string)$inv['category'])) . '">';
-                           $current_cat = $inv['category'];
-                        }
-                        echo '<option value="' . intval($inv['id']) . '" data-unit="' . htmlspecialchars($inv['unit']) . '">'
-                           . htmlspecialchars($inv['ingredient_name']) . ' (' . htmlspecialchars($inv['unit']) . ', '
-                           . number_format($inv['quantity'], 2) . ' in stock)</option>';
-                     }
-                     if ($current_cat !== null) echo '</optgroup>';
-                  ?>
-               </select>
-            </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Recipe ingredients apply to every option. For ingredients with different amounts by size, use the option-specific recipe section above.</div>
-         </div>
-
-         <div class="field">
-            <label><i class="fa-solid fa-weight-scale"></i> Quantity Used Per Item Sold</label>
-            <div class="input-wrapper">
-               <input type="number" name="quantity_used" min="0.01" step="0.01" placeholder="e.g. 150" required>
-            </div>
-            <div class="help-text"><i class="fa-solid fa-info-circle"></i> Amount deducted from inventory (<span id="selectedUnitLabel">unit</span>) for each item sold</div>
-         </div>
-
-         <div class="modal-actions">
-            <button type="submit" name="add_product_ingredient" class="btn">
-               <i class="fa-solid fa-link"></i> Link Recipe Ingredient
-            </button>
-         </div>
-      </form>
-      <?php else: ?>
-         <div class="all-linked-msg">
-            <i class="fa-solid fa-circle-check"></i> All available recipe ingredients are already linked.
-         </div>
-      <?php endif; ?>
    </div>
 </div>
-<script>
-   function updateIngredientUnit() {
-      const select = document.getElementById('ingredientSelect');
-      const label = document.getElementById('selectedUnitLabel');
-      if (!select || !label) return;
-      const selected = select.options[select.selectedIndex];
-      label.textContent = selected && selected.dataset.unit ? selected.dataset.unit : 'unit';
-   }
-
-</script>
 <?php endif; ?>
 
 <?php if ($mi_product !== null && $manage_packaging_only): ?>
