@@ -331,6 +331,7 @@ $authImages = [
                 ?>
                     <fieldset class="customization-team-member">
                         <legend>Team member <?php echo $index + 1; ?></legend>
+                        <br>
                         <label>Name <input type="text" name="team_name[<?php echo $index; ?>]" maxlength="100" required value="<?php echo escapeOutput($member['name']); ?>"></label>
                         <label>Role <input type="text" name="team_role[<?php echo $index; ?>]" maxlength="60" required value="<?php echo escapeOutput($member['role']); ?>"></label>
                         <label>Bio <textarea name="team_bio[<?php echo $index; ?>]" maxlength="250" rows="3" required><?php echo escapeOutput($member['bio']); ?></textarea></label>
