@@ -1513,7 +1513,7 @@ if(isset($_POST['submit'])){
       </main>
 
       <aside class="image-panel" aria-hidden="false">
-         <img src="images/logback.jpeg" alt="Coffee background - admin registration page" loading="lazy">
+         <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['admin_register_image_path'], 'images/logback.jpeg')); ?>" alt="Coffee background - admin registration page" loading="lazy">
          <div class="image-overlay">
             <h2>
                Join Our Team

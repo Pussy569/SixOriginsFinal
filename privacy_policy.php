@@ -1,5 +1,8 @@
 <?php
 session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,13 +173,14 @@ session_start();
          }
       }
    </style>
+   <?php echo site_customization_css($site_customization); ?>
 </head>
-<body>
+<body class="privacy-policy">
 
-   <header>
+   <header class="privacy-header">
       <div class="logo-section">
-         <img src="images/logos.png" alt="Six Origins Logo">
-         <h1>Six Origins Cafe</h1>
+         <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo">
+         <h1><?php echo escapeOutput($site_customization['brand_name']); ?> <?php echo escapeOutput($site_customization['brand_tagline']); ?></h1>
       </div>
       <a href="login.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Login</a>
    </header>
@@ -187,7 +191,7 @@ session_start();
 
       <h3>1. Introduction</h3>
       <p>
-         Six Origins Cafe ("we", "us", "our") operates the website. This page informs you of our policies 
+         <?php echo escapeOutput($site_customization['brand_name']); ?> <?php echo escapeOutput($site_customization['brand_tagline']); ?> ("we", "us", "our") operates the website. This page informs you of our policies
          regarding the collection, use, and disclosure of personal data when you use our service and the 
          choices you have associated with that data.
       </p>
@@ -202,7 +206,7 @@ session_start();
       </ul>
 
       <h3>3. Use of Data</h3>
-      <p>Six Origins Cafe uses the collected data for various purposes:</p>
+      <p><?php echo escapeOutput($site_customization['brand_name']); ?> uses the collected data for various purposes:</p>
       <ul>
          <li>To provide and maintain our service</li>
          <li>To notify you about changes to our service</li>
@@ -214,7 +218,7 @@ session_start();
       </ul>
 
       <div class="highlight">
-         <strong>🔒 Security Note:</strong> Your password is encrypted using bcrypt hashing. Verification 
+         <strong>🔒 Security Note:</strong> Your password is encrypted using bcrypt hashing. Verification
          images are stored securely with restricted access. We do not share your personal data with third parties 
          without your consent.
       </div>
@@ -259,7 +263,7 @@ session_start();
       </p>
       <p>
          📧 <strong>Email:</strong> privacy@sixorigins.com<br>
-         📍 <strong>Address:</strong> Six Origins Cafe, Coffee Street, City<br>
+         📍 <strong>Address:</strong> <?php echo escapeOutput($site_customization['brand_name']); ?>, Coffee Street, City<br>
          📞 <strong>Phone:</strong> +1 (555) 123-4567
       </p>
 
@@ -271,8 +275,8 @@ session_start();
 
    </div>
 
-   <footer>
-      <p <a href="privacy_policy.php" style="color: white; text-decoration: none;"></a></a>&copy; 2024 Six Origins Cafe. All rights reserved. | <a href="privacy_policy.php" style="color: white; text-decoration: none;">Privacy Policy</a></p>
+   <footer class="privacy-footer">
+      <p>&copy; <?php echo date('Y'); ?> <?php echo escapeOutput($site_customization['brand_name']); ?>. All rights reserved. | <a href="privacy_policy.php" style="color: white; text-decoration: none;">Privacy Policy</a></p>
    </footer>
 
 </body>

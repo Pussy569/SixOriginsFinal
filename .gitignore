@@ -11,6 +11,7 @@ finalshopdatabase.sql
 !/database/migrations/20261031_weekly_special.sql
 !/database/migrations/20261031_weekly_special_products.sql
 !/database/migrations/20261109_site_customization.sql
+!/database/migrations/20261109_site_customization_experience.sql
 *.sqlite
 *.sqlite3
 *.db

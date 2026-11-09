@@ -1,6 +1,9 @@
 <?php
 session_start();
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+require_once __DIR__ . '/app/services/admin_log_activity.php';
+$site_customization = get_site_customization($conn);
 require_once __DIR__ . '/app/services/login_session_security.php';
 
 $account_user_id = current_account_session_user_id();
@@ -8,7 +11,6 @@ $account_session_token = (string)($_SESSION['account_session_token'] ?? '');
 clear_active_account_session($account_user_id, $account_session_token);
 
 if (isset($_SESSION['admin_id']) && (($_GET['reason'] ?? '') !== 'timeout')) {
-    require_once __DIR__ . '/app/services/admin_log_activity.php';
     log_admin_activity((int)$_SESSION['admin_id'], 'Admin Logout', 'Admin signed out.', 'success', 'admin', (int)$_SESSION['admin_id']);
 }
 session_unset();
@@ -77,6 +79,7 @@ if (($_GET['reason'] ?? '') === 'timeout') {
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
+        .coffee-loader i { font-size: 30px; color: var(--primary-red); }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -220,12 +223,17 @@ if (($_GET['reason'] ?? '') === 'timeout') {
             .logout-card h2 { font-size: 1.6rem; }
         }
     </style>
+    <?php echo site_customization_css($site_customization); ?>
+    <?php echo site_customization_loading_css($site_customization); ?>
 </head>
-<body>
+<body data-loading-style="<?php echo escapeOutput($site_customization['loading_style']); ?>">
 
     <div id="loader-overlay">
-        <div class="coffee-loader"></div>
-        <div class="loader-text">Six Origins Logout...</div>
+        <div class="coffee-loader"><i class="fa-solid fa-mug-hot"></i></div>
+        <div class="logout-loader-spinner"></div>
+        <div class="logout-loader-dots"><i></i><i></i><i></i></div>
+        <div class="logout-loader-bar"><i></i></div>
+        <div class="loader-text"><?php echo escapeOutput($site_customization['brand_name']); ?> Logout...</div>
     </div>
 
     <main class="logout-card" id="mainCard">

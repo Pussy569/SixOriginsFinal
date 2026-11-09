@@ -6,6 +6,10 @@ function site_customization_defaults(): array
         'brand_name' => 'Six Origins',
         'brand_tagline' => 'Cafe',
         'logo_path' => 'images/logos.png',
+        'login_image_path' => 'images/logback.jpeg',
+        'register_image_path' => 'images/logback.jpeg',
+        'admin_register_image_path' => 'images/logback.jpeg',
+        'loading_style' => 'rings',
         'primary_color' => '#C6453E',
         'secondary_color' => '#5E1F13',
         'accent_color' => '#664C47',
@@ -27,7 +31,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -38,6 +42,16 @@ function get_site_customization(mysqli $conn): array
         && (!is_string($settings['logo_path']) || !preg_match('#^images/site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings['logo_path']))) {
         $settings['logo_path'] = 'images/logos.png';
     }
+    foreach ([
+        'login_image_path' => 'images/logback.jpeg',
+        'register_image_path' => 'images/logback.jpeg',
+        'admin_register_image_path' => 'images/logback.jpeg',
+    ] as $image_key => $default_image) {
+        if ($settings[$image_key] !== $default_image
+            && (!is_string($settings[$image_key]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$image_key]))) {
+            $settings[$image_key] = $default_image;
+        }
+    }
 
     foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text'] as $color_key) {
         if (!is_string($settings[$color_key]) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $settings[$color_key])) {
@@ -47,6 +61,9 @@ function get_site_customization(mysqli $conn): array
 
     if (!in_array($settings['hero_media_type'], ['video', 'image'], true)) {
         $settings['hero_media_type'] = 'video';
+    }
+    if (!in_array($settings['loading_style'], ['rings', 'spinner', 'dots', 'progress', 'coffee', 'none'], true)) {
+        $settings['loading_style'] = 'rings';
     }
 
     return $settings;
@@ -88,20 +105,26 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
 {
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
+            login_image_path = VALUES(login_image_path), register_image_path = VALUES(register_image_path),
+            admin_register_image_path = VALUES(admin_register_image_path), loading_style = VALUES(loading_style),
             primary_color = VALUES(primary_color), secondary_color = VALUES(secondary_color), accent_color = VALUES(accent_color),
             page_background = VALUES(page_background), surface_color = VALUES(surface_color), text_color = VALUES(text_color),
             navbar_background = VALUES(navbar_background), navbar_text = VALUES(navbar_text),
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        'sssssssssssssi',
+        'sssssssssssssssssi',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
+        $settings['login_image_path'],
+        $settings['register_image_path'],
+        $settings['admin_register_image_path'],
+        $settings['loading_style'],
         $settings['primary_color'],
         $settings['secondary_color'],
         $settings['accent_color'],
@@ -134,13 +157,13 @@ function save_site_customization_upload(array $file, string $kind, string $proje
 
     $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-    $allowed = $kind === 'logo'
+    $allowed = $kind !== 'hero'
         ? ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp']
         : ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'mp4' => 'video/mp4', 'webm' => 'video/webm'];
     if (!isset($allowed[$extension]) || $mime !== $allowed[$extension]) {
         throw new RuntimeException($kind === 'hero'
             ? 'Use a valid JPG, PNG, WebP, MP4, or WebM homepage media file.'
-            : 'Use a valid JPG, PNG, or WebP logo image.');
+            : ($kind === 'logo' ? 'Use a valid JPG, PNG, or WebP logo image.' : 'Use a valid JPG, PNG, or WebP picture.'));
     }
     if ($kind === 'hero' && str_starts_with($mime, 'video/') && !in_array($extension, ['mp4', 'webm'], true)) {
         throw new RuntimeException('Homepage video must be an MP4 or WebM file.');
@@ -159,10 +182,54 @@ function save_site_customization_upload(array $file, string $kind, string $proje
 
 function delete_site_customization_upload(?string $path, string $projectRoot): void
 {
-    if (site_customization_media_url($path) !== null) {
+    if (site_customization_media_url($path) !== null || (is_string($path) && preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $path))) {
         $file = $projectRoot . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
         if (is_file($file) && !unlink($file)) {
             error_log('Could not remove replaced site customization upload: ' . basename($file));
         }
     }
+}
+
+function site_customization_auth_image_url(?string $path, string $default): string
+{
+    if ($path === $default) {
+        return $default;
+    }
+    return is_string($path) && preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $path)
+        ? 'images/' . $path
+        : $default;
+}
+
+function site_customization_loading_css(array $settings): string
+{
+    return '<style id="site-customization-loading">
+    body[data-loading-style="spinner"] .loader-ring.second,body[data-loading-style="spinner"] .loader-dots,body[data-loading-style="spinner"] .loader-bar{display:none!important}
+    body[data-loading-style="spinner"] .logout-loader-dots,body[data-loading-style="spinner"] .logout-loader-bar{display:none!important}
+    body[data-loading-style="dots"] .loader-ring,body[data-loading-style="dots"] .loader-bar{display:none!important}
+    body[data-loading-style="dots"] .logout-loader-spinner,body[data-loading-style="dots"] .logout-loader-bar{display:none!important}
+    body[data-loading-style="progress"] .loader-ring,body[data-loading-style="progress"] .loader-dots{display:none!important}
+    body[data-loading-style="progress"] .logout-loader-spinner,body[data-loading-style="progress"] .logout-loader-dots{display:none!important}
+    body[data-loading-style="coffee"] .loader-ring,body[data-loading-style="coffee"] .loader-dots,body[data-loading-style="coffee"] .loader-bar{display:none!important}
+    body[data-loading-style="coffee"] .coffee-loader{display:block!important}
+    body[data-loading-style="coffee"] .logout-loader-spinner,body[data-loading-style="coffee"] .logout-loader-dots,body[data-loading-style="coffee"] .logout-loader-bar{display:none!important}
+    body[data-loading-style]:not([data-loading-style="coffee"]) .coffee-loader{display:none!important}
+    body[data-loading-style="none"] .loading-screen,body[data-loading-style="none"] #loader-overlay{display:none!important}
+    .logout-loader-spinner{width:68px;height:68px;border:5px solid var(--light-cream);border-top-color:var(--primary-red);border-radius:50%;animation:siteLoaderSpin .9s linear infinite}
+    .logout-loader-dots,.logout-loader-bar{display:none}
+    .logout-loader-dots{align-items:center;gap:8px}
+    .logout-loader-dots i{width:9px;height:9px;border-radius:50%;background:var(--primary-red);animation:siteLoaderBounce .8s infinite alternate}
+    .logout-loader-dots i:nth-child(2){animation-delay:.15s}.logout-loader-dots i:nth-child(3){animation-delay:.3s}
+    .logout-loader-bar{width:180px;height:6px;border-radius:8px;background:color-mix(in srgb,var(--primary-red) 18%,transparent);overflow:hidden}
+    .logout-loader-bar i{display:block;width:40%;height:100%;border-radius:8px;background:var(--primary-red);animation:siteLoaderProgress 1.2s ease-in-out infinite}
+    .coffee-loader{display:none!important;align-items:center;justify-content:center;color:var(--primary-red);font-size:2rem}
+    .loading-screen .coffee-loader{font-size:3rem;animation:siteLoaderSpin 2.4s linear infinite}
+    @keyframes siteLoaderSpin{to{transform:rotate(360deg)}}@keyframes siteLoaderBounce{to{transform:translateY(-7px);opacity:.55}}@keyframes siteLoaderProgress{from{transform:translateX(-110%)}to{transform:translateX(300%)}}
+    body[data-loading-style="dots"] .logout-loader-dots,body[data-loading-style="progress"] .logout-loader-bar{display:flex}
+    body[data-loading-style="progress"] .logout-loader-bar{display:block}
+    .privacy-header{background:var(--site-navbar-bg)!important;color:var(--site-navbar-text)}
+    .privacy-header .logo-section h1{color:var(--site-navbar-text)!important}
+    .privacy-footer{background:var(--site-navbar-bg)!important;color:var(--site-navbar-text)}
+    .privacy-footer p,.privacy-footer a{color:var(--site-navbar-text)!important}
+    .privacy-policy .back-btn{background:var(--primary-red)}
+    </style>';
 }

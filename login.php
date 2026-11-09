@@ -717,8 +717,9 @@ if (isset($_POST['submit'])) {
    </style>
    <noscript><style>.loading-screen{display:none!important}</style></noscript>
 <?php echo site_customization_css($site_customization); ?>
+<?php echo site_customization_loading_css($site_customization); ?>
 </head>
-<body>
+<body data-loading-style="<?php echo escapeOutput($site_customization['loading_style']); ?>">
 
    <!-- ✅ NEW: LOADING SCREEN (shows while the page loads and again when you press Sign In) -->
    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading">
@@ -726,6 +727,7 @@ if (isset($_POST['submit'])) {
          <div class="loader-ring"></div>
          <div class="loader-ring second"></div>
          <img src="images/app-icon-192.png" alt="Six Origins" class="loader-logo">
+         <div class="coffee-loader" aria-hidden="true"><i class="fa-solid fa-mug-hot"></i></div>
       </div>
       <div class="loader-title"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
       <div class="loader-text"><span id="loaderMsg">Brewing your page</span>
@@ -736,7 +738,7 @@ if (isset($_POST['submit'])) {
 
    <div class="layout">
       <aside class="image-panel">
-         <img src="images/logback.jpeg" alt="Coffee background">
+         <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['login_image_path'], 'images/logback.jpeg')); ?>" alt="Coffee background">
          <div class="image-overlay">
             <h2>
                Welcome Back!
