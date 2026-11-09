@@ -151,6 +151,18 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .header-wrap .brand,.header-wrap .brand .logo-main,.header-wrap .brand .logo-sub,.header-wrap .nav a,.header-wrap .icon-btn,.header-wrap .profile-btn,.admin-header .brand .logo-main,.admin-header .brand .logo-sub,.admin-header .nav-link,.admin-header .nav-dropdown-toggle,.admin-header .icon-btn{color:var(--site-navbar-text)}
 .header-wrap .profile-menu,.admin-header .profile-menu,.admin-header .nav-dropdown-menu{background:var(--site-surface)!important;color:var(--site-text)}
 .header-wrap .profile-menu a,.admin-header .profile-menu a,.admin-header .nav-dropdown-menu a{color:var(--site-text)}
+.header-wrap .profile-menu{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.header-wrap .profile-menu .profile-info{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.header-wrap .profile-menu .name{color:{$secondary}!important}
+.header-wrap .profile-menu .muted{color:{$accent}!important}
+.header-wrap .profile-menu .profile-info img{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.header-wrap .profile-menu .wallet-balance{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.header-wrap .profile-menu .wallet-balance:hover,.header-wrap .profile-menu .wallet-balance:focus-visible{border-color:{$primary}!important}
+.header-wrap .profile-menu .wallet-balance-label i,.header-wrap .profile-menu .wallet-balance-amount{color:{$primary}!important}
+.header-wrap .profile-menu .profile-actions .icon-btn{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important;box-shadow:none!important;transform:none!important}
+.header-wrap .profile-menu .profile-actions .icon-btn i{color:{$primary}!important}
+.header-wrap .profile-menu .profile-actions .icon-btn:hover,.header-wrap .profile-menu .profile-actions .icon-btn:focus-visible{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important;box-shadow:0 6px 16px color-mix(in srgb,{$primary} 22%,transparent)!important;transform:translateX(4px)!important}
+.header-wrap .profile-menu .profile-actions .icon-btn:hover i,.header-wrap .profile-menu .profile-actions .icon-btn:focus-visible i{color:{$navbarText}!important}
 .form-panel{background:var(--site-surface)!important}
 .logo-text h3,.form-header .title,.form-panel label{color:var(--site-text)}
 .home-btn,.guide-btn,.form-panel .btn,.form-panel button[type=submit]{background:var(--primary-red)}
