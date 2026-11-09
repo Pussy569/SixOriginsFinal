@@ -36,7 +36,7 @@ Products can have a separate whole-peso price and stock quantity for each size. 
 
 ### Customize branding and theme
 
-The Head Admin can open **Site Customization** from the admin profile menu to change the logo image and text, system colors, and homepage background image/video. Only the configured Head Admin account can save these settings. Supported logo images are JPG, PNG, and WebP (5 MB max); homepage backgrounds support JPG, PNG, WebP, MP4, or WebM (50 MB max). The uploaded media is stored with execution disabled and persisted under `/data/site_customization` in Docker.
+The Head Admin can open **Site Customization** from the admin profile menu to change the logo image and text, system colors, homepage background video, and loading animation. Only the configured Head Admin account can save these settings. Supported logo images are JPG, PNG, and WebP (5 MB max); homepage backgrounds support MP4 or WebM video (50 MB max). The uploaded media is stored with execution disabled and persisted under `/data/site_customization` in Docker.
 
 For an existing database or one initialized from the private `database/database.sql` seed used by Docker/production, back it up and apply `database/migrations/20261109_site_customization.sql` before deploying this feature:
 

@@ -112,6 +112,15 @@ function site_customization_media_url(?string $path): ?string
     return 'images/site_customization/' . substr($path, strlen('site-customization/'));
 }
 
+function site_customization_video_url(?string $path): ?string
+{
+    if (!is_string($path) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:mp4|webm)$#', $path)) {
+        return null;
+    }
+
+    return site_customization_media_url($path);
+}
+
 function site_customization_logo_url(?string $path): string
 {
     if ($path === 'images/logos.png') {
@@ -190,21 +199,18 @@ function save_site_customization_upload(array $file, string $kind, string $proje
 
     $maxBytes = $kind === 'hero' ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
     if (!isset($file['size']) || (int)$file['size'] < 1 || (int)$file['size'] > $maxBytes) {
-        throw new RuntimeException($kind === 'hero' ? 'Homepage media must be no larger than 50 MB.' : 'The logo must be no larger than 5 MB.');
+        throw new RuntimeException($kind === 'hero' ? 'Homepage video must be no larger than 50 MB.' : 'The logo must be no larger than 5 MB.');
     }
 
     $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
     $allowed = $kind !== 'hero'
         ? ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp']
-        : ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'mp4' => 'video/mp4', 'webm' => 'video/webm'];
+        : ['mp4' => 'video/mp4', 'webm' => 'video/webm'];
     if (!isset($allowed[$extension]) || $mime !== $allowed[$extension]) {
         throw new RuntimeException($kind === 'hero'
-            ? 'Use a valid JPG, PNG, WebP, MP4, or WebM homepage media file.'
+            ? 'Use a valid MP4 or WebM video for the homepage background.'
             : ($kind === 'logo' ? 'Use a valid JPG, PNG, or WebP logo image.' : 'Use a valid JPG, PNG, or WebP picture.'));
-    }
-    if ($kind === 'hero' && str_starts_with($mime, 'video/') && !in_array($extension, ['mp4', 'webm'], true)) {
-        throw new RuntimeException('Homepage video must be an MP4 or WebM file.');
     }
 
     $directory = $projectRoot . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'site_customization';

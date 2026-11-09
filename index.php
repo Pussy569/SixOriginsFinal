@@ -1303,16 +1303,12 @@ img, video { max-width: 100%; }
 
    <section class="hero">
       <?php
-      $heroMediaUrl = site_customization_media_url($site_customization['hero_media_path']);
-      if ($heroMediaUrl !== null && $site_customization['hero_media_type'] === 'image'):
+      $heroMediaUrl = site_customization_video_url($site_customization['hero_media_path']);
       ?>
-         <img id="heroImage" src="<?php echo escapeOutput($heroMediaUrl); ?>" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
-      <?php else: ?>
          <video id="heroVideo" autoplay loop playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;">
             <source src="<?php echo escapeOutput($heroMediaUrl ?? 'video/hoho.mp4'); ?>" type="<?php echo $heroMediaUrl === null || str_ends_with($heroMediaUrl, '.mp4') ? 'video/mp4' : 'video/webm'; ?>">
             Your browser does not support the video tag.
          </video>
-      <?php endif; ?>
       <div class="hero-content">
          <h1>Six Origins Making Every Day Better</h1>
          <p>Experience quality coffee and apparel crafted with passion.</p>

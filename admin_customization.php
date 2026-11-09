@@ -94,23 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newSettings['hero_media_path'] = null;
             $newSettings['hero_media_type'] = 'video';
         } else {
-            $mediaType = (string)($_POST['hero_media_type'] ?? '');
-            if (!in_array($mediaType, ['image', 'video'], true)) {
-                throw new RuntimeException('Choose either an image or a video for the homepage background.');
-            }
             $uploadedMedia = save_site_customization_upload($_FILES['hero_media'] ?? [], 'hero', __DIR__);
             if ($uploadedMedia !== null) {
                 $newUploads[] = $uploadedMedia;
-                $expectedType = in_array(pathinfo($uploadedMedia, PATHINFO_EXTENSION), ['mp4', 'webm'], true) ? 'video' : 'image';
-                if ($expectedType !== $mediaType) {
-                    delete_site_customization_upload($uploadedMedia, __DIR__);
-                    throw new RuntimeException('The uploaded homepage media does not match the selected image or video type.');
-                }
                 $newSettings['hero_media_path'] = $uploadedMedia;
-            } elseif ($mediaType !== $settings['hero_media_type']) {
-                throw new RuntimeException('Upload a new file when changing the homepage media type.');
+                $newSettings['hero_media_type'] = 'video';
             }
-            $newSettings['hero_media_type'] = $mediaType;
         }
 
         save_site_customization($conn, $newSettings, (int)$_SESSION['admin_id']);
@@ -163,7 +152,8 @@ $logoUrl = (string)$settings['logo_path'];
 if ($logoUrl !== 'images/logos.png') {
     $logoUrl = site_customization_media_url(substr($logoUrl, strlen('images/'))) ?? 'images/logos.png';
 }
-$mediaUrl = site_customization_media_url($settings['hero_media_path']);
+$mediaUrl = site_customization_video_url($settings['hero_media_path']);
+$hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['hero_media_path'] !== null;
 $authImages = [
     'login_image_path' => ['title' => 'Login page picture', 'input' => 'login_image', 'default' => 'images/logback.jpeg'],
     'register_image_path' => ['title' => 'Customer registration picture', 'input' => 'register_image', 'default' => 'images/logback.jpeg'],
@@ -176,7 +166,7 @@ $authImages = [
         <div class="customization-intro-icon"><i class="fa-solid fa-palette"></i></div>
         <div>
             <h1>Site Customization</h1>
-            <p>Manage your brand, colors, page images, and loading experience in one place.</p>
+            <p>Personalize your storefront and admin experience. Changes apply across the system without changing how it works.</p>
         </div>
     </header>
     <?php if ($message !== ''): ?>
@@ -186,6 +176,7 @@ $authImages = [
         <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
         <section class="customization-card">
             <h2><i class="fa-solid fa-signature"></i> Brand identity</h2>
+            <p class="customization-help">Set the name and logo customers see across the site.</p>
             <label>Logo text <input type="text" name="brand_name" maxlength="60" required value="<?php echo escapeOutput($settings['brand_name']); ?>"></label>
             <label>Logo tagline <input type="text" name="brand_tagline" maxlength="80" value="<?php echo escapeOutput($settings['brand_tagline']); ?>"></label>
             <label>Logo picture <input type="file" name="logo" accept="image/jpeg,image/png,image/webp"></label>
@@ -242,22 +233,40 @@ $authImages = [
                 </div>
             <?php endforeach; ?>
         </section>
-        <section class="customization-card">
-            <h2><i class="fa-solid fa-panorama"></i> Homepage background</h2>
-            <label>Media type
-                <select name="hero_media_type">
-                    <option value="video" <?php echo $settings['hero_media_type'] === 'video' ? 'selected' : ''; ?>>Video</option>
-                    <option value="image" <?php echo $settings['hero_media_type'] === 'image' ? 'selected' : ''; ?>>Image</option>
-                </select>
-            </label>
-            <label>Upload homepage image/video <input type="file" name="hero_media" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"></label>
-            <p>Current: <?php echo $mediaUrl === null ? 'Default bundled video' : escapeOutput(basename($mediaUrl)); ?></p>
-            <?php if ($mediaUrl !== null && $settings['hero_media_type'] === 'image'): ?>
-                <img class="customization-hero-preview" src="<?php echo escapeOutput($mediaUrl); ?>" alt="Current homepage background">
-            <?php endif; ?>
-            <label class="customization-check"><input type="checkbox" name="reset_hero_media" value="1"> Restore the default homepage video</label>
-            <small>Images: JPG, PNG, or WebP (5 MB max). Videos: MP4 or WebM (50 MB max).</small>
-        </section>
+        <div class="customization-media-row">
+            <section class="customization-card customization-homepage-video">
+                <h2><i class="fa-solid fa-film"></i> Homepage background video</h2>
+                <p class="customization-help">Choose a video to play behind the homepage welcome message. Leave the upload empty to keep the current video.</p>
+                <label for="hero-media">Upload a video <input id="hero-media" type="file" name="hero_media" accept="video/mp4,video/webm"></label>
+                <?php if ($mediaUrl !== null): ?>
+                    <p class="customization-current-media"><i class="fa-solid fa-circle-check"></i> Current video: <strong><?php echo escapeOutput(basename($mediaUrl)); ?></strong></p>
+                    <video class="customization-video-preview" controls muted playsinline preload="metadata">
+                        <source src="<?php echo escapeOutput($mediaUrl); ?>" type="<?php echo str_ends_with($mediaUrl, '.mp4') ? 'video/mp4' : 'video/webm'; ?>">
+                    </video>
+                <?php elseif ($hasLegacyHeroImage): ?>
+                    <p class="customization-legacy-notice"><i class="fa-solid fa-triangle-exclamation"></i> A previous image selection is no longer used. Upload a video or restore the default video.</p>
+                <?php else: ?>
+                    <p class="customization-current-media"><i class="fa-solid fa-circle-check"></i> Using the included default video.</p>
+                <?php endif; ?>
+                <label class="customization-check"><input type="checkbox" name="reset_hero_media" value="1"> Restore the default homepage video</label>
+                <small>Accepted formats: MP4 or WebM. Maximum file size: 50 MB.</small>
+            </section>
+            <section class="customization-card customization-loading-card">
+                <h2><i class="fa-solid fa-spinner"></i> Loading animation</h2>
+                <p class="customization-help">Choose the loading style shown on the login and logout screens.</p>
+                <label for="loading-style">Loading style
+                    <select id="loading-style" name="loading_style">
+                        <option value="rings" <?php echo $settings['loading_style'] === 'rings' ? 'selected' : ''; ?>>Coffee rings and progress</option>
+                        <option value="spinner" <?php echo $settings['loading_style'] === 'spinner' ? 'selected' : ''; ?>>Simple spinner</option>
+                        <option value="dots" <?php echo $settings['loading_style'] === 'dots' ? 'selected' : ''; ?>>Bouncing dots</option>
+                        <option value="progress" <?php echo $settings['loading_style'] === 'progress' ? 'selected' : ''; ?>>Progress bar</option>
+                        <option value="coffee" <?php echo $settings['loading_style'] === 'coffee' ? 'selected' : ''; ?>>Coffee loader</option>
+                        <option value="none" <?php echo $settings['loading_style'] === 'none' ? 'selected' : ''; ?>>No loading animation</option>
+                    </select>
+                </label>
+                <div class="customization-loading-note"><i class="fa-regular fa-lightbulb"></i><span>Pick an animation that fits your brand. Choose “No loading animation” for the fastest, simplest experience.</span></div>
+            </section>
+        </div>
         <section class="customization-card customization-auth-images">
             <h2><i class="fa-regular fa-images"></i> Sign-in and registration pictures</h2>
             <p class="customization-help">Upload a different JPG, PNG, or WebP image for each welcome screen. Images can be up to 5 MB.</p>
@@ -277,20 +286,6 @@ $authImages = [
                     </div>
                 <?php endforeach; ?>
             </div>
-        </section>
-        <section class="customization-card">
-            <h2><i class="fa-solid fa-spinner"></i> Loading animation</h2>
-            <label>Choose the loading style
-                <select name="loading_style">
-                    <option value="rings" <?php echo $settings['loading_style'] === 'rings' ? 'selected' : ''; ?>>Coffee rings and progress</option>
-                    <option value="spinner" <?php echo $settings['loading_style'] === 'spinner' ? 'selected' : ''; ?>>Simple spinner</option>
-                    <option value="dots" <?php echo $settings['loading_style'] === 'dots' ? 'selected' : ''; ?>>Bouncing dots</option>
-                    <option value="progress" <?php echo $settings['loading_style'] === 'progress' ? 'selected' : ''; ?>>Progress bar</option>
-                    <option value="coffee" <?php echo $settings['loading_style'] === 'coffee' ? 'selected' : ''; ?>>Coffee loader</option>
-                    <option value="none" <?php echo $settings['loading_style'] === 'none' ? 'selected' : ''; ?>>No loading animation</option>
-                </select>
-            </label>
-            <p class="customization-help">Used on login and logout screens. The progress bar and dots are also shown on login unless a simpler style is selected.</p>
         </section>
         <section class="customization-card customization-auth-images">
             <h2><i class="fa-solid fa-mug-hot"></i> Homepage featured section</h2>
@@ -329,12 +324,13 @@ $authImages = [
 </main>
 <style>
 .customization-page{width:min(100%,1380px);max-width:1380px;margin:0 auto;padding:28px clamp(20px,3vw,42px) 56px}
-.customization-intro{display:flex;align-items:center;gap:16px;margin:6px 0 26px}
+.customization-intro{display:flex;align-items:center;gap:16px;margin:6px 0 26px;padding:22px 24px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:16px;background:linear-gradient(115deg,var(--site-surface),color-mix(in srgb,var(--site-page-bg) 70%,var(--site-surface)));box-shadow:0 8px 24px rgba(30,20,16,.035)}
 .customization-intro-icon{width:54px;height:54px;display:grid;place-items:center;flex:none;border-radius:16px;background:var(--primary-red);color:#fff;font-size:1.35rem;box-shadow:0 8px 20px color-mix(in srgb,var(--primary-red) 22%,transparent)}
 .customization-intro h1{color:var(--dark-brown);margin:0 0 5px;font-size:clamp(1.45rem,2.4vw,2rem)}
 .customization-intro p,.customization-help{margin:0;color:var(--gray-brown);line-height:1.6}
-.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:22px}
-.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:17px;box-shadow:0 8px 24px rgba(30,20,16,.035)}
+.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:22px}
+.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:15px;box-shadow:0 8px 24px rgba(30,20,16,.035)}
+.customization-card>p{line-height:1.55}
 .customization-card h2{display:flex;align-items:center;gap:10px;color:var(--dark-brown);font-size:1.12rem;margin:0;padding-bottom:13px;border-bottom:1px solid color-mix(in srgb,var(--gray-brown) 15%,transparent)}
 .customization-card h2 i{color:var(--primary-red)}
 .customization-card label{display:grid;gap:8px;color:var(--dark-brown);font-weight:700;line-height:1.4}
@@ -357,6 +353,13 @@ $authImages = [
 .customization-preview-row{display:flex;align-items:center;gap:12px;color:var(--gray-brown);font-size:.92rem}
 .customization-logo-preview{width:68px;height:68px;object-fit:contain;border:1px solid #eee4dd;border-radius:10px;padding:4px;background:#fff}
 .customization-hero-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px}
+.customization-media-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr);align-items:stretch;gap:22px}
+.customization-media-row .customization-card{height:100%}
+.customization-current-media{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--gray-brown);font-size:.92rem}
+.customization-current-media i{color:#25834b}
+.customization-video-preview{width:100%;max-height:220px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#1f1714}
+.customization-legacy-notice,.customization-loading-note{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;background:color-mix(in srgb,var(--primary-red) 7%,var(--site-surface));color:var(--site-text);font-size:.9rem;line-height:1.5}
+.customization-legacy-notice i,.customization-loading-note i{flex:none;margin-top:3px;color:var(--primary-red)}
 .customization-auth-images{grid-column:1/-1}
 .customization-auth-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .customization-image-setting{min-width:0;display:grid;align-content:start;gap:14px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
@@ -366,6 +369,7 @@ $authImages = [
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
 .customization-message.error{background:#fde8e7;color:#8a1f19}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
+@media(max-width:760px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
 @media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-extra-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
