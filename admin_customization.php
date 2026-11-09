@@ -47,9 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newSettings[$key] = strtoupper($value);
         }
         foreach ([
-            'showcase_background',
-            'showcase_heading_color',
-            'showcase_text_color',
             'chatbot_primary_color',
             'chatbot_panel_color',
             'chatbot_text_color',
@@ -61,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $newSettings[$key] = strtoupper($value);
         }
+        $newSettings['showcase_background'] = $newSettings['navbar_background'];
+        $newSettings['showcase_heading_color'] = $newSettings['navbar_text'];
+        $newSettings['showcase_text_color'] = $newSettings['navbar_text'];
 
         $oldLogo = $settings['logo_path'];
         $uploadedLogo = save_site_customization_upload($_FILES['logo'] ?? [], 'logo', __DIR__);
@@ -407,24 +407,13 @@ $authImages = [
         </section>
         <section class="customization-card customization-auth-images">
             <h2><i class="fa-solid fa-mug-hot"></i> Homepage featured section</h2>
-            <p class="customization-help">This is the “Every Cup Starts with a Smile” section shown below the main homepage banner.</p>
+            <p class="customization-help">This is the “Every Cup Starts with a Smile” section shown below the main homepage banner. Its background and text automatically use your system navbar colors.</p>
             <?php
             $showcaseImageUrl = site_customization_auth_image_url($settings['showcase_image_path'], 'images/coffee-splash.png');
             ?>
             <label>Featured image <input type="file" name="showcase_image" accept="image/jpeg,image/png,image/webp"></label>
             <div class="customization-preview-row"><img class="customization-auth-preview customization-showcase-preview" src="<?php echo escapeOutput($showcaseImageUrl); ?>" alt="Featured section image preview"><span>Current image</span></div>
             <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
-            <div class="customization-extra-colors">
-                <?php foreach (['showcase_background' => 'Section background', 'showcase_heading_color' => 'Heading', 'showcase_text_color' => 'Description text'] as $key => $label): ?>
-                    <div class="customization-extra-color-setting">
-                        <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?></label>
-                        <span class="customization-color-control">
-                            <input id="color-picker-<?php echo escapeOutput($key); ?>" type="color" value="<?php echo escapeOutput($settings[$key]); ?>" aria-label="Pick <?php echo escapeOutput($label); ?>">
-                            <input id="color-<?php echo escapeOutput($key); ?>" class="customization-hex-input" type="text" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput(strtoupper($settings[$key])); ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#5E1F13" autocomplete="off" spellcheck="false" aria-label="<?php echo escapeOutput($label); ?> hex code" required>
-                        </span>
-                    </div>
-                <?php endforeach; ?>
-            </div>
         </section>
         <section class="customization-card customization-auth-images">
             <h2><i class="fa-solid fa-comments"></i> Customer and admin chatbots</h2>

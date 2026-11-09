@@ -1504,7 +1504,7 @@ img, video { max-width: 100%; }
    <?php endif; ?>
 
    <!-- Coffee Moment -->
-   <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring" style="--coffee-moment-background:<?php echo escapeOutput($site_customization['showcase_background']); ?>;--coffee-moment-heading:<?php echo escapeOutput($site_customization['showcase_heading_color']); ?>;--coffee-moment-copy:<?php echo escapeOutput($site_customization['showcase_text_color']); ?>">
+   <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring">
       <div class="coffee-moment-inner">
          <div class="coffee-moment-text">
             <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> For the Coffee Lovers</span>

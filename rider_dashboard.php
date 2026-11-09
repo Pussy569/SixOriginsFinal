@@ -15,6 +15,8 @@ include 'inventory_functions.php';
 include 'send_receipt_email.php';
 include 'send_sms_notification.php';
 require_once __DIR__ . '/app/services/login_session_security.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 
 $rider_id = $_SESSION['rider_id'] ?? null;
 
@@ -459,6 +461,7 @@ if ($completed_result) {
          }
       }
    </style>
+   <?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
 

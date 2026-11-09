@@ -170,6 +170,14 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .page .btn.refresh,.page .btn.approve,.page .btn.view{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
 .page .btn.reject{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
 .page .btn.refresh:hover,.page .btn.approve:hover,.page .btn.view:hover{background:{$secondary}!important;color:{$navbarText}!important}
+.page .edit-container.card{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.page .hero{background:linear-gradient(135deg,{$page},{$surface})!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.page .hero h1,.page .edit-container .title{color:{$secondary}!important}
+.page .breadcrumb,.page .helper{color:{$accent}!important}
+.page .breadcrumb a{color:{$primary}!important}
+.page .edit-container input,.page .edit-container select{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.page .edit-container .btn-primary{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.page .edit-container .btn-ghost{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
 .dashboard-header{background:linear-gradient(135deg,{$primary} 0%,{$secondary} 100%)!important;color:{$navbarText}!important;box-shadow:0 14px 34px color-mix(in srgb,{$primary} 28%,transparent)!important}
 .dashboard-header .title,.dashboard-header .title i,.dashboard-header .sub,.dashboard-header .sub>i{color:{$navbarText}!important}
 .dashboard-header .action-btn:not(.secondary){background:{$surface}!important;color:{$secondary}!important}
@@ -228,11 +236,27 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .main-layout .product-card,.main-layout .contact-cta{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
 .cart-wrap .cart-item,.cart-wrap .summary-row,.cart-wrap .item-title,.cart-wrap .summary h3,.cart-wrap .summary .grand{color:{$text}!important}
 .cart-wrap .cart-item input,.cart-wrap .cart-item select,.topup-wrap input,.topup-wrap select,.topup-wrap textarea,.profile-wrap .password-form input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
-.cart-wrap .checkout-modal,.cart-wrap .receipt-modal,.checkout-wrapper .receipt-modal{background:{$surface}!important;color:{$text}!important}
-.cart-wrap .checkout-modal-header,.checkout-wrapper .receipt-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
-.cart-wrap .checkout-modal-header h2,.cart-wrap .checkout-modal-header button,.checkout-wrapper .receipt-header .receipt-cafe-name,.checkout-wrapper .receipt-header .receipt-cafe-tagline,.checkout-wrapper .receipt-header .receipt-success-badge{color:{$navbarText}!important}
+.checkout-overlay .checkout-modal,.receipt-overlay .receipt-modal,.cart-wrap .checkout-modal,.cart-wrap .receipt-modal,.checkout-wrapper .receipt-modal{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.checkout-overlay .checkout-modal-header,.checkout-wrapper .receipt-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.checkout-overlay .checkout-modal-header h2,.checkout-overlay .checkout-modal-close,.checkout-wrapper .receipt-header .receipt-cafe-name,.checkout-wrapper .receipt-header .receipt-cafe-tagline,.checkout-wrapper .receipt-header .receipt-success-badge{color:{$navbarText}!important}
+.checkout-overlay .checkout-modal-close{background:color-mix(in srgb,{$navbarText} 18%,transparent)!important}
+.checkout-overlay .checkout-section-title{color:{$primary}!important}
+.checkout-overlay .checkout-modal-body,.checkout-overlay .checkout-section,.checkout-overlay .checkout-modal-body p{color:{$text}!important}
+.checkout-overlay .receipt-table{background:{$surface}!important;color:{$text}!important}
+.checkout-overlay .receipt-table thead{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.checkout-overlay .receipt-table th,.checkout-overlay .receipt-table td{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.checkout-overlay .receipt-table tbody td{background:{$surface}!important;color:{$text}!important}
+.checkout-overlay .receipt-table tfoot td{background:{$page}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.checkout-overlay .receipt-table .grand-total td{color:{$primary}!important}
+.checkout-overlay .checkout-modal .product-cell-custom,.checkout-overlay .checkout-modal .opt-tag,.checkout-overlay .checkout-modal .small{color:{$accent}!important}
+.checkout-overlay .note-box,.checkout-overlay .discount-section,.checkout-overlay .wallet-panel{background:{$page}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.checkout-overlay .checkout label,.checkout-overlay .instruction-field label,.checkout-overlay .discount-section h3,.checkout-overlay .wallet-panel h3{color:{$secondary}!important}
+.checkout-overlay .checkout .box,.checkout-overlay .instruction-field textarea,.checkout-overlay .discount-form select{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 32%,{$page})!important}
+.checkout-overlay .checkout .box:focus,.checkout-overlay .instruction-field textarea:focus{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 18%,transparent)!important}
+.checkout-overlay .checkout-modal .btn-primary:not(:disabled),.checkout-overlay .checkout-place-actions .btn:not(.btn-ghost):not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.checkout-overlay .checkout-modal .btn-ghost,.checkout-overlay .checkout-modal .btn-close-modal{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
 .cart-wrap .receipt-table,.checkout-wrapper .receipt-table{background:{$surface}!important;color:{$text}!important}
-.cart-wrap .receipt-table thead,.checkout-wrapper .receipt-table thead{background:{$primary}!important;color:{$navbarText}!important}
+.cart-wrap .receipt-table thead,.checkout-wrapper .receipt-table thead{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
 .cart-wrap .receipt-table tfoot td,.checkout-wrapper .receipt-table tfoot td{background:{$page}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
 .cart-wrap .grand-total td,.checkout-wrapper .grand-total td{color:{$primary}!important}
 .checkout-wrapper .btn-primary:not(:disabled),.checkout-wrapper .discount-form .btn,.receipt-modal-actions .btn-primary,.cart-wrap .checkout-modal .btn-primary:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
@@ -242,6 +266,34 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .topup-wrap .gcash-card,.topup-wrap .info-box{border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
 .order-card .card-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
 .receipt-table tbody td,.order-card .card-body,.contact-grid p,.profile-wrap p,.checkout-wrapper p,.sx-body .sx-description{color:{$text}}
+.rider-badge,.order-card,.empty-note{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.topbar h1,.section-title,.rider-badge i,.order-line>i{color:{$secondary}!important}
+.topbar .sub,.section-desc,.empty-note{color:{$accent}!important}
+.order-card .card-top{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.order-card .card-body{background:{$surface}!important;color:{$text}!important}
+.order-card .card-actions{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.take-btn,.complete-btn{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.take-btn:hover,.complete-btn:hover{background:{$secondary}!important;border-color:{$secondary}!important}
+.logout-btn{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.logout-btn:hover{background:{$primary}!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.container>.panel,.container>.form-card{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.container>.panel .info-section{background:{$page}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.container>.panel .brand h1,.container>.form-card .title,.container>.form-card label{color:{$secondary}!important}
+.container>.panel .brand p,.container>.form-card .subtitle,.container>.form-card .info{color:{$accent}!important}
+.container>.form-card .input,.container>.form-card .input input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.container>.form-card .btn:not(.ghost){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.container>.form-card .btn.ghost{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.change-password-form{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.change-password-form h2,.change-password-form label{color:{$secondary}!important}
+.change-password-form input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.change-password-form button{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.change-password-form .ca{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.coffee-moment{background:linear-gradient(120deg,{$navbar} 0%,{$secondary} 100%)!important}
+.coffee-moment .coffee-moment-tag{color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 30%,transparent)!important}
+.coffee-moment-text h2,.coffee-moment-text p{color:{$navbarText}!important}
+.coffee-moment-text .cta-btn:not(.secondary-btn){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.coffee-moment-text .cta-btn.secondary-btn{background:color-mix(in srgb,{$navbarText} 10%,transparent)!important;color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 35%,transparent)!important}
+.coffee-moment-text .cta-btn:hover{background:{$secondary}!important;color:{$navbarText}!important}
 </style>";
 }
 
@@ -426,9 +478,6 @@ function site_customization_chatbot_css(array $settings): string
 .chatbot-window .chatbot-close{color:{$headerText}}
 .chatbot-window .cb-quick-btn{border-color:{$primary}}
 .chatbot-header-title .admin-chatbot-brand{width:34px;height:34px;object-fit:cover;border-radius:50%;background:#fff;padding:2px;flex:none}
-.coffee-moment{background:var(--coffee-moment-background)!important}
-.coffee-moment-text h2{color:var(--coffee-moment-heading)!important}
-.coffee-moment-text p{color:var(--coffee-moment-copy)!important}
 </style>";
 }
 

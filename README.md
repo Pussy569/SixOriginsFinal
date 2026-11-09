@@ -48,7 +48,7 @@ Fresh databases initialized from `database/schema.sql` already include the custo
 
 The Head Admin can also set separate login, customer-registration, and admin-registration pictures (JPG, PNG, or WebP, 5 MB max) and choose a loading style for the login/logout screens. If the original customization migration was already applied to an existing database, apply `database/migrations/20261109_site_customization_experience.sql` as well; fresh schema imports already include these fields.
 
-The featured homepage section image/background/text colors and the shared customer/admin chatbot icon/colors are also customizable. On existing databases, apply `20261109_site_customization_chatbots.sql` after the initial customization table and, when needed, the experience migration. Fresh schema imports already include these settings.
+The featured homepage section image and shared customer/admin chatbot icon/colors are also customizable. The featured section background, text, and buttons follow the system color palette. On existing databases, apply `20261109_site_customization_chatbots.sql` after the initial customization table and, when needed, the experience migration. Fresh schema imports already include these settings.
 
 The Head Admin can also change the About page background and featured cafe/product images, and edit the existing team members' names, roles, bios, and profile pictures. Existing databases must apply `database/migrations/20261109_site_customization_about_team.sql` after creating the site customization table and applying the earlier site customization migrations:
 

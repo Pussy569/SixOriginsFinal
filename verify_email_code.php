@@ -1,6 +1,8 @@
 <?php
 session_start();
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 require_once __DIR__ . '/mail_helper.php';
 require_once __DIR__ . '/app/services/login_session_security.php';
 
@@ -670,16 +672,17 @@ label {
   }
 }
 </style>
+<?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
 
 <div class="container">
   <aside class="panel" aria-hidden="false">
     <div class="brand">
-      <img src="images/logo.jpg" alt="Six Origins Cafe" />
+      <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?>" />
       <div>
-        <h1>Six Origins</h1>
-        <p>Cafe Portal</p>
+        <h1><?php echo escapeOutput($site_customization['brand_name']); ?></h1>
+        <p><?php echo escapeOutput($site_customization['brand_tagline']); ?> Portal</p>
       </div>
     </div>
 

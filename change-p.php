@@ -1,5 +1,8 @@
 <?php 
 session_start();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 
 if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
 
@@ -9,9 +12,10 @@ if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
 <head>
 	<title>Change Password</title>
 	<link rel="stylesheet" href="style.css">
+	<?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
-    <form action="change-p.php" method="post">
+    <form class="change-password-form" action="change-p.php" method="post">
      	<h2>Change Password</h2>
      	<?php if (isset($_GET['error'])) { ?>
      		<p class="error"><?php echo $_GET['error']; ?></p>
