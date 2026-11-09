@@ -10,6 +10,15 @@ function site_customization_defaults(): array
         'register_image_path' => 'images/logback.jpeg',
         'admin_register_image_path' => 'images/logback.jpeg',
         'loading_style' => 'rings',
+        'showcase_image_path' => 'images/coffee-splash.png',
+        'showcase_background' => '#5E1F13',
+        'showcase_heading_color' => '#FFFFFF',
+        'showcase_text_color' => '#F2E9E4',
+        'chatbot_image_path' => 'images/logos.png',
+        'chatbot_primary_color' => '#C6453E',
+        'chatbot_panel_color' => '#FFFBF7',
+        'chatbot_text_color' => '#5E1F13',
+        'chatbot_header_text_color' => '#FFFFFF',
         'primary_color' => '#C6453E',
         'secondary_color' => '#5E1F13',
         'accent_color' => '#664C47',
@@ -31,7 +40,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -46,6 +55,8 @@ function get_site_customization(mysqli $conn): array
         'login_image_path' => 'images/logback.jpeg',
         'register_image_path' => 'images/logback.jpeg',
         'admin_register_image_path' => 'images/logback.jpeg',
+        'showcase_image_path' => 'images/coffee-splash.png',
+        'chatbot_image_path' => 'images/logos.png',
     ] as $image_key => $default_image) {
         if ($settings[$image_key] !== $default_image
             && (!is_string($settings[$image_key]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$image_key]))) {
@@ -53,7 +64,7 @@ function get_site_customization(mysqli $conn): array
         }
     }
 
-    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text'] as $color_key) {
+    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'showcase_background', 'showcase_heading_color', 'showcase_text_color', 'chatbot_primary_color', 'chatbot_panel_color', 'chatbot_text_color', 'chatbot_header_text_color'] as $color_key) {
         if (!is_string($settings[$color_key]) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $settings[$color_key])) {
             $settings[$color_key] = site_customization_defaults()[$color_key];
         }
@@ -105,19 +116,24 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
 {
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             login_image_path = VALUES(login_image_path), register_image_path = VALUES(register_image_path),
             admin_register_image_path = VALUES(admin_register_image_path), loading_style = VALUES(loading_style),
+            showcase_image_path = VALUES(showcase_image_path), showcase_background = VALUES(showcase_background),
+            showcase_heading_color = VALUES(showcase_heading_color), showcase_text_color = VALUES(showcase_text_color),
+            chatbot_image_path = VALUES(chatbot_image_path), chatbot_primary_color = VALUES(chatbot_primary_color),
+            chatbot_panel_color = VALUES(chatbot_panel_color), chatbot_text_color = VALUES(chatbot_text_color),
+            chatbot_header_text_color = VALUES(chatbot_header_text_color),
             primary_color = VALUES(primary_color), secondary_color = VALUES(secondary_color), accent_color = VALUES(accent_color),
             page_background = VALUES(page_background), surface_color = VALUES(surface_color), text_color = VALUES(text_color),
             navbar_background = VALUES(navbar_background), navbar_text = VALUES(navbar_text),
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        'sssssssssssssssssi',
+        str_repeat('s', 26) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
@@ -125,6 +141,15 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
         $settings['register_image_path'],
         $settings['admin_register_image_path'],
         $settings['loading_style'],
+        $settings['showcase_image_path'],
+        $settings['showcase_background'],
+        $settings['showcase_heading_color'],
+        $settings['showcase_text_color'],
+        $settings['chatbot_image_path'],
+        $settings['chatbot_primary_color'],
+        $settings['chatbot_panel_color'],
+        $settings['chatbot_text_color'],
+        $settings['chatbot_header_text_color'],
         $settings['primary_color'],
         $settings['secondary_color'],
         $settings['accent_color'],
@@ -198,6 +223,40 @@ function site_customization_auth_image_url(?string $path, string $default): stri
     return is_string($path) && preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $path)
         ? 'images/' . $path
         : $default;
+}
+
+function site_customization_chatbot_css(array $settings): string
+{
+    $primary = escapeOutput($settings['chatbot_primary_color']);
+    $panel = escapeOutput($settings['chatbot_panel_color']);
+    $text = escapeOutput($settings['chatbot_text_color']);
+    $headerText = escapeOutput($settings['chatbot_header_text_color']);
+    return "<style id=\"site-customization-chatbot\">
+#chatbot-root{--cb-red:{$primary};--cb-red-deep:{$primary};--cb-brown:{$text};--cb-gray:{$text};--cb-cream:{$panel};--cb-line:color-mix(in srgb,{$text} 16%,{$panel})}
+#chatbot-root #chatbot-box,#chatbot-root #cb-body,#chatbot-root .cb-quick-bar,#chatbot-root .cb-quick-btn:not(.hot){background:{$panel}}
+#chatbot-root #cb-messages{background:{$panel}}
+#chatbot-root .cb-msg-bubble{background:{$panel}!important;color:{$text}!important}
+#chatbot-root .cb-header,#chatbot-root #chatbot-launcher,#chatbot-root .cb-quick-btn.hot,#chatbot-root .cb-msg-row.user .cb-msg-bubble,#chatbot-root .cb-msg-row.user .cb-avatar{background:{$primary};color:{$headerText}}
+#chatbot-root .cb-name,#chatbot-root .cb-status,#chatbot-root .cb-icon-btn,#chatbot-root .cb-quick-btn.hot,#chatbot-root .cb-msg-row.user .cb-msg-bubble{color:{$headerText}}
+#chatbot-root .cb-msg-bubble,#chatbot-root .cb-quick-btn:not(.hot){color:{$text}}
+#chatbot-root .cb-msg-bubble a,#chatbot-root .cb-quick-btn i{color:{$primary}}
+.chatbot-fab,.chatbot-header{background:{$primary}!important;color:{$headerText}!important}
+.chatbot-fab.active{background:{$primary}!important;color:{$headerText}!important}
+.chatbot-window{background:{$panel}!important}
+.chatbot-messages{background:{$panel}}
+.chatbot-window .cb-message-content,.chatbot-window .bot-response-text,.chatbot-window .cb-quick-btn{color:{$text}}
+.chatbot-window .cb-message.bot .cb-message-content,.chatbot-window .chatbot-input-area,.chatbot-window .chatbot-window-body{background:{$panel}!important}
+.chatbot-window .cb-message.user .cb-message-content,.chatbot-window .cb-quick-btn:hover,.chatbot-window .chatbot-send{background:{$primary}!important;color:{$headerText}!important}
+.chatbot-window .bot-response-title,.chatbot-window .bot-response-item-value,.chatbot-window .cb-typing-dot{color:{$primary}}
+.chatbot-window .bot-response-data{border-left-color:{$primary};color:{$text}}
+.chatbot-window .chatbot-input{color:{$text}}
+.chatbot-window .chatbot-close{color:{$headerText}}
+.chatbot-window .cb-quick-btn{border-color:{$primary}}
+.chatbot-header-title .admin-chatbot-brand{width:34px;height:34px;object-fit:cover;border-radius:50%;background:#fff;padding:2px;flex:none}
+.coffee-moment{background:var(--coffee-moment-background)!important}
+.coffee-moment-text h2{color:var(--coffee-moment-heading)!important}
+.coffee-moment-text p{color:var(--coffee-moment-copy)!important}
+</style>";
 }
 
 function site_customization_loading_css(array $settings): string

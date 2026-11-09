@@ -1508,7 +1508,7 @@ img, video { max-width: 100%; }
    <?php endif; ?>
 
    <!-- Coffee Moment -->
-   <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring">
+   <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring" style="--coffee-moment-background:<?php echo escapeOutput($site_customization['showcase_background']); ?>;--coffee-moment-heading:<?php echo escapeOutput($site_customization['showcase_heading_color']); ?>;--coffee-moment-copy:<?php echo escapeOutput($site_customization['showcase_text_color']); ?>">
       <div class="coffee-moment-inner">
          <div class="coffee-moment-text">
             <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> For the Coffee Lovers</span>
@@ -1527,7 +1527,7 @@ img, video { max-width: 100%; }
             <span class="coffee-moment-sparkle"></span>
             <span class="coffee-moment-sparkle"></span>
             <div class="coffee-moment-frame">
-               <img class="coffee-moment-img" src="images/coffee-splash.png" alt="A splash of freshly brewed coffee" loading="lazy">
+               <img class="coffee-moment-img" src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['showcase_image_path'], 'images/coffee-splash.png')); ?>" alt="A splash of freshly brewed coffee" loading="lazy">
                <span class="coffee-moment-shine"></span>
             </div>
          </div>

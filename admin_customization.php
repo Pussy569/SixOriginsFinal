@@ -46,6 +46,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $newSettings[$key] = strtoupper($value);
         }
+        foreach ([
+            'showcase_background',
+            'showcase_heading_color',
+            'showcase_text_color',
+            'chatbot_primary_color',
+            'chatbot_panel_color',
+            'chatbot_text_color',
+            'chatbot_header_text_color',
+        ] as $key) {
+            $value = (string)($_POST[$key] ?? '');
+            if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                throw new RuntimeException('Choose a valid six-digit hex color for each color setting.');
+            }
+            $newSettings[$key] = strtoupper($value);
+        }
 
         $oldLogo = $settings['logo_path'];
         $uploadedLogo = save_site_customization_upload($_FILES['logo'] ?? [], 'logo', __DIR__);
@@ -61,6 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'login_image_path' => 'login_image',
             'register_image_path' => 'register_image',
             'admin_register_image_path' => 'admin_register_image',
+            'showcase_image_path' => 'showcase_image',
+            'chatbot_image_path' => 'chatbot_image',
         ] as $settingKey => $uploadKey) {
             $oldAuthImages[$settingKey] = $settings[$settingKey];
             $uploadedImage = save_site_customization_upload($_FILES[$uploadKey] ?? [], 'image', __DIR__);
@@ -275,6 +292,38 @@ $authImages = [
             </label>
             <p class="customization-help">Used on login and logout screens. The progress bar and dots are also shown on login unless a simpler style is selected.</p>
         </section>
+        <section class="customization-card customization-auth-images">
+            <h2><i class="fa-solid fa-mug-hot"></i> Homepage featured section</h2>
+            <p class="customization-help">This is the “Every Cup Starts with a Smile” section shown below the main homepage banner.</p>
+            <?php
+            $showcaseImageUrl = site_customization_auth_image_url($settings['showcase_image_path'], 'images/coffee-splash.png');
+            ?>
+            <label>Featured image <input type="file" name="showcase_image" accept="image/jpeg,image/png,image/webp"></label>
+            <div class="customization-preview-row"><img class="customization-auth-preview customization-showcase-preview" src="<?php echo escapeOutput($showcaseImageUrl); ?>" alt="Featured section image preview"><span>Current image</span></div>
+            <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
+            <div class="customization-extra-colors">
+                <?php foreach (['showcase_background' => 'Section background', 'showcase_heading_color' => 'Heading', 'showcase_text_color' => 'Description text'] as $key => $label): ?>
+                    <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?>
+                        <span class="customization-color-control"><input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>"><output><?php echo escapeOutput(strtoupper($settings[$key])); ?></output></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <section class="customization-card customization-auth-images">
+            <h2><i class="fa-solid fa-comments"></i> Customer and admin chatbots</h2>
+            <p class="customization-help">These colors and the icon are shared by the floating chatbot on the storefront and the assistant in the admin panel.</p>
+            <?php $chatbotImageUrl = site_customization_auth_image_url($settings['chatbot_image_path'], 'images/logos.png'); ?>
+            <label>Chatbot icon image <input type="file" name="chatbot_image" accept="image/jpeg,image/png,image/webp"></label>
+            <div class="customization-preview-row"><img class="customization-logo-preview" src="<?php echo escapeOutput($chatbotImageUrl); ?>" alt="Chatbot icon preview"><span>Current chatbot icon</span></div>
+            <label class="customization-check"><input type="checkbox" name="reset_chatbot_image" value="1"> Restore default chatbot icon</label>
+            <div class="customization-extra-colors">
+                <?php foreach (['chatbot_primary_color' => 'Buttons and header', 'chatbot_panel_color' => 'Panel background', 'chatbot_text_color' => 'Message text', 'chatbot_header_text_color' => 'Header text'] as $key => $label): ?>
+                    <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?>
+                        <span class="customization-color-control"><input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>"><output><?php echo escapeOutput(strtoupper($settings[$key])); ?></output></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </section>
         <button type="submit" class="customization-save">Save customization</button>
     </form>
 </main>
@@ -300,6 +349,9 @@ $authImages = [
 .customization-color-control{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 8px;border:1px solid #ded5cf;border-radius:10px;background:var(--site-surface)}
 .customization-color-control input[type=color]{width:48px;height:38px;flex:none;padding:2px;border:0;border-radius:6px;background:transparent;cursor:pointer}
 .customization-color-control output{overflow:hidden;color:var(--site-text);font-size:.82rem;font-weight:700;text-overflow:ellipsis}
+.customization-extra-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 16px}
+.customization-extra-colors label{min-width:0}
+.customization-extra-colors .customization-color-control{margin-top:2px}
 .customization-check{display:flex!important;align-items:center;gap:9px!important;font-size:.92rem}
 .customization-check input{width:17px;height:17px;accent-color:var(--primary-red)}
 .customization-preview-row{display:flex;align-items:center;gap:12px;color:var(--gray-brown);font-size:.92rem}
@@ -314,8 +366,8 @@ $authImages = [
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
 .customization-message.error{background:#fde8e7;color:#8a1f19}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
-@media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
+@media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-extra-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
 <script>
 document.querySelectorAll('.customization-color-control input[type="color"]').forEach((input) => {

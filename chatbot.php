@@ -1,6 +1,8 @@
 <?php
 // =============== SESSION & CONFIG ===============
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 
 // ============== GET USER_ID PROPERLY ==============
 $user_id = 0;
@@ -438,9 +440,9 @@ function formatProduct($product, $conn) {
   <section id="chatbot-box" role="dialog" aria-label="Six Origins chat">
     <header class="cb-header">
       <div class="cb-title">
-        <span class="cb-brand"><img src="images/logos.png" alt="" /></span>
+        <span class="cb-brand"><img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['chatbot_image_path'], 'images/logos.png')); ?>" alt="" /></span>
         <span class="cb-title-text">
-          <span class="cb-name">Six Origins</span>
+          <span class="cb-name"><?php echo escapeOutput($site_customization['brand_name']); ?></span>
           <span class="cb-status"><span class="cb-live-dot"></span> Online</span>
         </span>
       </div>
@@ -1004,6 +1006,7 @@ html.cb-lock, html.cb-lock body { overflow: hidden !important; }
   #chatbot-root *, #chatbot-root *::before, #chatbot-root *::after { animation: none !important; transition: none !important; }
 }
 </style>
+<?php echo site_customization_chatbot_css($site_customization); ?>
 
 <script>
 (function () {

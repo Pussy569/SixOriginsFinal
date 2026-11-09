@@ -1679,6 +1679,8 @@ SYS;
 if (!isset($_SESSION['admin_id'])) {
     exit;
 }
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 ?>
 
 <!-- Chatbot Widget CSS & HTML -->
@@ -1789,6 +1791,15 @@ if (!isset($_SESSION['admin_id'])) {
     .chatbot-header-title i {
         font-size: 1.4rem;
         flex-shrink: 0;
+    }
+    .chatbot-header-title .admin-chatbot-brand {
+        width: 36px;
+        height: 36px;
+        object-fit: cover;
+        border-radius: 50%;
+        background: #fff;
+        padding: 2px;
+        flex: 0 0 36px;
     }
 
     .chatbot-close {
@@ -2247,6 +2258,7 @@ if (!isset($_SESSION['admin_id'])) {
         }
     }
 </style>
+<?php echo site_customization_chatbot_css($site_customization); ?>
 
 <!-- Chatbot HTML -->
 <button type="button" class="chatbot-fab" id="chatbotFab" title="Need some help?" aria-label="Need some help? Open admin chat" aria-expanded="false" aria-controls="chatbotWindow">
@@ -2257,7 +2269,7 @@ if (!isset($_SESSION['admin_id'])) {
     <!-- Header -->
     <div class="chatbot-header">
         <div class="chatbot-header-title">
-            <i class="fa-solid fa-robot"></i>
+            <img class="admin-chatbot-brand" src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['chatbot_image_path'], 'images/logos.png')); ?>" alt="">
             <h3>Admin Assistant</h3>
         </div>
         <button type="button" class="chatbot-close" id="chatbotClose" title="Close" aria-label="Close chat">×</button>
