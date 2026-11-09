@@ -1340,7 +1340,7 @@ if(isset($_POST['submit'])){
       <main class="form-panel" aria-labelledby="registerTitle">
          <div class="form-wrapper">
             <div class="logo-section">
-               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
+               <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
                <div class="logo-text">
                   <h3><?php echo escapeOutput($site_customization['brand_name']); ?></h3>
                   <p><?php echo escapeOutput($site_customization['brand_tagline']); ?></p>
@@ -1517,7 +1517,7 @@ if(isset($_POST['submit'])){
          <div class="image-overlay">
             <h2>
                Join Our Team
-               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
+               <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
 
             <div class="benefits">

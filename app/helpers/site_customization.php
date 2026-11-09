@@ -109,7 +109,20 @@ function site_customization_media_url(?string $path): ?string
     if (!is_string($path) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp|mp4|webm)$#', $path)) {
         return null;
     }
-    return 'images/' . $path;
+    return 'images/site_customization/' . substr($path, strlen('site-customization/'));
+}
+
+function site_customization_logo_url(?string $path): string
+{
+    if ($path === 'images/logos.png') {
+        return $path;
+    }
+
+    if (!is_string($path) || !preg_match('#^images/site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $path)) {
+        return 'images/logos.png';
+    }
+
+    return 'images/site_customization/' . substr($path, strlen('images/site-customization/'));
 }
 
 function save_site_customization(mysqli $conn, array $settings, int $adminId): void
@@ -221,7 +234,7 @@ function site_customization_auth_image_url(?string $path, string $default): stri
         return $default;
     }
     return is_string($path) && preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $path)
-        ? 'images/' . $path
+        ? 'images/site_customization/' . substr($path, strlen('site-customization/'))
         : $default;
 }
 

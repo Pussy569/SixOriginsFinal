@@ -179,7 +179,7 @@ $site_customization = get_site_customization($conn);
 
    <header class="privacy-header">
       <div class="logo-section">
-         <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo">
+         <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo">
          <h1><?php echo escapeOutput($site_customization['brand_name']); ?> <?php echo escapeOutput($site_customization['brand_tagline']); ?></h1>
       </div>
       <a href="login.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Login</a>

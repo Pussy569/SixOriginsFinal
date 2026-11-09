@@ -742,7 +742,7 @@ if (isset($_POST['submit'])) {
          <div class="image-overlay">
             <h2>
                Welcome Back!
-               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
+               <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
             <p>Step into your cozy coffee corner. Your account is secure and ready for you.</p>
          </div>
@@ -820,7 +820,7 @@ if (isset($_POST['submit'])) {
             </div>
 
             <div class="logo-section">
-               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
+               <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
                <div class="logo-text">
                   <h3><?php echo escapeOutput($site_customization['brand_name']); ?></h3>
                   <p><?php echo escapeOutput($site_customization['brand_tagline']); ?></p>

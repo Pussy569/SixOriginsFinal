@@ -52,7 +52,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <title>Six Origins Cafe — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="icon" type="image/png" href="<?php echo escapeOutput($site_customization['logo_path']); ?>">
+<link rel="icon" type="image/png" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 <style>
@@ -373,7 +373,7 @@ html { -webkit-text-size-adjust: 100%; }
     <div class="admin-header-inner">
         <!-- Brand Logo -->
         <a href="admin_page.php" class="brand" aria-label="Six Origins Admin home">
-            <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
+            <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
             <div class="logo-text">
                 <div class="logo-main"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
                 <div class="logo-sub"><?php echo escapeOutput($site_customization['brand_tagline']); ?> Admin Panel</div>

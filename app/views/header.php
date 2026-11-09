@@ -1008,7 +1008,7 @@ html{-webkit-text-size-adjust:100%}
 <header class="header-wrap" id="headerWrap" role="banner">
   <div class="container">
      <a href="index.php" class="brand" aria-label="Six Origins Cafe home">
-        <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img" loading="lazy">
+        <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img" loading="lazy">
         <div class="logo-text">
            <div class="logo-main"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
            <div class="logo-sub"><?php echo escapeOutput($site_customization['brand_tagline']); ?></div>
