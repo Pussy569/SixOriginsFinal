@@ -34,6 +34,18 @@ Order status changes, including cancellations and the admin "Done Preparing" act
 
 Products can have a separate whole-peso price and stock quantity for each size. Set both on every size row when creating a product; customer catalog, detail, and cart flows use the selected size's saved price.
 
+### Customize branding and theme
+
+The Head Admin can open **Site Customization** from the admin profile menu to change the logo image and text, system colors, and homepage background image/video. Only the configured Head Admin account can save these settings. Supported logo images are JPG, PNG, and WebP (5 MB max); homepage backgrounds support JPG, PNG, WebP, MP4, or WebM (50 MB max). The uploaded media is stored with execution disabled and persisted under `/data/site_customization` in Docker.
+
+For an existing database or one initialized from the private `database/database.sql` seed used by Docker/production, back it up and apply `database/migrations/20261109_site_customization.sql` before deploying this feature:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization.sql
+```
+
+Fresh databases initialized from `database/schema.sql` already include the customization table and do not need this migration. For XAMPP, ensure `images/site_customization` is writable by the PHP/Apache process and set `upload_max_filesize=52M` and `post_max_size=53M` in `php.ini` so the Head Admin can upload video files.
+
 To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients have their own product-wide form and are deducted for every option. Use the separate **Add Packaging for a Product Option** button to manually select an inventory item, the matching customer option, and the per-sale quantity. Items from any inventory category can be selected, including Consumable. Only orders for that selected option deduct the assigned amount, so a Small Cup mapping does not affect Medium or Large. Leave options unmapped when no additional inventory deduction is needed.
 
 Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:

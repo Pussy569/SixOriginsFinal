@@ -4,6 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__) . '/services/admin_log_activity.php';
+require_once dirname(__DIR__) . '/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 $show_admin_activity = is_head_admin();
 $profile_image = 'default.png';
 if (isset($_SESSION['admin_email'])) {
@@ -50,7 +52,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <title>Six Origins Cafe — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="icon" type="image/png" href="images/logos.png">
+<link rel="icon" type="image/png" href="<?php echo escapeOutput($site_customization['logo_path']); ?>">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 <style>
@@ -364,16 +366,17 @@ html { -webkit-text-size-adjust: 100%; }
     .icon-btn.has-new .fa-bell { animation: none; }
 }
 </style>
+<?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
 <header class="admin-header" id="adminHeaderWrap" role="banner">
     <div class="admin-header-inner">
         <!-- Brand Logo -->
         <a href="admin_page.php" class="brand" aria-label="Six Origins Admin home">
-            <img src="images/logos.png" alt="Six Origins Logo" class="logo-img">
+            <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
             <div class="logo-text">
-                <div class="logo-main">Six Origins</div>
-                <div class="logo-sub">Admin Panel</div>
+                <div class="logo-main"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
+                <div class="logo-sub"><?php echo escapeOutput($site_customization['brand_tagline']); ?> Admin Panel</div>
             </div>
         </a>
         <!-- Main Navigation -->
@@ -476,6 +479,9 @@ html { -webkit-text-size-adjust: 100%; }
                             <i class="fa-solid fa-boxes"></i> Inventory Management
                         </a>
                         <?php if ($show_admin_activity): ?>
+                            <a href="admin_customization.php" class="icon-btn <?php echo $current_page === 'admin_customization.php' ? 'active' : ''; ?>">
+                                <i class="fa-solid fa-palette"></i> Site Customization
+                            </a>
                             <a href="admin_activity.php" class="icon-btn <?php echo $current_page === 'admin_activity.php' ? 'active' : ''; ?>">
                                 <i class="fa-solid fa-clipboard-list"></i> Overseeing Admin Activity
                             </a>

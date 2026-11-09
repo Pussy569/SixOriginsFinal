@@ -11,6 +11,8 @@ ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 require_once __DIR__ . '/mail_helper.php';
 require_once __DIR__ . '/app/services/admin_log_activity.php';
 require_once __DIR__ . '/app/services/login_session_security.php';
@@ -714,6 +716,7 @@ if (isset($_POST['submit'])) {
       }
    </style>
    <noscript><style>.loading-screen{display:none!important}</style></noscript>
+<?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
 
@@ -724,7 +727,7 @@ if (isset($_POST['submit'])) {
          <div class="loader-ring second"></div>
          <img src="images/app-icon-192.png" alt="Six Origins" class="loader-logo">
       </div>
-      <div class="loader-title">Six Origins</div>
+      <div class="loader-title"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
       <div class="loader-text"><span id="loaderMsg">Brewing your page</span>
          <span class="loader-dots"><span></span><span></span><span></span></span>
       </div>
@@ -737,7 +740,7 @@ if (isset($_POST['submit'])) {
          <div class="image-overlay">
             <h2>
                Welcome Back!
-               <img src="images/logos.png" alt="Six Origins Icon">
+               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
             <p>Step into your cozy coffee corner. Your account is secure and ready for you.</p>
          </div>
@@ -815,10 +818,10 @@ if (isset($_POST['submit'])) {
             </div>
 
             <div class="logo-section">
-               <img src="images/logos.png" alt="Six Origins Logo" class="logo-img">
+               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
                <div class="logo-text">
-                  <h3>Six Origins</h3>
-                  <p>☕ Coffee Lovers</p>
+                  <h3><?php echo escapeOutput($site_customization['brand_name']); ?></h3>
+                  <p><?php echo escapeOutput($site_customization['brand_tagline']); ?></p>
                </div>
             </div>
 

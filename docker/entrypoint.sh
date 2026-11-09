@@ -41,6 +41,7 @@ chown -R www-data:www-data /var/www/html/logs
 chmod 750 /var/www/html/logs
 link_persistent_dir /var/www/html/images/user_uploads /data/user_uploads
 link_persistent_dir /var/www/html/images/admin_uploads /data/admin_uploads
+link_persistent_dir /var/www/html/images/site_customization /data/site_customization
 link_persistent_dir /var/www/html/uploads /data/verification_uploads
 chown -R www-data:www-data /data
 chmod 700 /data/sessions /data/topup_proofs /data/verification_uploads

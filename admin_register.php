@@ -14,6 +14,8 @@
 
 session_start();
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 require_once __DIR__ . '/app/helpers/verification_uploads.php';
 
 if(isset($_POST['submit'])){
@@ -1330,6 +1332,7 @@ if(isset($_POST['submit'])){
          .guide-btn { width: 48px; height: 48px; }
       }
    </style>
+   <?php echo site_customization_css($site_customization); ?>
 </head>
 <body>
 
@@ -1337,10 +1340,10 @@ if(isset($_POST['submit'])){
       <main class="form-panel" aria-labelledby="registerTitle">
          <div class="form-wrapper">
             <div class="logo-section">
-               <img src="images/logos.png" alt="Six Origins Logo" class="logo-img">
+               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img">
                <div class="logo-text">
-                  <h3>Six Origins</h3>
-                  <p>☕ Coffee Lovers</p>
+                  <h3><?php echo escapeOutput($site_customization['brand_name']); ?></h3>
+                  <p><?php echo escapeOutput($site_customization['brand_tagline']); ?></p>
                </div>
             </div>
 
@@ -1514,7 +1517,7 @@ if(isset($_POST['submit'])){
          <div class="image-overlay">
             <h2>
                Join Our Team
-               <img src="images/logos.png" alt="Six Origins Icon">
+               <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
 
             <div class="benefits">

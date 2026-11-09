@@ -1,5 +1,7 @@
 <?php
 include dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__) . '/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 
 $user_id = null;
 $is_guest = false;
@@ -980,6 +982,7 @@ html{-webkit-text-size-adjust:100%}
   .nav a:hover,.icon-btn:hover,.profile-btn:hover,.brand:hover{transform:none}
 }
 </style>
+<?php echo site_customization_css($site_customization); ?>
 <script src="Js/app-launch.js" defer></script>
 </head>
 <body>
@@ -1005,10 +1008,10 @@ html{-webkit-text-size-adjust:100%}
 <header class="header-wrap" id="headerWrap" role="banner">
   <div class="container">
      <a href="index.php" class="brand" aria-label="Six Origins Cafe home">
-        <img src="images/logos.png" alt="Six Origins Logo" class="logo-img" loading="lazy">
+        <img src="<?php echo escapeOutput($site_customization['logo_path']); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Logo" class="logo-img" loading="lazy">
         <div class="logo-text">
-           <div class="logo-main">Six Origins</div>
-           <div class="logo-sub">Cafe</div>
+           <div class="logo-main"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
+           <div class="logo-sub"><?php echo escapeOutput($site_customization['brand_tagline']); ?></div>
         </div>
      </a>
 

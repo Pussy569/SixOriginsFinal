@@ -19,6 +19,8 @@ RUN apt-get update \
     && test "$(apache2ctl -M | awk '$1 ~ /^mpm_/ && $2 == "(shared)" { print $1 }')" = "mpm_prefork_module" \
     && rm -rf /var/lib/apt/lists/*
 
+RUN printf '%s\n' 'upload_max_filesize = 52M' 'post_max_size = 53M' > /usr/local/etc/php/conf.d/zz-six-origins-uploads.ini
+
 COPY docker/apache-app.conf /etc/apache2/conf-available/app.conf
 RUN a2enconf app \
     && apache2ctl -t
@@ -29,8 +31,8 @@ COPY config.sample.php ./config.php
 COPY --from=dependencies /app/vendor ./vendor
 COPY docker/entrypoint.sh /usr/local/bin/six-origins-entrypoint
 
-RUN mkdir -p uploads logs images/user_uploads images/admin_uploads /data/sessions /data/topup_proofs \
-    && chown -R www-data:www-data images/user_uploads images/admin_uploads uploads logs /data \
+RUN mkdir -p uploads logs images/user_uploads images/admin_uploads images/site_customization /data/sessions /data/topup_proofs \
+    && chown -R www-data:www-data images/user_uploads images/admin_uploads images/site_customization uploads logs /data \
     && chmod 755 /usr/local/bin/six-origins-entrypoint
 
 ENV PORT=80
