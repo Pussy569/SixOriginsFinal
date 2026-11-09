@@ -244,10 +244,10 @@ if ($logoUrl !== 'images/logos.png') {
 }
 $mediaUrl = site_customization_video_url($settings['hero_media_path']);
 $hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['hero_media_path'] !== null;
-$aboutHeroImageUrl = site_customization_auth_image_url($settings['about_hero_image_path'], 'images/aboback.png');
 $aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
 $pageBackgroundOptions = [
+    'about_hero_image_path' => ['title' => 'About page hero/banner', 'input' => 'about_hero_image', 'default' => 'images/aboback.png'],
     'shop_background_image_path' => ['title' => 'Shop hero/banner', 'input' => 'shop_background'],
     'contact_background_image_path' => ['title' => 'Contact hero/banner', 'input' => 'contact_background'],
     'orders_background_image_path' => ['title' => 'Customer orders hero/banner', 'input' => 'orders_background'],
@@ -261,7 +261,7 @@ foreach ($pageBackgroundOptions as $settingKey => $imageConfig) {
     $pageBackgroundImages[$settingKey] = [
         'title' => $imageConfig['title'],
         'input' => $imageConfig['input'],
-        'url' => site_customization_auth_image_url($settings[$settingKey], ''),
+        'url' => site_customization_auth_image_url($settings[$settingKey], $imageConfig['default'] ?? ''),
     ];
 }
 $teamMembers = $settings['team_members'];
@@ -307,17 +307,7 @@ $authImages = [
         </section>
         <section class="customization-card customization-about-team" id="about-team">
             <h2><i class="fa-solid fa-people-group"></i> About page and team</h2>
-            <p class="customization-help">Change the About page hero image and the six team profiles shown to customers. Leave an image upload empty to keep its current picture.</p>
-            <div class="customization-about-hero-setting">
-                <label for="about-hero-image">About page background image
-                    <input id="about-hero-image" type="file" name="about_hero_image" accept="image/jpeg,image/png,image/webp">
-                </label>
-                <div class="customization-preview-row">
-                    <img class="customization-about-preview" src="<?php echo escapeOutput($aboutHeroImageUrl); ?>" alt="Current About page background">
-                    <span>Current About page background</span>
-                </div>
-                <label class="customization-check"><input type="checkbox" name="reset_about_hero_image" value="1"> Restore default About page image</label>
-            </div>
+            <p class="customization-help">Change the featured cafe and product images, and the six team profiles shown to customers. About page banner images are managed with the other page banners below.</p>
             <div class="customization-auth-image-grid">
                 <?php foreach ([
                     'about_cafe_image_path' => ['title' => 'Featured cafe image', 'input' => 'about_cafe_image', 'url' => $aboutCafeImageUrl, 'default' => 'images/promo-cafe.png'],
@@ -357,7 +347,7 @@ $authImages = [
         </section>
         <section class="customization-card customization-page-backgrounds" id="page-backgrounds">
             <h2><i class="fa-regular fa-images"></i> Customer page hero/banner images</h2>
-            <p class="customization-help">Choose an image for the top hero/banner on each page, like the About page. This changes only the banner—not the full-page background. Leave an upload empty to keep its current image, or restore the page's default banner.</p>
+            <p class="customization-help">Choose an image for the top hero/banner on each page. This changes only the banner—not the full-page background. Leave an upload empty to keep its current image, or restore the page's default banner.</p>
             <div class="customization-page-background-grid">
                 <?php foreach ($pageBackgroundImages as $settingKey => $imageConfig): ?>
                     <div class="customization-page-background-setting">
@@ -581,9 +571,6 @@ $authImages = [
 .customization-image-setting{min-width:0;display:grid;align-content:start;gap:14px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
 .customization-auth-preview{width:100%;height:150px;object-fit:cover;border-radius:9px;background:#eee}
 .customization-about-team{grid-column:1/-1}
-.customization-about-hero-setting{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:14px 22px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
-.customization-about-hero-setting .customization-check{grid-column:1/-1}
-.customization-about-preview{width:100%;height:130px;object-fit:cover;border-radius:9px;background:#eee}
 .customization-team-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .customization-team-member{min-width:0;display:grid;align-content:start;gap:12px;margin:0;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
 .customization-team-member legend{padding:0 6px;color:var(--dark-brown);font-weight:800}
@@ -655,7 +642,7 @@ $authImages = [
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
 @media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-extra-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors,.customization-team-grid,.customization-about-hero-setting{grid-template-columns:1fr}.customization-about-hero-setting .customization-check{grid-column:auto}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
+@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors,.customization-team-grid{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
 <script>
 document.querySelectorAll('.customization-color-control').forEach((control) => {
