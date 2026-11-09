@@ -177,22 +177,52 @@ $authImages = [
         </section>
         <section class="customization-card customization-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
+            <p class="customization-help customization-colors-intro">Choose a color to update that part of the site. Keep text and background colors easy to read together.</p>
             <?php
             $colorFields = [
-                'primary_color' => 'Primary color',
-                'secondary_color' => 'Secondary color',
-                'accent_color' => 'Accent color',
-                'page_background' => 'Page background',
-                'surface_color' => 'Forms and panels',
-                'text_color' => 'Text color',
-                'navbar_background' => 'Navbar background',
-                'navbar_text' => 'Navbar text',
+                'primary_color' => [
+                    'label' => 'Primary color',
+                    'description' => 'Main buttons, links, highlights, and active controls.',
+                ],
+                'secondary_color' => [
+                    'label' => 'Secondary color',
+                    'description' => 'Deep brand color used by headings and dark accents.',
+                ],
+                'accent_color' => [
+                    'label' => 'Accent color',
+                    'description' => 'Supporting color for descriptions and secondary details.',
+                ],
+                'page_background' => [
+                    'label' => 'Page background',
+                    'description' => 'The large background behind page content.',
+                ],
+                'surface_color' => [
+                    'label' => 'Forms and panels',
+                    'description' => 'Cards, forms, menus, and other content surfaces.',
+                ],
+                'text_color' => [
+                    'label' => 'Text color',
+                    'description' => 'General text on pages; check contrast on light surfaces.',
+                ],
+                'navbar_background' => [
+                    'label' => 'Navbar background',
+                    'description' => 'Background of the customer and admin navigation bars.',
+                ],
+                'navbar_text' => [
+                    'label' => 'Navbar text',
+                    'description' => 'Text and icons in the navigation bars; contrast it with the navbar background.',
+                ],
             ];
-            foreach ($colorFields as $key => $label):
+            foreach ($colorFields as $key => $colorInfo):
             ?>
-                <label><?php echo escapeOutput($label); ?>
-                    <input type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>">
-                </label>
+                <div class="customization-color-setting">
+                    <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($colorInfo['label']); ?></label>
+                    <p><?php echo escapeOutput($colorInfo['description']); ?></p>
+                    <div class="customization-color-control">
+                        <input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>">
+                        <output for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput(strtoupper($settings[$key])); ?></output>
+                    </div>
+                </div>
             <?php endforeach; ?>
         </section>
         <section class="customization-card">
@@ -249,6 +279,51 @@ $authImages = [
     </form>
 </main>
 <style>
-.customization-page{max-width:1240px;width:100%;padding:24px clamp(16px,3vw,36px) 48px}.customization-intro{display:flex;align-items:center;gap:16px;margin:6px 0 24px}.customization-intro-icon{width:54px;height:54px;display:grid;place-items:center;flex:none;border-radius:16px;background:var(--primary-red);color:#fff;font-size:1.35rem;box-shadow:0 8px 20px color-mix(in srgb,var(--primary-red) 22%,transparent)}.customization-intro h1{color:var(--dark-brown);margin:0 0 5px;font-size:clamp(1.45rem,2.4vw,2rem)}.customization-intro p,.customization-help{margin:0;color:var(--gray-brown);line-height:1.6}.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:20px}.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(18px,2.4vw,26px);display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 24px rgba(30,20,16,.035)}.customization-card h2{display:flex;align-items:center;gap:10px;color:var(--dark-brown);font-size:1.12rem;margin:0;padding-bottom:12px;border-bottom:1px solid color-mix(in srgb,var(--gray-brown) 15%,transparent)}.customization-card h2 i{color:var(--primary-red)}.customization-card label{display:grid;gap:8px;color:var(--dark-brown);font-weight:700;line-height:1.4}.customization-card input:not([type=color]):not([type=checkbox]),.customization-card select{width:100%;min-height:44px;padding:10px 12px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit}.customization-card input[type=file]{padding:9px!important;font-size:.9rem}.customization-card input:focus-visible,.customization-card select:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-red) 24%,transparent);outline-offset:1px}.customization-colors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:14px}.customization-colors h2{grid-column:1/-1}.customization-colors label{min-width:0}.customization-colors input[type=color]{width:100%;height:46px;padding:4px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);cursor:pointer}.customization-check{display:flex!important;align-items:center;gap:9px!important;font-size:.92rem}.customization-check input{width:17px;height:17px;accent-color:var(--primary-red)}.customization-preview-row{display:flex;align-items:center;gap:12px;color:var(--gray-brown);font-size:.92rem}.customization-logo-preview{width:68px;height:68px;object-fit:contain;border:1px solid #eee4dd;border-radius:10px;padding:4px;background:#fff}.customization-hero-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px}.customization-auth-images{grid-column:1/-1}.customization-auth-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.customization-image-setting{min-width:0;display:grid;align-content:start;gap:14px;padding:14px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}.customization-auth-preview{width:100%;height:135px;object-fit:cover;border-radius:9px;background:#eee}.customization-save{grid-column:1/-1;min-height:50px;padding:13px 18px;border:0;border-radius:10px;background:var(--primary-red);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 20%,transparent);transition:transform .18s,box-shadow .18s}.customization-save:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 28%,transparent)}.customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}.customization-message.error{background:#fde8e7;color:#8a1f19}@media(max-width:850px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-save{grid-column:auto}}@media(max-width:560px){.customization-page{padding-top:18px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid{grid-template-columns:1fr}.customization-colors h2{grid-column:auto}.customization-card{padding:17px}.customization-auth-preview{height:170px}}
+.customization-page{width:min(100%,1380px);max-width:1380px;margin:0 auto;padding:28px clamp(20px,3vw,42px) 56px}
+.customization-intro{display:flex;align-items:center;gap:16px;margin:6px 0 26px}
+.customization-intro-icon{width:54px;height:54px;display:grid;place-items:center;flex:none;border-radius:16px;background:var(--primary-red);color:#fff;font-size:1.35rem;box-shadow:0 8px 20px color-mix(in srgb,var(--primary-red) 22%,transparent)}
+.customization-intro h1{color:var(--dark-brown);margin:0 0 5px;font-size:clamp(1.45rem,2.4vw,2rem)}
+.customization-intro p,.customization-help{margin:0;color:var(--gray-brown);line-height:1.6}
+.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:22px}
+.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:17px;box-shadow:0 8px 24px rgba(30,20,16,.035)}
+.customization-card h2{display:flex;align-items:center;gap:10px;color:var(--dark-brown);font-size:1.12rem;margin:0;padding-bottom:13px;border-bottom:1px solid color-mix(in srgb,var(--gray-brown) 15%,transparent)}
+.customization-card h2 i{color:var(--primary-red)}
+.customization-card label{display:grid;gap:8px;color:var(--dark-brown);font-weight:700;line-height:1.4}
+.customization-card input:not([type=color]):not([type=checkbox]),.customization-card select{width:100%;min-height:44px;padding:10px 12px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit}
+.customization-card input[type=file]{padding:9px!important;font-size:.9rem}
+.customization-card input:focus-visible,.customization-card select:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-red) 24%,transparent);outline-offset:1px}
+.customization-colors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:18px 16px}
+.customization-colors h2,.customization-colors-intro{grid-column:1/-1}
+.customization-color-setting{min-width:0;display:grid;align-content:start;gap:6px}
+.customization-color-setting label{display:block;color:var(--dark-brown);font-weight:800}
+.customization-color-setting>p{min-height:38px;margin:0;color:var(--gray-brown);font-size:.82rem;line-height:1.45}
+.customization-color-control{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 8px;border:1px solid #ded5cf;border-radius:10px;background:var(--site-surface)}
+.customization-color-control input[type=color]{width:48px;height:38px;flex:none;padding:2px;border:0;border-radius:6px;background:transparent;cursor:pointer}
+.customization-color-control output{overflow:hidden;color:var(--site-text);font-size:.82rem;font-weight:700;text-overflow:ellipsis}
+.customization-check{display:flex!important;align-items:center;gap:9px!important;font-size:.92rem}
+.customization-check input{width:17px;height:17px;accent-color:var(--primary-red)}
+.customization-preview-row{display:flex;align-items:center;gap:12px;color:var(--gray-brown);font-size:.92rem}
+.customization-logo-preview{width:68px;height:68px;object-fit:contain;border:1px solid #eee4dd;border-radius:10px;padding:4px;background:#fff}
+.customization-hero-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px}
+.customization-auth-images{grid-column:1/-1}
+.customization-auth-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.customization-image-setting{min-width:0;display:grid;align-content:start;gap:14px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
+.customization-auth-preview{width:100%;height:150px;object-fit:cover;border-radius:9px;background:#eee}
+.customization-save{grid-column:1/-1;min-height:52px;padding:13px 18px;border:0;border-radius:10px;background:var(--primary-red);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 20%,transparent);transition:transform .18s,box-shadow .18s}
+.customization-save:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 28%,transparent)}
+.customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
+.customization-message.error{background:#fde8e7;color:#8a1f19}
+@media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
+@media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
+<script>
+document.querySelectorAll('.customization-color-control input[type="color"]').forEach((input) => {
+    const output = input.parentElement.querySelector('output');
+    input.addEventListener('input', () => {
+        output.value = input.value.toUpperCase();
+        output.textContent = input.value.toUpperCase();
+    });
+});
+</script>
 <?php include 'admin_footer.php'; ?>
