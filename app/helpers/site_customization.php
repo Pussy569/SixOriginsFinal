@@ -228,10 +228,35 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .team .member .role,.team .member .social-btn{background:{$page}!important;color:{$primary}!important}
 .team .member h4{color:{$secondary}!important}
 .promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta,.about-grid>.card,.main-layout>.card,.products-section .product-card,.product,.weekly-special-card,.cart-wrap>.card,.cart-item,.topup-wrap>.card,.gcash-card,.password-panel{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
-.hero .btn,.hero-content .cta-btn,.promo .promo-btn:not(.promo-btn-ghost),.contact-cta a,.facts-cta,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled),.main-layout .btn-primary:not(:disabled),.price-badge,.cart-wrap .btn-primary:not(:disabled),.topup-wrap .btn-primary:not(:disabled),.profile-wrap .toggle-btn,.about-content-card a,.contact-card a{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.hero .btn,.hero-content .cta-btn,.promo .promo-btn:not(.promo-btn-ghost),.contact-cta a,.facts-cta,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled),.main-layout .btn-primary:not(:disabled),.price-badge,.cart-wrap .btn-primary:not(:disabled),.cart-wrap .option-btn,.topup-wrap .btn-primary:not(:disabled),.profile-wrap .toggle-btn,.about-content-card a,.contact-card a,.impact-card .cta,.pd-btn-primary:not(:disabled),.back-btn,.btn-approve,.available-badge{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
 .promo .promo-btn-ghost,.main-layout .btn-outline,.cart-wrap .btn-ghost,.cart-wrap .btn-outline,.topup-wrap .btn-ghost,.profile-wrap .btn-ghost{background:{$page}!important;color:{$primary}!important;border:1px solid color-mix(in srgb,{$primary} 55%,{$page})!important}
-.promo .promo-btn:hover,.facts-cta:hover,.hero-content .cta-btn:hover,.main-layout .btn-primary:hover:not(:disabled),.cart-wrap .btn-primary:hover:not(:disabled),.topup-wrap .btn-primary:hover:not(:disabled),.profile-wrap .btn-primary:hover,.profile-wrap .toggle-btn:hover,.about-content-card a:hover,.contact-card a:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.promo .promo-btn:hover,.facts-cta:hover,.hero-content .cta-btn:hover,.main-layout .btn-primary:hover:not(:disabled),.cart-wrap .btn-primary:hover:not(:disabled),.cart-wrap .option-btn:hover,.topup-wrap .btn-primary:hover:not(:disabled),.topup-wrap .btn-ghost:hover,.profile-wrap .btn-primary:hover,.profile-wrap .toggle-btn:hover,.about-content-card a:hover,.contact-card a:hover,.impact-card .cta:hover,.pd-btn-primary:hover:not(:disabled),.back-btn:hover,.btn-approve:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
 .main-layout .card h2 i,.main-layout .product-details .special-product-label,.main-layout .product-details .size-type-tag,.main-layout .product-card label,.main-layout .stock,.cart-wrap .item-price,.cart-wrap .summary .grand span,.topup-wrap .gcash-number,.profile-wrap .helper i{color:{$primary}!important}
+.pd-page .pd-card{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.pd-page .pd-breadcrumb a,.pd-page .pd-price,.pd-page .pd-hint{color:{$primary}!important}
+.pd-page .pd-info h1,.pd-page .pd-label,.pd-page .pd-total strong{color:{$secondary}!important}
+.pd-page .pd-desc,.pd-page .pd-total small,.pd-page .pd-label small{color:{$accent}!important}
+.pd-page .pd-chip span,.pd-page .pd-qty,.pd-page .pd-btn-outline{background:{$surface}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.pd-page .pd-chip:hover span,.pd-page .pd-qty button:hover:not(:disabled),.pd-page .pd-btn-outline:hover{background:{$page}!important;color:{$primary}!important;border-color:{$primary}!important}
+.pd-page .pd-chip input:checked+span{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.pd-page .pd-chip input:checked+span em{color:color-mix(in srgb,{$navbarText} 85%,transparent)!important}
+.pd-page .pd-btn-primary:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.pd-page .pd-btn-primary:hover:not(:disabled){background:{$secondary}!important;color:{$navbarText}!important}
+.pd-page .pd-stock.none{background:color-mix(in srgb,{$primary} 10%,{$surface})!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 25%,{$surface})!important}
+.pd-page .pd-stock.idle{background:{$page}!important;color:{$accent}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.pd-page .pd-qty:focus-within{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 16%,transparent)!important}
+.pd-page .pd-breadcrumb strong{color:{$secondary}!important}
+.pd-page .pd-divider{background:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.cart-wrap .option-btn{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.cart-wrap .option-btn:hover{background:{$secondary}!important;color:{$navbarText}!important}
+.cart-wrap .delete-link,.cart-wrap .delete-btn{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.cart-wrap .delete-link:hover,.cart-wrap .delete-btn:hover:not(.disabled){background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.cart-wrap .btn-ghost:hover,.cart-wrap .btn-outline:hover:not(.disabled){background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.cart-wrap .item-meta .size-type-tag{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 25%,{$page})!important}
+.cart-wrap .sub-total,.cart-wrap .sub-total span,.cart-wrap .empty i{color:{$primary}!important}
+.cart-wrap .card:hover,.cart-wrap .cart-item:hover{border-color:color-mix(in srgb,{$accent} 40%,{$page})!important}
+.impact-card .cta{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.impact-card .cta:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
 .search-field i,.search-hint a,.results-head h2 i,.product-details .size-type-tag,.product-details .stock,.product-details label,.product-details .line-total,.pref-row label i,.extra-row-title i,.empty>i{color:{$primary}!important}
 .search-card,.search-results .product-card,.content-wrapper .search-card,.content-wrapper .product-card,.content-wrapper .empty{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
 .search-field input,.product-card select,.product-card .input,.product-card .qty{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
@@ -291,6 +316,41 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .checkout-wrapper .btn-primary:not(:disabled),.checkout-wrapper .discount-form .btn,.receipt-modal-actions .btn-primary,.cart-wrap .checkout-modal .btn-primary:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
 .checkout-wrapper .btn-ghost,.receipt-modal-actions .btn-ghost,.cart-wrap .checkout-modal .btn-ghost{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 35%,{$page})!important}
 .profile-wrap .toggle-btn[aria-expanded=true]{background:{$secondary}!important;color:{$navbarText}!important}
+.admin-header .profile-menu{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.admin-header .profile-menu .name{color:{$secondary}!important}
+.admin-header .profile-menu .email{color:{$accent}!important}
+.admin-header .profile-menu .profile-info{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.admin-header .profile-menu .icon-btn,.admin-header .profile-menu .icon-btn.active{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important;transform:none!important}
+.admin-header .profile-menu .icon-btn i{color:{$primary}!important}
+.admin-header .profile-menu .icon-btn:hover,.admin-header .profile-menu .icon-btn.active:hover{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important;transform:translateX(4px)!important}
+.admin-header .profile-menu .icon-btn:hover i,.admin-header .profile-menu .icon-btn.active:hover i{color:{$navbarText}!important}
+.admin-header .nav-dropdown-menu{background:{$surface}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.admin-header .nav-dropdown-menu a:hover,.admin-header .nav-dropdown-menu a.current,.admin-header .nav-dropdown-menu a:focus-visible{background:{$page}!important;color:{$primary}!important}
+.admin-header #notif-bell:hover,.admin-header #notif-bell.active{background:color-mix(in srgb,{$navbarText} 24%,transparent)!important;color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 50%,transparent)!important}
+.admin-header #notif-bell .badge{background:{$surface}!important;color:{$primary}!important}
+.admin-header .notif-dropdown{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.admin-header .notif-section{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.admin-header .notif-title{background:{$page}!important;color:{$secondary}!important}
+.admin-header .notif-item,.admin-header .activity-item{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 18%,{$page})!important}
+.admin-header .notif-item:hover,.admin-header .activity-item:hover{background:{$page}!important}
+.admin-header .notif-item strong,.admin-header .activity-action{color:{$secondary}!important}
+.admin-header .notif-title i{color:{$primary}!important}
+.admin-header .notif-list{scrollbar-color:color-mix(in srgb,{$accent} 35%,{$page}) transparent}
+.admin-header .notif-list::-webkit-scrollbar-thumb,.admin-header .notif-list::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,{$accent} 35%,{$page})}
+.admin-header .activity-time,.admin-header .activity-details,.admin-header .notif-empty{color:{$accent}!important}
+.page .back-btn,.page .btn-approve{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.page .back-btn:hover,.page .btn-approve:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.page .btn-reject,.page .btn-cancel{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.page .btn-reject:hover,.page .btn-cancel:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.page .stats .stat,.page .requests>.card,.page .empty-state,.page .dialog{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.page .stats .stat-icon{background:color-mix(in srgb,{$primary} 12%,{$surface})!important;color:{$primary}!important}
+.page .stats .stat-label,.page .meta,.page .empty-state{color:{$accent}!important}
+.page .requests .amount,.page .dialog .icon{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.page .message:not(.error){background:color-mix(in srgb,{$primary} 10%,{$surface})!important;color:{$text}!important;border-left-color:{$primary}!important}
+.page .search input,.page .sort{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.page .search input:focus,.page .sort:focus{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 16%,transparent)!important}
+.product-card .available-badge{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.topup-wrap .btn-ghost:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
 .topup-wrap .gcash-card strong,.topup-wrap .info-box i{color:{$primary}!important}
 .topup-wrap .gcash-card,.topup-wrap .info-box{border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
 .order-card .card-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
