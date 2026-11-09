@@ -331,7 +331,6 @@ $authImages = [
                 ?>
                     <fieldset class="customization-team-member">
                         <legend>Team member <?php echo $index + 1; ?></legend>
-                        <br>
                         <label>Name <input type="text" name="team_name[<?php echo $index; ?>]" maxlength="100" required value="<?php echo escapeOutput($member['name']); ?>"></label>
                         <label>Role <input type="text" name="team_role[<?php echo $index; ?>]" maxlength="60" required value="<?php echo escapeOutput($member['role']); ?>"></label>
                         <label>Bio <textarea name="team_bio[<?php echo $index; ?>]" maxlength="250" rows="3" required><?php echo escapeOutput($member['bio']); ?></textarea></label>
@@ -573,8 +572,8 @@ $authImages = [
 .customization-auth-preview{width:100%;height:150px;object-fit:cover;border-radius:9px;background:#eee}
 .customization-about-team{grid-column:1/-1}
 .customization-team-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.customization-team-member{min-width:0;display:grid;align-content:start;gap:12px;margin:0;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
-.customization-team-member legend{padding:0 6px;color:var(--dark-brown);font-weight:800}
+.customization-team-member{min-width:0;display:grid;align-content:start;gap:12px;margin:0;padding:12px 16px 16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
+.customization-team-member legend{margin-left:8px;padding:0 8px;color:var(--dark-brown);font-weight:800}
 .customization-team-member textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit;resize:vertical}
 .customization-team-preview{width:68px;height:68px;object-fit:cover;border:1px solid #eee4dd;border-radius:50%;background:#fff}
 .customization-save{grid-column:1/-1;min-height:52px;padding:13px 18px;border:0;border-radius:10px;background:var(--primary-red);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 20%,transparent);transition:transform .18s,box-shadow .18s}
