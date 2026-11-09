@@ -99,6 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $newUploads[] = $uploadedMedia;
                 $newSettings['hero_media_path'] = $uploadedMedia;
                 $newSettings['hero_media_type'] = 'video';
+            } elseif ($settings['hero_media_type'] === 'image') {
+                $newSettings['hero_media_path'] = null;
+                $newSettings['hero_media_type'] = 'video';
             }
         }
 
@@ -185,7 +188,7 @@ $authImages = [
         </section>
         <section class="customization-card customization-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
-            <p class="customization-help customization-colors-intro">Choose a color to update that part of the site. Keep text and background colors easy to read together.</p>
+            <p class="customization-help customization-colors-intro">Use the color swatch or type a six-digit hex code (for example, #8B4A2F). Keep text and background colors easy to read together.</p>
             <?php
             $colorFields = [
                 'primary_color' => [
@@ -227,8 +230,8 @@ $authImages = [
                     <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($colorInfo['label']); ?></label>
                     <p><?php echo escapeOutput($colorInfo['description']); ?></p>
                     <div class="customization-color-control">
-                        <input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>">
-                        <output for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput(strtoupper($settings[$key])); ?></output>
+                        <input id="color-picker-<?php echo escapeOutput($key); ?>" type="color" value="<?php echo escapeOutput($settings[$key]); ?>" aria-label="Pick <?php echo escapeOutput($colorInfo['label']); ?>">
+                        <input id="color-<?php echo escapeOutput($key); ?>" class="customization-hex-input" type="text" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput(strtoupper($settings[$key])); ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#8B4A2F" autocomplete="off" spellcheck="false" aria-label="<?php echo escapeOutput($colorInfo['label']); ?> hex code" required>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -239,7 +242,7 @@ $authImages = [
                 <p class="customization-help">Choose a video to play behind the homepage welcome message. Leave the upload empty to keep the current video.</p>
                 <label for="hero-media">Upload a video <input id="hero-media" type="file" name="hero_media" accept="video/mp4,video/webm"></label>
                 <?php if ($mediaUrl !== null): ?>
-                    <p class="customization-current-media"><i class="fa-solid fa-circle-check"></i> Current video: <strong><?php echo escapeOutput(basename($mediaUrl)); ?></strong></p>
+                    <p class="customization-current-media"><i class="fa-solid fa-circle-check"></i> Your custom homepage video is active.</p>
                     <video class="customization-video-preview" controls muted playsinline preload="metadata">
                         <source src="<?php echo escapeOutput($mediaUrl); ?>" type="<?php echo str_ends_with($mediaUrl, '.mp4') ? 'video/mp4' : 'video/webm'; ?>">
                     </video>
@@ -298,9 +301,13 @@ $authImages = [
             <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
             <div class="customization-extra-colors">
                 <?php foreach (['showcase_background' => 'Section background', 'showcase_heading_color' => 'Heading', 'showcase_text_color' => 'Description text'] as $key => $label): ?>
-                    <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?>
-                        <span class="customization-color-control"><input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>"><output><?php echo escapeOutput(strtoupper($settings[$key])); ?></output></span>
-                    </label>
+                    <div class="customization-extra-color-setting">
+                        <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?></label>
+                        <span class="customization-color-control">
+                            <input id="color-picker-<?php echo escapeOutput($key); ?>" type="color" value="<?php echo escapeOutput($settings[$key]); ?>" aria-label="Pick <?php echo escapeOutput($label); ?>">
+                            <input id="color-<?php echo escapeOutput($key); ?>" class="customization-hex-input" type="text" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput(strtoupper($settings[$key])); ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#5E1F13" autocomplete="off" spellcheck="false" aria-label="<?php echo escapeOutput($label); ?> hex code" required>
+                        </span>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </section>
@@ -313,9 +320,13 @@ $authImages = [
             <label class="customization-check"><input type="checkbox" name="reset_chatbot_image" value="1"> Restore default chatbot icon</label>
             <div class="customization-extra-colors">
                 <?php foreach (['chatbot_primary_color' => 'Buttons and header', 'chatbot_panel_color' => 'Panel background', 'chatbot_text_color' => 'Message text', 'chatbot_header_text_color' => 'Header text'] as $key => $label): ?>
-                    <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?>
-                        <span class="customization-color-control"><input id="color-<?php echo escapeOutput($key); ?>" type="color" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput($settings[$key]); ?>"><output><?php echo escapeOutput(strtoupper($settings[$key])); ?></output></span>
-                    </label>
+                    <div class="customization-extra-color-setting">
+                        <label for="color-<?php echo escapeOutput($key); ?>"><?php echo escapeOutput($label); ?></label>
+                        <span class="customization-color-control">
+                            <input id="color-picker-<?php echo escapeOutput($key); ?>" type="color" value="<?php echo escapeOutput($settings[$key]); ?>" aria-label="Pick <?php echo escapeOutput($label); ?>">
+                            <input id="color-<?php echo escapeOutput($key); ?>" class="customization-hex-input" type="text" name="<?php echo escapeOutput($key); ?>" value="<?php echo escapeOutput(strtoupper($settings[$key])); ?>" pattern="#[0-9A-Fa-f]{6}" maxlength="7" placeholder="#C6453E" autocomplete="off" spellcheck="false" aria-label="<?php echo escapeOutput($label); ?> hex code" required>
+                        </span>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </section>
@@ -329,7 +340,8 @@ $authImages = [
 .customization-intro h1{color:var(--dark-brown);margin:0 0 5px;font-size:clamp(1.45rem,2.4vw,2rem)}
 .customization-intro p,.customization-help{margin:0;color:var(--gray-brown);line-height:1.6}
 .customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:22px}
-.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:15px;box-shadow:0 8px 24px rgba(30,20,16,.035)}
+.customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:15px;box-shadow:0 8px 24px rgba(30,20,16,.035);transition:border-color .18s,box-shadow .18s}
+.customization-card:hover{border-color:color-mix(in srgb,var(--primary-red) 24%,var(--gray-brown));box-shadow:0 12px 30px rgba(30,20,16,.06)}
 .customization-card>p{line-height:1.55}
 .customization-card h2{display:flex;align-items:center;gap:10px;color:var(--dark-brown);font-size:1.12rem;margin:0;padding-bottom:13px;border-bottom:1px solid color-mix(in srgb,var(--gray-brown) 15%,transparent)}
 .customization-card h2 i{color:var(--primary-red)}
@@ -344,17 +356,21 @@ $authImages = [
 .customization-color-setting>p{min-height:38px;margin:0;color:var(--gray-brown);font-size:.82rem;line-height:1.45}
 .customization-color-control{display:flex;align-items:center;gap:10px;min-width:0;padding:5px 8px;border:1px solid #ded5cf;border-radius:10px;background:var(--site-surface)}
 .customization-color-control input[type=color]{width:48px;height:38px;flex:none;padding:2px;border:0;border-radius:6px;background:transparent;cursor:pointer}
-.customization-color-control output{overflow:hidden;color:var(--site-text);font-size:.82rem;font-weight:700;text-overflow:ellipsis}
+.customization-color-control input[type=color]:focus-visible,.customization-hex-input:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-red) 24%,transparent);outline-offset:1px}
+.customization-color-control .customization-hex-input{width:100%;min-width:0;min-height:38px;padding:6px 8px;border:1px solid #e6ddd7;border-radius:7px;background:var(--site-surface);color:var(--site-text);font:600 .9rem/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.02em}
+.customization-color-control .customization-hex-input[aria-invalid=true]{border-color:#b42318;background:#fff8f7}
 .customization-extra-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 16px}
-.customization-extra-colors label{min-width:0}
+.customization-extra-color-setting{display:grid;gap:8px;min-width:0}
+.customization-extra-color-setting>label{display:block;color:var(--dark-brown);font-weight:700}
 .customization-extra-colors .customization-color-control{margin-top:2px}
 .customization-check{display:flex!important;align-items:center;gap:9px!important;font-size:.92rem}
 .customization-check input{width:17px;height:17px;accent-color:var(--primary-red)}
 .customization-preview-row{display:flex;align-items:center;gap:12px;color:var(--gray-brown);font-size:.92rem}
 .customization-logo-preview{width:68px;height:68px;object-fit:contain;border:1px solid #eee4dd;border-radius:10px;padding:4px;background:#fff}
 .customization-hero-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px}
-.customization-media-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr);align-items:stretch;gap:22px}
+.customization-media-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.72fr);align-items:stretch;gap:22px}
 .customization-media-row .customization-card{height:100%}
+.customization-loading-card{justify-content:center}
 .customization-current-media{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--gray-brown);font-size:.92rem}
 .customization-current-media i{color:#25834b}
 .customization-video-preview{width:100%;max-height:220px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#1f1714}
@@ -369,16 +385,31 @@ $authImages = [
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
 .customization-message.error{background:#fde8e7;color:#8a1f19}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
-@media(max-width:760px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
+@media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
 @media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-extra-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
 <script>
-document.querySelectorAll('.customization-color-control input[type="color"]').forEach((input) => {
-    const output = input.parentElement.querySelector('output');
-    input.addEventListener('input', () => {
-        output.value = input.value.toUpperCase();
-        output.textContent = input.value.toUpperCase();
+document.querySelectorAll('.customization-color-control').forEach((control) => {
+    const picker = control.querySelector('input[type="color"]');
+    const hexInput = control.querySelector('.customization-hex-input');
+    const validateHex = () => {
+        const valid = /^#[0-9A-Fa-f]{6}$/.test(hexInput.value.trim());
+        hexInput.setCustomValidity(valid ? '' : 'Enter a six-digit hex color, for example #8B4A2F.');
+        hexInput.setAttribute('aria-invalid', String(!valid));
+        if (valid) picker.value = hexInput.value.trim();
+        return valid;
+    };
+
+    picker.addEventListener('input', () => {
+        hexInput.value = picker.value.toUpperCase();
+        validateHex();
+    });
+    hexInput.addEventListener('input', validateHex);
+    hexInput.addEventListener('blur', () => {
+        const value = hexInput.value.trim();
+        if (/^[0-9A-Fa-f]{6}$/.test(value)) hexInput.value = `#${value}`;
+        validateHex();
     });
 });
 </script>
