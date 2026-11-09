@@ -232,17 +232,27 @@ $authImages = [
 <main class="page customization-page">
     <header class="customization-intro">
         <div class="customization-intro-icon"><i class="fa-solid fa-palette"></i></div>
-        <div>
+        <div class="customization-intro-copy">
+            <span class="customization-eyebrow">Brand studio</span>
             <h1>Site Customization</h1>
             <p>Personalize your storefront and admin experience. Changes apply across the system without changing how it works.</p>
         </div>
+        <span class="customization-access"><i class="fa-solid fa-shield-halved"></i> Head Admin</span>
     </header>
+    <nav class="customization-jump-nav" aria-label="Customization sections">
+        <a href="#brand-identity"><i class="fa-solid fa-signature"></i> Brand</a>
+        <a href="#system-colors"><i class="fa-solid fa-droplet"></i> Colors</a>
+        <a href="#about-team"><i class="fa-solid fa-people-group"></i> About &amp; team</a>
+        <a href="#homepage-video"><i class="fa-solid fa-film"></i> Homepage</a>
+        <a href="#sign-in-pictures"><i class="fa-regular fa-images"></i> Sign-in pages</a>
+        <a href="#chatbot-settings"><i class="fa-solid fa-comments"></i> Chatbots</a>
+    </nav>
     <?php if ($message !== ''): ?>
         <div class="customization-message <?php echo $messageType === 'error' ? 'error' : ''; ?>" role="status"><?php echo escapeOutput($message); ?></div>
     <?php endif; ?>
     <form method="post" enctype="multipart/form-data" class="customization-form">
         <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
-        <section class="customization-card">
+        <section class="customization-card" id="brand-identity">
             <h2><i class="fa-solid fa-signature"></i> Brand identity</h2>
             <p class="customization-help">Set the name and logo customers see across the site.</p>
             <label>Logo text <input type="text" name="brand_name" maxlength="60" required value="<?php echo escapeOutput($settings['brand_name']); ?>"></label>
@@ -251,7 +261,7 @@ $authImages = [
             <div class="customization-preview-row"><img class="customization-logo-preview" src="<?php echo escapeOutput($logoUrl); ?>" alt="Current logo"><span>Current logo</span></div>
             <label class="customization-check"><input type="checkbox" name="reset_logo" value="1"> Restore the default logo</label>
         </section>
-        <section class="customization-card customization-about-team">
+        <section class="customization-card customization-about-team" id="about-team">
             <h2><i class="fa-solid fa-people-group"></i> About page and team</h2>
             <p class="customization-help">Change the About page hero image and the six team profiles shown to customers. Leave an image upload empty to keep its current picture.</p>
             <div class="customization-about-hero-setting">
@@ -301,7 +311,7 @@ $authImages = [
             </div>
             <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
         </section>
-        <section class="customization-card customization-colors">
+        <section class="customization-card customization-colors" id="system-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
             <p class="customization-help customization-colors-intro">Use the color swatch or type a six-digit hex code (for example, #8B4A2F). Keep text and background colors easy to read together.</p>
             <?php
@@ -352,7 +362,7 @@ $authImages = [
             <?php endforeach; ?>
         </section>
         <div class="customization-media-row">
-            <section class="customization-card customization-homepage-video">
+            <section class="customization-card customization-homepage-video" id="homepage-video">
                 <h2><i class="fa-solid fa-film"></i> Homepage background video</h2>
                 <p class="customization-help">Choose a video to play behind the homepage welcome message. Leave the upload empty to keep the current video.</p>
                 <label for="hero-media">Upload a video <input id="hero-media" type="file" name="hero_media" accept="video/mp4,video/webm"></label>
@@ -369,7 +379,7 @@ $authImages = [
                 <label class="customization-check"><input type="checkbox" name="reset_hero_media" value="1"> Restore the default homepage video</label>
                 <small>Accepted formats: MP4 or WebM. Maximum file size: 50 MB.</small>
             </section>
-            <section class="customization-card customization-loading-card">
+            <section class="customization-card customization-loading-card" id="loading-animation">
                 <h2><i class="fa-solid fa-spinner"></i> Loading animation</h2>
                 <p class="customization-help">Choose the loading style shown on the login and logout screens.</p>
                 <label for="loading-style">Loading style
@@ -385,7 +395,7 @@ $authImages = [
                 <div class="customization-loading-note"><i class="fa-regular fa-lightbulb"></i><span>Pick an animation that fits your brand. Choose “No loading animation” for the fastest, simplest experience.</span></div>
             </section>
         </div>
-        <section class="customization-card customization-auth-images">
+        <section class="customization-card customization-auth-images" id="sign-in-pictures">
             <h2><i class="fa-regular fa-images"></i> Sign-in and registration pictures</h2>
             <p class="customization-help">Upload a different JPG, PNG, or WebP image for each welcome screen. Images can be up to 5 MB.</p>
             <div class="customization-auth-image-grid">
@@ -405,7 +415,7 @@ $authImages = [
                 <?php endforeach; ?>
             </div>
         </section>
-        <section class="customization-card customization-auth-images">
+        <section class="customization-card customization-auth-images" id="featured-section">
             <h2><i class="fa-solid fa-mug-hot"></i> Homepage featured section</h2>
             <p class="customization-help">This is the “Every Cup Starts with a Smile” section shown below the main homepage banner. Its background and text automatically use your system navbar colors.</p>
             <?php
@@ -415,7 +425,7 @@ $authImages = [
             <div class="customization-preview-row"><img class="customization-auth-preview customization-showcase-preview" src="<?php echo escapeOutput($showcaseImageUrl); ?>" alt="Featured section image preview"><span>Current image</span></div>
             <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
         </section>
-        <section class="customization-card customization-auth-images">
+        <section class="customization-card customization-auth-images" id="chatbot-settings">
             <h2><i class="fa-solid fa-comments"></i> Customer and admin chatbots</h2>
             <p class="customization-help">These colors and the icon are shared by the floating chatbot on the storefront and the assistant in the admin panel.</p>
             <?php $chatbotImageUrl = site_customization_auth_image_url($settings['chatbot_image_path'], 'images/logos.png'); ?>
@@ -434,7 +444,10 @@ $authImages = [
                 <?php endforeach; ?>
             </div>
         </section>
-        <button type="submit" class="customization-save">Save customization</button>
+        <div class="customization-save-bar">
+            <span><i class="fa-solid fa-circle-info"></i> Changes apply across the storefront and admin panel.</span>
+            <button type="submit" class="customization-save"><i class="fa-solid fa-floppy-disk"></i> Save customization</button>
+        </div>
     </form>
 </main>
 <style>
@@ -497,6 +510,39 @@ $authImages = [
 .customization-save:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 28%,transparent)}
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
 .customization-message.error{background:#fde8e7;color:#8a1f19}
+.customization-intro{position:relative;overflow:hidden;min-height:132px;margin:6px 0 16px;padding:26px 30px;border:1px solid color-mix(in srgb,var(--primary-red) 16%,var(--gray-brown));border-radius:20px;background:radial-gradient(circle at 90% 15%,color-mix(in srgb,var(--primary-red) 12%,transparent),transparent 34%),linear-gradient(115deg,var(--site-surface),color-mix(in srgb,var(--site-page-bg) 76%,var(--site-surface)));box-shadow:0 12px 32px color-mix(in srgb,var(--dark-brown) 8%,transparent)}
+.customization-intro-icon{width:62px;height:62px;border-radius:18px;background:linear-gradient(145deg,var(--primary-red),var(--dark-brown));box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 24%,transparent)}
+.customization-intro-copy{min-width:0}
+.customization-eyebrow{display:block;margin-bottom:4px;color:var(--primary-red);font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.customization-intro h1{font-size:clamp(1.55rem,2.6vw,2.15rem);letter-spacing:-.04em}
+.customization-access{display:inline-flex;align-items:center;gap:8px;margin-left:auto;padding:9px 13px;border:1px solid color-mix(in srgb,var(--primary-red) 18%,var(--site-surface));border-radius:999px;background:color-mix(in srgb,var(--primary-red) 7%,var(--site-surface));color:var(--dark-brown);font-size:.8rem;font-weight:800;white-space:nowrap}
+.customization-access i{color:var(--primary-red)}
+.customization-jump-nav{position:sticky;top:10px;z-index:20;display:flex;gap:8px;overflow-x:auto;margin:0 0 22px;padding:10px;border:1px solid color-mix(in srgb,var(--gray-brown) 14%,transparent);border-radius:14px;background:color-mix(in srgb,var(--site-surface) 94%,transparent);box-shadow:0 8px 22px color-mix(in srgb,var(--dark-brown) 8%,transparent);backdrop-filter:blur(14px);scrollbar-width:thin}
+.customization-jump-nav a{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;min-height:38px;padding:8px 13px;border:1px solid transparent;border-radius:10px;color:var(--gray-brown);font-size:.84rem;font-weight:800;text-decoration:none;transition:background .18s,color .18s,border-color .18s,transform .18s}
+.customization-jump-nav a i{color:var(--primary-red)}
+.customization-jump-nav a:hover,.customization-jump-nav a:focus-visible{border-color:color-mix(in srgb,var(--primary-red) 20%,var(--site-surface));background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface));color:var(--dark-brown);outline:none;transform:translateY(-1px)}
+.customization-card{border-radius:18px;box-shadow:0 10px 28px color-mix(in srgb,var(--dark-brown) 6%,transparent)}
+.customization-card:hover{border-color:color-mix(in srgb,var(--primary-red) 25%,var(--gray-brown));box-shadow:0 14px 34px color-mix(in srgb,var(--dark-brown) 9%,transparent)}
+.customization-card h2{font-size:1.16rem;letter-spacing:-.02em}
+.customization-card h2 i{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--primary-red) 9%,var(--site-surface))}
+.customization-card input:not([type=color]):not([type=checkbox]),.customization-card select,.customization-team-member textarea{transition:border-color .18s,box-shadow .18s}
+.customization-card input:not([type=color]):not([type=checkbox]):hover,.customization-card select:hover,.customization-team-member textarea:hover{border-color:color-mix(in srgb,var(--primary-red) 38%,var(--gray-brown))}
+.customization-card input:focus-visible,.customization-card select:focus-visible,.customization-team-member textarea:focus-visible{border-color:var(--primary-red);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary-red) 12%,transparent)}
+.customization-color-setting{padding:12px;border:1px solid color-mix(in srgb,var(--gray-brown) 12%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 32%,var(--site-surface))}
+.customization-color-setting>p{min-height:0}
+.customization-color-control{box-shadow:0 2px 6px color-mix(in srgb,var(--dark-brown) 4%,transparent)}
+.customization-auth-image-grid,.customization-team-grid{gap:18px}
+.customization-image-setting,.customization-team-member,.customization-about-hero-setting{border-radius:15px;box-shadow:0 4px 14px color-mix(in srgb,var(--dark-brown) 4%,transparent)}
+.customization-auth-preview,.customization-about-preview{border:1px solid color-mix(in srgb,var(--gray-brown) 14%,transparent)}
+.customization-video-preview{border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);box-shadow:0 8px 20px color-mix(in srgb,var(--dark-brown) 12%,transparent)}
+.customization-save-bar{position:sticky;bottom:12px;z-index:15;grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px 12px 18px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:15px;background:color-mix(in srgb,var(--site-surface) 94%,transparent);box-shadow:0 12px 32px color-mix(in srgb,var(--dark-brown) 14%,transparent);backdrop-filter:blur(16px)}
+.customization-save-bar>span{display:flex;align-items:center;gap:9px;color:var(--gray-brown);font-size:.86rem;font-weight:600;line-height:1.4}
+.customization-save-bar>span i{color:var(--primary-red)}
+.customization-save{display:inline-flex;align-items:center;justify-content:center;gap:9px;grid-column:auto;min-width:220px;background:linear-gradient(135deg,var(--primary-red),var(--dark-brown));box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 22%,transparent)}
+.customization-save:hover{box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 30%,transparent)}
+.customization-form section[id],.customization-media-row section[id]{scroll-margin-top:84px}
+@media(max-width:720px){.customization-access{display:none}.customization-jump-nav{top:6px;margin-bottom:16px}}
+@media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
