@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
 
 $admin_id = $_SESSION['admin_id'];
 
@@ -7,6 +8,7 @@ if(!isset($admin_id)){
    header('location:login.php');
    exit;
 }
+$site_customization = get_site_customization($conn);
 
 // --- Top 5 Best Sellers Query (FIXED - Parse total_products field) ---
 // Note: we no longer GROUP BY / LIMIT in SQL because the raw product_name
@@ -865,6 +867,10 @@ function truncateLabel(label, maxLength) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const themePrimary = <?php echo json_encode($site_customization['primary_color']); ?>;
+    const themeSecondary = <?php echo json_encode($site_customization['secondary_color']); ?>;
+    const themeText = <?php echo json_encode($site_customization['text_color']); ?>;
+    const themePage = <?php echo json_encode($site_customization['page_background']); ?>;
     const bestSellersFullLabels = <?php echo json_encode($best_products_labels); ?>;
     const bestSellersData = <?php echo json_encode($best_products_data); ?>;
 
@@ -879,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const valueAxis = {
             beginAtZero: true,
             ticks: {
-                color: '#5E1F13',
+                color: themeText,
                 font: { weight: 700, size: isMobile ? 11 : 12 },
                 precision: 0
             },
@@ -887,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         const labelAxis = {
             ticks: {
-                color: '#5E1F13',
+                color: themeText,
                 font: { weight: 700, size: isMobile ? 11 : 12 },
                 autoSkip: false,
                 maxRotation: isMobile ? 0 : 40,
@@ -905,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [{
                     label: 'Units Sold',
                     data: bestSellersData,
-                    backgroundColor: '#C6453E',
+                    backgroundColor: themePrimary,
                     borderRadius: 10,
                     maxBarThickness: isMobile ? 28 : 50,
                     borderSkipped: false
@@ -918,7 +924,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(94, 31, 19, 0.8)',
+                        backgroundColor: themeSecondary,
                         padding: 12,
                         titleFont: { size: 14, weight: 'bold' },
                         bodyFont: { size: 13 },
@@ -964,10 +970,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     '#D4A574',
                     '#0369a1',
                     '#b45309',
-                    '#C6453E',
-                    '#D97E6A'
+                    themePrimary,
+                    '#94a3b8'
                 ],
-                borderColor: '#fff2e0',
+                borderColor: themePage,
                 borderWidth: 2
             }]
         },
@@ -979,14 +985,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     display: true,
                     position: 'bottom',
                     labels: {
-                        color: '#5E1F13',
+                        color: themeText,
                         font: { size: mqMobile.matches ? 11 : 12, weight: 600 },
                         padding: mqMobile.matches ? 10 : 15,
                         boxWidth: 12
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(94, 31, 19, 0.8)',
+                    backgroundColor: themeSecondary,
                     padding: 12,
                     callbacks: {
                         label: function(ctx) { return ctx.label + ': ' + ctx.parsed + ' orders'; }
@@ -1005,13 +1011,13 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 label: 'Sales (₱)',
                 data: <?php echo json_encode($sales_totals); ?>,
-                backgroundColor: 'rgba(198, 69, 62, 0.08)',
-                borderColor: '#C6453E',
+                backgroundColor: themePrimary,
+                borderColor: themePrimary,
                 borderWidth: 3,
                 pointRadius: mqMobile.matches ? 5 : 8,
                 pointHoverRadius: mqMobile.matches ? 7 : 10,
-                pointBackgroundColor: '#5E1F13',
-                pointBorderColor: '#fff',
+                pointBackgroundColor: themeSecondary,
+                pointBorderColor: themePage,
                 pointBorderWidth: 2,
                 fill: true,
                 tension: 0.4
@@ -1023,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(94, 31, 19, 0.8)',
+                    backgroundColor: themeSecondary,
                     padding: 12,
                     callbacks: {
                         label: function(ctx) { return '₱' + ctx.parsed.y.toLocaleString(); }
@@ -1034,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        color: '#5E1F13',
+                        color: themeText,
                         font: { weight: 700, size: mqMobile.matches ? 11 : 12 },
                         callback: function(value) { return '₱' + value.toLocaleString(); }
                     },
@@ -1042,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 x: {
                     ticks: {
-                        color: '#5E1F13',
+                        color: themeText,
                         font: { weight: 700, size: mqMobile.matches ? 11 : 12 },
                         maxRotation: mqMobile.matches ? 45 : 0,
                         autoSkip: true,

@@ -227,11 +227,40 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .site-footer{background:linear-gradient(135deg,{$navbar},{$secondary})!important}
 .team .member .role,.team .member .social-btn{background:{$page}!important;color:{$primary}!important}
 .team .member h4{color:{$secondary}!important}
-.promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta,.about-grid>.card,.main-layout>.card,.products-section .product-card,.cart-wrap>.card,.cart-item,.topup-wrap>.card,.gcash-card,.password-panel{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
-.hero .btn,.promo .promo-btn:not(.promo-btn-ghost),.contact-cta a,.facts-cta,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled),.main-layout .btn-primary:not(:disabled),.price-badge,.cart-wrap .btn-primary:not(:disabled),.topup-wrap .btn-primary:not(:disabled),.profile-wrap .toggle-btn{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta,.about-grid>.card,.main-layout>.card,.products-section .product-card,.product,.weekly-special-card,.cart-wrap>.card,.cart-item,.topup-wrap>.card,.gcash-card,.password-panel{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.hero .btn,.hero-content .cta-btn,.promo .promo-btn:not(.promo-btn-ghost),.contact-cta a,.facts-cta,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled),.main-layout .btn-primary:not(:disabled),.price-badge,.cart-wrap .btn-primary:not(:disabled),.topup-wrap .btn-primary:not(:disabled),.profile-wrap .toggle-btn,.about-content-card a,.contact-card a{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
 .promo .promo-btn-ghost,.main-layout .btn-outline,.cart-wrap .btn-ghost,.cart-wrap .btn-outline,.topup-wrap .btn-ghost,.profile-wrap .btn-ghost{background:{$page}!important;color:{$primary}!important;border:1px solid color-mix(in srgb,{$primary} 55%,{$page})!important}
-.promo .promo-btn:hover,.facts-cta:hover,.main-layout .btn-primary:hover:not(:disabled),.cart-wrap .btn-primary:hover:not(:disabled),.topup-wrap .btn-primary:hover:not(:disabled),.profile-wrap .btn-primary:hover,.profile-wrap .toggle-btn:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.promo .promo-btn:hover,.facts-cta:hover,.hero-content .cta-btn:hover,.main-layout .btn-primary:hover:not(:disabled),.cart-wrap .btn-primary:hover:not(:disabled),.topup-wrap .btn-primary:hover:not(:disabled),.profile-wrap .btn-primary:hover,.profile-wrap .toggle-btn:hover,.about-content-card a:hover,.contact-card a:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
 .main-layout .card h2 i,.main-layout .product-details .special-product-label,.main-layout .product-details .size-type-tag,.main-layout .product-card label,.main-layout .stock,.cart-wrap .item-price,.cart-wrap .summary .grand span,.topup-wrap .gcash-number,.profile-wrap .helper i{color:{$primary}!important}
+.search-field i,.search-hint a,.results-head h2 i,.product-details .size-type-tag,.product-details .stock,.product-details label,.product-details .line-total,.pref-row label i,.extra-row-title i,.empty>i{color:{$primary}!important}
+.search-card,.search-results .product-card,.content-wrapper .search-card,.content-wrapper .product-card,.content-wrapper .empty{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.search-field input,.product-card select,.product-card .input,.product-card .qty{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.search-field input:focus,.product-card select:focus,.product-card .input:focus{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 18%,transparent)!important}
+.search-hint,.results-head h2,.product-details .name{color:{$secondary}!important}
+.content-wrapper .results-count,.product-details .size-type-tag,.product-details .special-product-label{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 25%,{$page})!important}
+.content-wrapper .badge-low{background:color-mix(in srgb,{$accent} 12%,{$surface})!important;color:{$accent}!important;border-color:color-mix(in srgb,{$accent} 25%,{$surface})!important}
+.content-wrapper .badge-out{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.content-wrapper .product-card:hover{border-color:{$primary}!important}
+.content-wrapper .btn-primary:not(:disabled),.content-wrapper .btn-outline:hover:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.content-wrapper .btn-outline{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 45%,{$page})!important}
+.content-wrapper .message{background:color-mix(in srgb,{$primary} 10%,{$surface})!important;color:{$text}!important;border-left-color:{$primary}!important}
+.content-wrapper .message::before{color:{$primary}!important}
+.content-wrapper .price-badge,.badge-price{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.product .btn-primary:not(:disabled),.product .btn-outline:hover:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.product .btn-outline{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 45%,{$page})!important}
+.product .title{color:{$secondary}!important}
+.product .desc,.product .size-type-tag{color:{$accent}!important}
+.product .size-type-tag{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.product .qty:focus,.product select:focus{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 18%,transparent)!important}
+.about-content-card h3 i,.contact-card h3 i{color:{$primary}!important}
+.section-header .section-filters a:first-child{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.section-header .section-filters a:hover,.section-header .section-filters a:focus{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.weekly-special-card .special-product-label{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 24%,{$page})!important}
+.weekly-special-card .announcement-label{color:{$primary}!important}
+.weekly-special-card h3{color:{$secondary}!important}
+.weekly-special-card p{color:{$text}!important}
+.weekly-special-card a{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.weekly-special-card a:hover,.weekly-special-card a:focus{background:{$secondary}!important;color:{$navbarText}!important}
 .main-layout .product-details .special-product-label,.main-layout .product-details .size-type-tag,.cart-wrap .item-customization .customization-line,.cart-wrap .payment-pill{background:{$page}!important;border-color:color-mix(in srgb,{$primary} 25%,{$page})!important}
 .main-layout .product-card,.main-layout .contact-cta{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
 .cart-wrap .cart-item,.cart-wrap .summary-row,.cart-wrap .item-title,.cart-wrap .summary h3,.cart-wrap .summary .grand{color:{$text}!important}
@@ -288,6 +317,48 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .change-password-form input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
 .change-password-form button{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
 .change-password-form .ca{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.refresh-btn,.update-btn,.done-now-btn,.chip.active,.kb-btn:not(.kb-btn-secondary),.kb-title-icon,.an-btn,.an-btn-secondary,.an-btn:hover,.an-btn-secondary:hover,.dashboard-header .action-btn:not(.secondary){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.refresh-btn:hover,.update-btn:not(:disabled):hover,.chip.active:hover,.kb-btn:not(.kb-btn-secondary):hover,.an-btn:hover,.an-btn-secondary:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.cancel-btn,.delete-btn{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.cancel-btn:hover,.delete-btn:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.order-card.cancelled{border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.order-card.cancelled .card-header{background:linear-gradient(135deg,{$secondary},{$accent})!important}
+.status-pending,.status-completed{background:color-mix(in srgb,{$primary} 12%,{$surface})!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 28%,{$surface})!important}
+.status-cancelled{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.chip:not(.active):hover,.search:focus-within,.select:focus{border-color:{$primary}!important}
+.search i,.kb-label i,.kb-modal-head h2 i,.kb-stat-icon.total,.kb-filter-btn.active,.kb-chip.more,.an-title i,.chart-header i,.meta-item i{color:{$primary}!important}
+.search,.select,.kb-search input,.kb-input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.search:focus-within,.kb-search input:focus,.kb-input:focus{border-color:{$primary}!important;box-shadow:0 0 0 3px color-mix(in srgb,{$primary} 16%,transparent)!important}
+.chip,.kb-filter-btn.active,.kb-btn-secondary,.kb-close,.kb-icon-btn{background:{$surface}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.chip.active,.kb-filter-btn.active{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.kb-filter-btn:hover,.kb-btn-secondary:hover,.kb-close:hover,.kb-icon-btn:hover{background:{$page}!important;color:{$primary}!important;border-color:{$primary}!important}
+.kb-page,.kb-page .kb-table tbody td,.kb-page .kb-table .kb-response-text,.kb-modal-overlay .kb-modal{color:{$text}!important}
+.kb-page .kb-stat,.kb-page .kb-card,.kb-modal-overlay .kb-modal{background:{$surface}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.kb-page .kb-toolbar{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 20%,{$page})!important}
+.kb-page .kb-table thead th{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 20%,{$page})!important}
+.kb-page .kb-table tbody tr:hover,.kb-page .kb-filters{background:{$page}!important}
+.kb-page .kb-chip,.kb-page .kb-priority-bar{background:{$page}!important;color:{$secondary}!important}
+.kb-page .kb-chip.more{background:color-mix(in srgb,{$primary} 12%,{$surface})!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 25%,{$surface})!important}
+.kb-page .kb-priority-bar div{background:linear-gradient(90deg,{$accent},{$primary})!important}
+.kb-modal-overlay .kb-modal-head{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.kb-modal-overlay .kb-modal-head h2,.kb-modal-overlay .kb-modal-head h2 i{color:{$navbarText}!important}
+.kb-page .kb-header h1,.kb-page .kb-stat-value,.kb-page .kb-stat-label,.kb-page .kb-sub,.kb-page .kb-empty h3,.kb-page .kb-no-results h3{color:{$secondary}!important}
+.kb-page .kb-search i,.kb-page .kb-empty i,.kb-page .kb-no-results i,.kb-page .kb-stat-icon.total,.kb-page .kb-modal-head h2 i,.kb-page .kb-label i{color:{$primary}!important}
+.kb-page .kb-search input,.kb-page .kb-input,.kb-page .kb-modal input,.kb-page .kb-modal textarea,.kb-page .kb-modal select{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.kb-page .kb-stat-icon.total{background:color-mix(in srgb,{$primary} 12%,{$surface})!important}
+.kb-page .kb-stat-icon.inactive,.kb-page .kb-type-tag,.kb-page .kb-priority-num span,.kb-page .kb-empty,.kb-page .kb-no-results{color:{$accent}!important}
+.kb-page .kb-icon-btn.delete,.kb-page .kb-icon-btn.delete:hover{color:{$secondary}!important;background:{$page}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.kb-page .kb-icon-btn.edit,.kb-page .kb-icon-btn.edit:hover{color:{$primary}!important;background:{$page}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.kb-modal-overlay .kb-close{background:color-mix(in srgb,{$navbarText} 15%,transparent)!important;color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 25%,transparent)!important}
+.kb-modal-overlay .kb-switch input:checked+.kb-slider{background:{$primary}!important}
+.an-page .an-title h1,.an-page .chart-header h3{color:{$secondary}!important}
+.an-page .an-subtitle,.an-page .kpi-card .kpi-label{color:{$accent}!important}
+.an-page .kpi-card,.an-page .chart-panel,.an-page .low-stock-panel{background:{$surface}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.an-page .kpi-card::before,.an-page .chart-panel::before,.an-page .low-stock-panel::before{background:linear-gradient(90deg,{$accent},{$primary})!important}
+.an-page .export-menu,.an-page .export-menu a{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
+.an-page .export-menu a:hover{background:{$page}!important;color:{$primary}!important}
+.an-page .chart-header i,.an-page .kpi-icon,.an-page .kpi-value,.an-page .low-stock-item .stock-value{color:{$primary}!important}
+.an-page .low-stock-item{background:{$page}!important;color:{$text}!important}
 .coffee-moment{background:linear-gradient(120deg,{$navbar} 0%,{$secondary} 100%)!important}
 .coffee-moment .coffee-moment-tag{color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 30%,transparent)!important}
 .coffee-moment-text h2,.coffee-moment-text p{color:{$navbarText}!important}
