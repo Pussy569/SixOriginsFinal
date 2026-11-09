@@ -907,7 +907,7 @@ if ($unseen_total_q && mysqli_num_rows($unseen_total_q) > 0) {
      }
    </style>
 </head>
-<body>
+<body class="site-page-background page-contact">
 
 <?php include 'header.php'; ?>
 

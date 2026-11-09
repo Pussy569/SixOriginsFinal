@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Choose a valid loading animation.');
         }
         $newSettings['loading_style'] = $loadingStyle;
-        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'order_header_text_color'] as $key) {
+        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'navbar_hover_color', 'order_header_text_color'] as $key) {
             $value = (string)($_POST[$key] ?? '');
             if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
                 throw new RuntimeException('Choose a valid six-digit hex color for each color setting.');
@@ -105,6 +105,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $pageBackgrounds = [
+            'shop_background_image_path' => 'shop_background',
+            'contact_background_image_path' => 'contact_background',
+            'orders_background_image_path' => 'orders_background',
+            'search_background_image_path' => 'search_background',
+            'cart_background_image_path' => 'cart_background',
+            'profile_background_image_path' => 'profile_background',
+            'topup_background_image_path' => 'topup_background',
+        ];
+        $oldPageBackgrounds = [];
+        foreach ($pageBackgrounds as $settingKey => $uploadKey) {
+            $oldPageBackgrounds[$settingKey] = $settings[$settingKey];
+            $uploadedBackground = save_site_customization_upload($_FILES[$uploadKey] ?? [], 'image', __DIR__);
+            if ($uploadedBackground !== null) {
+                $newUploads[] = $uploadedBackground;
+                $newSettings[$settingKey] = $uploadedBackground;
+            } elseif (!empty($_POST['reset_' . $uploadKey])) {
+                $newSettings[$settingKey] = site_customization_defaults()[$settingKey];
+            }
+        }
+
         $oldTeamMembers = $settings['team_members'];
         $postedNames = $_POST['team_name'] ?? [];
         $postedRoles = $_POST['team_role'] ?? [];
@@ -161,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_admin_activity(
             (int)$_SESSION['admin_id'],
             'Updated Site Customization',
-            'Updated site branding, colors, homepage media, or About page content.',
+            'Updated site branding, colors, page backgrounds, homepage media, or About page content.',
             'success',
             'site_customization',
             1,
@@ -177,6 +198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($oldAboutImages as $settingKey => $oldAboutImage) {
             if ($oldAboutImage !== $newSettings[$settingKey]) {
                 delete_site_customization_upload($oldAboutImage, __DIR__);
+            }
+        }
+        foreach ($oldPageBackgrounds as $settingKey => $oldPageBackground) {
+            if ($oldPageBackground !== $newSettings[$settingKey]) {
+                delete_site_customization_upload($oldPageBackground, __DIR__);
             }
         }
         foreach ($oldTeamMembers as $index => $oldMember) {
@@ -221,6 +247,23 @@ $hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['her
 $aboutHeroImageUrl = site_customization_auth_image_url($settings['about_hero_image_path'], 'images/aboback.png');
 $aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
+$pageBackgroundOptions = [
+    'shop_background_image_path' => ['title' => 'Shop page', 'input' => 'shop_background'],
+    'contact_background_image_path' => ['title' => 'Contact page', 'input' => 'contact_background'],
+    'orders_background_image_path' => ['title' => 'Customer orders page', 'input' => 'orders_background'],
+    'search_background_image_path' => ['title' => 'Search page', 'input' => 'search_background'],
+    'cart_background_image_path' => ['title' => 'Shopping cart page', 'input' => 'cart_background'],
+    'profile_background_image_path' => ['title' => 'Customer profile page', 'input' => 'profile_background'],
+    'topup_background_image_path' => ['title' => 'Wallet top-up page', 'input' => 'topup_background'],
+];
+$pageBackgroundImages = [];
+foreach ($pageBackgroundOptions as $settingKey => $imageConfig) {
+    $pageBackgroundImages[$settingKey] = [
+        'title' => $imageConfig['title'],
+        'input' => $imageConfig['input'],
+        'url' => site_customization_auth_image_url($settings[$settingKey], ''),
+    ];
+}
 $teamMembers = $settings['team_members'];
 $authImages = [
     'login_image_path' => ['title' => 'Login page picture', 'input' => 'login_image', 'default' => 'images/logback.jpeg'],
@@ -243,6 +286,7 @@ $authImages = [
         <a href="#brand-identity"><i class="fa-solid fa-signature"></i> Brand</a>
         <a href="#system-colors"><i class="fa-solid fa-droplet"></i> Colors</a>
         <a href="#about-team"><i class="fa-solid fa-people-group"></i> About &amp; team</a>
+        <a href="#page-backgrounds"><i class="fa-regular fa-images"></i> Page backgrounds</a>
         <a href="#homepage-video"><i class="fa-solid fa-film"></i> Homepage</a>
         <a href="#sign-in-pictures"><i class="fa-regular fa-images"></i> Sign-in pages</a>
         <a href="#chatbot-settings"><i class="fa-solid fa-comments"></i> Chatbots</a>
@@ -311,6 +355,29 @@ $authImages = [
             </div>
             <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
         </section>
+        <section class="customization-card customization-page-backgrounds" id="page-backgrounds">
+            <h2><i class="fa-regular fa-images"></i> Customer page backgrounds</h2>
+            <p class="customization-help">Choose a separate background image for each page. Images appear softly behind the page content to keep text readable. Leave an upload empty to keep its current image; reset it to use the system background color.</p>
+            <div class="customization-page-background-grid">
+                <?php foreach ($pageBackgroundImages as $settingKey => $imageConfig): ?>
+                    <div class="customization-page-background-setting">
+                        <label><?php echo escapeOutput($imageConfig['title']); ?>
+                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <div class="customization-page-background-preview">
+                            <?php if ($imageConfig['url'] !== ''): ?>
+                                <img src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> background preview">
+                                <span>Current background</span>
+                            <?php else: ?>
+                                <div class="customization-page-background-empty"><i class="fa-regular fa-image"></i><span>Using system background color</span></div>
+                            <?php endif; ?>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Use system background color</label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <small>Accepted formats: JPG, PNG, or WebP. Maximum file size: 5 MB per image.</small>
+        </section>
         <section class="customization-card customization-colors" id="system-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
             <p class="customization-help customization-colors-intro">Use the color swatch or type a six-digit hex code (for example, #8B4A2F). Keep text and background colors easy to read together.</p>
@@ -347,6 +414,10 @@ $authImages = [
                 'navbar_text' => [
                     'label' => 'Navbar text',
                     'description' => 'Text and icons in the navigation bars; contrast it with the navbar background.',
+                ],
+                'navbar_hover_color' => [
+                    'label' => 'Navbar hover and active color',
+                    'description' => 'Background for hovered and current links in the customer and admin navigation bars. Use a shade that contrasts with navbar text.',
                 ],
                 'order_header_text_color' => [
                     'label' => 'Order card header text',
@@ -560,11 +631,18 @@ $authImages = [
 .customization-about-team .customization-image-setting .customization-preview-row{min-width:0;align-items:center}
 .customization-about-team .customization-image-setting .customization-auth-preview{width:72%;flex:0 0 72%;height:clamp(150px,17vw,230px)}
 .customization-about-team .customization-image-setting .customization-check{grid-column:1/-1}
+.customization-page-backgrounds{grid-column:1/-1}
+.customization-page-background-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.customization-page-background-setting{display:grid;align-content:start;gap:12px;min-width:0;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 15%,transparent);border-radius:14px;background:color-mix(in srgb,var(--site-page-bg) 34%,var(--site-surface))}
+.customization-page-background-preview{display:flex;align-items:center;gap:10px;min-width:0;color:var(--gray-brown);font-size:.84rem;line-height:1.35}
+.customization-page-background-preview img{width:72%;height:130px;flex:0 0 72%;object-fit:cover;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:10px;background:var(--site-page-bg)}
+.customization-page-background-empty{display:grid;place-items:center;gap:8px;width:100%;height:130px;padding:12px;border:1px dashed color-mix(in srgb,var(--gray-brown) 30%,transparent);border-radius:10px;background:color-mix(in srgb,var(--site-surface) 75%,transparent);text-align:center}
+.customization-page-background-empty i{color:var(--primary-red);font-size:1.4rem}
 @media(max-width:720px){.customization-access{display:none}.customization-jump-nav{top:6px;margin-bottom:16px}}
 @media(max-width:1050px){#system-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){#brand-identity{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:720px){.customization-about-team .customization-image-setting{grid-template-columns:1fr}.customization-about-team .customization-image-setting>label:first-child,.customization-about-team .customization-image-setting .customization-check{grid-column:auto}}
-@media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}}
+@media(max-width:720px){.customization-about-team .customization-image-setting{grid-template-columns:1fr}.customization-about-team .customization-image-setting>label:first-child,.customization-about-team .customization-image-setting .customization-check{grid-column:auto}.customization-page-background-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}.customization-page-background-grid{grid-template-columns:1fr}}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}

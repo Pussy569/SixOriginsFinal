@@ -939,7 +939,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     </style>
 </head>
-<body>
+<body class="site-page-background page-topup">
 
 <?php include 'header.php'; ?>
 
