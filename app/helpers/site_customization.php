@@ -39,6 +39,8 @@ function site_customization_defaults(): array
         'navbar_background' => '#5E1F13',
         'navbar_text' => '#FFFFFF',
         'navbar_hover_color' => '#8A3F2B',
+        'navbar_hover_text_color' => '#FFFFFF',
+        'navbar_hover_border_color' => '#8A3F2B',
         'order_header_text_color' => '#FFFFFF',
         'hero_media_path' => null,
         'hero_media_type' => 'video',
@@ -65,7 +67,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -133,7 +135,7 @@ function get_site_customization(mysqli $conn): array
         }
     }
 
-    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'navbar_hover_color', 'order_header_text_color', 'showcase_background', 'showcase_heading_color', 'showcase_text_color', 'chatbot_primary_color', 'chatbot_panel_color', 'chatbot_text_color', 'chatbot_header_text_color'] as $color_key) {
+    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'navbar_hover_color', 'navbar_hover_text_color', 'navbar_hover_border_color', 'order_header_text_color', 'showcase_background', 'showcase_heading_color', 'showcase_text_color', 'chatbot_primary_color', 'chatbot_panel_color', 'chatbot_text_color', 'chatbot_header_text_color'] as $color_key) {
         if (!is_string($settings[$color_key]) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $settings[$color_key])) {
             $settings[$color_key] = site_customization_defaults()[$color_key];
         }
@@ -160,13 +162,15 @@ function site_customization_css(array $settings): string
     $navbar = escapeOutput($settings['navbar_background']);
     $navbarText = escapeOutput($settings['navbar_text']);
     $navbarHover = escapeOutput($settings['navbar_hover_color']);
+    $navbarHoverText = escapeOutput($settings['navbar_hover_text_color']);
+    $navbarHoverBorder = escapeOutput($settings['navbar_hover_border_color']);
     $orderHeaderText = escapeOutput($settings['order_header_text_color']);
     $pageBackgroundRules = '';
     foreach (['shop', 'contact', 'orders', 'search', 'cart', 'profile', 'topup'] as $pageKey) {
         $imageUrl = site_customization_media_url($settings[$pageKey . '_background_image_path'] ?? null);
         if ($imageUrl !== null) {
             $safeImageUrl = escapeOutput($imageUrl);
-            $pageBackgroundRules .= ".site-page-background.page-{$pageKey}{background-color:{$page}!important;background-image:linear-gradient(color-mix(in srgb,{$page} 52%,transparent),color-mix(in srgb,{$page} 52%,transparent)),url('{$safeImageUrl}')!important;background-size:cover!important;background-position:center top!important;background-repeat:no-repeat!important;background-attachment:fixed!important}\n";
+            $pageBackgroundRules .= ".page-{$pageKey} .hero{background-image:linear-gradient(rgba(0,0,0,.52),rgba(0,0,0,.65)),url('{$safeImageUrl}')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}\n";
         }
     }
 
@@ -174,8 +178,8 @@ function site_customization_css(array $settings): string
 :root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--red:{$primary}!important;--red-dark:{$secondary}!important;--brown:{$secondary}!important;--brown-mid:{$accent}!important;--cream:{$page}!important;--cream-light:{$page}!important;--cream-mid:{$surface}!important;--border:color-mix(in srgb,{$accent} 30%,{$page})!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important;--site-accent-color:{$accent}!important}
 html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 {$pageBackgroundRules}
-.header-wrap .nav a:hover,.header-wrap .nav a.active,.header-wrap #mobileMenu a:hover,.admin-header .nav-link:hover,.admin-header .nav-dropdown-toggle:hover,.admin-header .nav-link.active,.admin-header .nav-dropdown-toggle.active{background:{$navbarHover}!important;color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 38%,transparent)!important;box-shadow:0 6px 16px color-mix(in srgb,{$navbarHover} 24%,transparent)!important}
-.admin-header .nav-dropdown-menu a:hover,.admin-header .nav-dropdown-menu a.current,.admin-header .nav-dropdown-menu a:focus-visible{background:{$navbarHover}!important;color:{$navbarText}!important}
+.header-wrap .nav a:hover,.header-wrap .nav a.active,.header-wrap #mobileMenu a:hover,.admin-header .nav-link:hover,.admin-header .nav-dropdown-toggle:hover,.admin-header .nav-link.active,.admin-header .nav-dropdown-toggle.active{background:{$navbarHover}!important;color:{$navbarHoverText}!important;border-color:{$navbarHoverBorder}!important;box-shadow:0 6px 16px color-mix(in srgb,{$navbarHover} 24%,transparent)!important}
+.admin-header .nav-dropdown-menu a:hover,.admin-header .nav-dropdown-menu a.current,.admin-header .nav-dropdown-menu a:focus-visible{background:{$navbarHover}!important;color:{$navbarHoverText}!important;border-color:{$navbarHoverBorder}!important}
 .header-wrap,.header-wrap.scrolled,.admin-header{background:var(--site-navbar-bg)!important;color:var(--site-navbar-text)}
 .header-wrap .brand,.header-wrap .brand .logo-main,.header-wrap .brand .logo-sub,.header-wrap .nav a,.header-wrap .icon-btn,.header-wrap .profile-btn,.admin-header .brand .logo-main,.admin-header .brand .logo-sub,.admin-header .nav-link,.admin-header .nav-dropdown-toggle,.admin-header .icon-btn{color:var(--site-navbar-text)}
 .header-wrap .profile-menu,.admin-header .profile-menu,.admin-header .nav-dropdown-menu{background:var(--site-surface)!important;color:var(--site-text)}
@@ -366,7 +370,7 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .admin-header .profile-menu .icon-btn:hover,.admin-header .profile-menu .icon-btn.active:hover{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important;transform:translateX(4px)!important}
 .admin-header .profile-menu .icon-btn:hover i,.admin-header .profile-menu .icon-btn.active:hover i{color:{$navbarText}!important}
 .admin-header .nav-dropdown-menu{background:{$surface}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
-.admin-header .nav-dropdown-menu a:hover,.admin-header .nav-dropdown-menu a.current,.admin-header .nav-dropdown-menu a:focus-visible{background:{$navbarHover}!important;color:{$navbarText}!important}
+.admin-header .nav-dropdown-menu a:hover,.admin-header .nav-dropdown-menu a.current,.admin-header .nav-dropdown-menu a:focus-visible{background:{$navbarHover}!important;color:{$navbarHoverText}!important;border-color:{$navbarHoverBorder}!important}
 .admin-header #notif-bell:hover,.admin-header #notif-bell.active{background:color-mix(in srgb,{$navbarText} 24%,transparent)!important;color:{$navbarText}!important;border-color:color-mix(in srgb,{$navbarText} 50%,transparent)!important}
 .admin-header #notif-bell .badge{background:{$surface}!important;color:{$primary}!important}
 .admin-header .notif-dropdown{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
@@ -522,8 +526,8 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
     }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
@@ -543,11 +547,13 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             page_background = VALUES(page_background), surface_color = VALUES(surface_color), text_color = VALUES(text_color),
             navbar_background = VALUES(navbar_background), navbar_text = VALUES(navbar_text),
             navbar_hover_color = VALUES(navbar_hover_color),
+            navbar_hover_text_color = VALUES(navbar_hover_text_color),
+            navbar_hover_border_color = VALUES(navbar_hover_border_color),
             order_header_text_color = VALUES(order_header_text_color),
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 39) . 'i',
+        str_repeat('s', 41) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
@@ -584,6 +590,8 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
         $settings['navbar_background'],
         $settings['navbar_text'],
         $settings['navbar_hover_color'],
+        $settings['navbar_hover_text_color'],
+        $settings['navbar_hover_border_color'],
         $settings['order_header_text_color'],
         $settings['hero_media_path'],
         $settings['hero_media_type'],

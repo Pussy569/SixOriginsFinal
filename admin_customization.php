@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Choose a valid loading animation.');
         }
         $newSettings['loading_style'] = $loadingStyle;
-        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'navbar_hover_color', 'order_header_text_color'] as $key) {
+        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'navbar_hover_color', 'navbar_hover_text_color', 'navbar_hover_border_color', 'order_header_text_color'] as $key) {
             $value = (string)($_POST[$key] ?? '');
             if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
                 throw new RuntimeException('Choose a valid six-digit hex color for each color setting.');
@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_admin_activity(
             (int)$_SESSION['admin_id'],
             'Updated Site Customization',
-            'Updated site branding, colors, page backgrounds, homepage media, or About page content.',
+            'Updated site branding, colors, page banners, homepage media, or About page content.',
             'success',
             'site_customization',
             1,
@@ -248,13 +248,13 @@ $aboutHeroImageUrl = site_customization_auth_image_url($settings['about_hero_ima
 $aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
 $pageBackgroundOptions = [
-    'shop_background_image_path' => ['title' => 'Shop page', 'input' => 'shop_background'],
-    'contact_background_image_path' => ['title' => 'Contact page', 'input' => 'contact_background'],
-    'orders_background_image_path' => ['title' => 'Customer orders page', 'input' => 'orders_background'],
-    'search_background_image_path' => ['title' => 'Search page', 'input' => 'search_background'],
-    'cart_background_image_path' => ['title' => 'Shopping cart page', 'input' => 'cart_background'],
-    'profile_background_image_path' => ['title' => 'Customer profile page', 'input' => 'profile_background'],
-    'topup_background_image_path' => ['title' => 'Wallet top-up page', 'input' => 'topup_background'],
+    'shop_background_image_path' => ['title' => 'Shop hero/banner', 'input' => 'shop_background'],
+    'contact_background_image_path' => ['title' => 'Contact hero/banner', 'input' => 'contact_background'],
+    'orders_background_image_path' => ['title' => 'Customer orders hero/banner', 'input' => 'orders_background'],
+    'search_background_image_path' => ['title' => 'Search hero/banner', 'input' => 'search_background'],
+    'cart_background_image_path' => ['title' => 'Shopping cart hero/banner', 'input' => 'cart_background'],
+    'profile_background_image_path' => ['title' => 'Customer profile hero/banner', 'input' => 'profile_background'],
+    'topup_background_image_path' => ['title' => 'Wallet top-up hero/banner', 'input' => 'topup_background'],
 ];
 $pageBackgroundImages = [];
 foreach ($pageBackgroundOptions as $settingKey => $imageConfig) {
@@ -286,7 +286,7 @@ $authImages = [
         <a href="#brand-identity"><i class="fa-solid fa-signature"></i> Brand</a>
         <a href="#system-colors"><i class="fa-solid fa-droplet"></i> Colors</a>
         <a href="#about-team"><i class="fa-solid fa-people-group"></i> About &amp; team</a>
-        <a href="#page-backgrounds"><i class="fa-regular fa-images"></i> Page backgrounds</a>
+        <a href="#page-backgrounds"><i class="fa-regular fa-images"></i> Page banners</a>
         <a href="#homepage-video"><i class="fa-solid fa-film"></i> Homepage</a>
         <a href="#sign-in-pictures"><i class="fa-regular fa-images"></i> Sign-in pages</a>
         <a href="#chatbot-settings"><i class="fa-solid fa-comments"></i> Chatbots</a>
@@ -356,8 +356,8 @@ $authImages = [
             <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
         </section>
         <section class="customization-card customization-page-backgrounds" id="page-backgrounds">
-            <h2><i class="fa-regular fa-images"></i> Customer page backgrounds</h2>
-            <p class="customization-help">Choose a separate background image for each page. Images appear softly behind the page content to keep text readable. Leave an upload empty to keep its current image; reset it to use the system background color.</p>
+            <h2><i class="fa-regular fa-images"></i> Customer page hero/banner images</h2>
+            <p class="customization-help">Choose an image for the top hero/banner on each page, like the About page. This changes only the banner—not the full-page background. Leave an upload empty to keep its current image, or restore the page's default banner.</p>
             <div class="customization-page-background-grid">
                 <?php foreach ($pageBackgroundImages as $settingKey => $imageConfig): ?>
                     <div class="customization-page-background-setting">
@@ -366,13 +366,13 @@ $authImages = [
                         </label>
                         <div class="customization-page-background-preview">
                             <?php if ($imageConfig['url'] !== ''): ?>
-                                <img src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> background preview">
-                                <span>Current background</span>
+                                <img src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                                <span>Current banner image</span>
                             <?php else: ?>
-                                <div class="customization-page-background-empty"><i class="fa-regular fa-image"></i><span>Using system background color</span></div>
+                                <div class="customization-page-background-empty"><i class="fa-regular fa-image"></i><span>Using default banner</span></div>
                             <?php endif; ?>
                         </div>
-                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Use system background color</label>
+                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default banner</label>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -416,8 +416,16 @@ $authImages = [
                     'description' => 'Text and icons in the navigation bars; contrast it with the navbar background.',
                 ],
                 'navbar_hover_color' => [
-                    'label' => 'Navbar hover and active color',
-                    'description' => 'Background for hovered and current links in the customer and admin navigation bars. Use a shade that contrasts with navbar text.',
+                    'label' => 'Navbar hover background',
+                    'description' => 'Background behind hovered and current links in the customer and admin navigation bars.',
+                ],
+                'navbar_hover_text_color' => [
+                    'label' => 'Navbar hover text',
+                    'description' => 'Text and icon color for hovered and current navigation links.',
+                ],
+                'navbar_hover_border_color' => [
+                    'label' => 'Navbar hover border',
+                    'description' => 'Border color for hovered and current navigation links.',
                 ],
                 'order_header_text_color' => [
                     'label' => 'Order card header text',

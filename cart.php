@@ -1053,7 +1053,7 @@ $open_checkout_on_load = isset($_GET['checkout']);
      }
    </style>
 </head>
-<body class="site-page-background page-cart">
+<body class="page-cart">
 
 <?php include 'header.php'; ?>
 

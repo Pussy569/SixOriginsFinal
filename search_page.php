@@ -486,7 +486,7 @@ $result_count = count($results);
     }
    </style>
 </head>
-<body class="site-page-background page-search">
+<body class="page-search">
 
 <?php include 'header.php'; ?>
 

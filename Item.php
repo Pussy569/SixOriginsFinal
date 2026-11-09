@@ -520,7 +520,7 @@ unset($_SESSION['message']);
     }
    </style>
 </head>
-<body class="site-page-background page-shop">
+<body class="page-shop">
 
 <?php include 'header.php'; ?>
 

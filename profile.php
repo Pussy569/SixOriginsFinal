@@ -1391,7 +1391,7 @@ if (!empty($user['profile_image'])) {
       }
     </style>
 </head>
-<body class="site-page-background page-profile">
+<body class="page-profile">
 
 <?php include 'header.php'; ?>
 

@@ -247,6 +247,8 @@ CREATE TABLE `site_customization` (
   `navbar_background` char(7) NOT NULL DEFAULT '#5E1F13',
   `navbar_text` char(7) NOT NULL DEFAULT '#FFFFFF',
   `navbar_hover_color` char(7) NOT NULL DEFAULT '#8A3F2B',
+  `navbar_hover_text_color` char(7) NOT NULL DEFAULT '#FFFFFF',
+  `navbar_hover_border_color` char(7) NOT NULL DEFAULT '#8A3F2B',
   `order_header_text_color` char(7) NOT NULL DEFAULT '#FFFFFF',
   `shop_background_image_path` varchar(255) DEFAULT NULL,
   `contact_background_image_path` varchar(255) DEFAULT NULL,

@@ -66,13 +66,19 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from the current `database/schema.sql` already include this setting.
 
-The Head Admin can also set separate background images for the Shop, Contact, Customer Orders, Search, Cart, Customer Profile, and Wallet Top-up pages, plus a separate navbar hover/active color. Back up existing databases and apply `database/migrations/20261109_site_customization_page_backgrounds.sql` after the order-header text migration:
+The Head Admin can also set separate hero/banner images (not full-page backgrounds) for the Shop, Contact, Customer Orders, Search, Cart, Customer Profile, and Wallet Top-up pages. The navbar hover background, text, and border colors are independently customizable. Back up existing databases and apply `database/migrations/20261109_site_customization_page_backgrounds.sql` after the order-header text migration:
 
 ```sh
 mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization_page_backgrounds.sql
 ```
 
-Background images accept JPG, PNG, or WebP up to 5 MB each. Each page can fall back to the system background color independently. Fresh databases initialized from the current `database/schema.sql` already include these fields.
+Page banner images accept JPG, PNG, or WebP up to 5 MB each. Each page can independently restore its default banner. Fresh databases initialized from the current `database/schema.sql` already include these fields.
+
+Existing databases must also add the separate navbar hover text and border colors. Back up the database, then apply `database/migrations/20261109_site_customization_navbar_hover_colors.sql` after the page backgrounds migration:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization_navbar_hover_colors.sql
+```
 
 To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients have their own product-wide form and are deducted for every option. Use the separate **Add Packaging for a Product Option** button to manually select an inventory item, the matching customer option, and the per-sale quantity. Items from any inventory category can be selected, including Consumable. Only orders for that selected option deduct the assigned amount, so a Small Cup mapping does not affect Medium or Large. Leave options unmapped when no additional inventory deduction is needed.
 

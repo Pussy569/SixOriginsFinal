@@ -817,7 +817,7 @@ if (isset($_POST['cancel_customer_order'])) {
       }
    </style>
 </head>
-<body class="site-page-background page-orders">
+<body class="page-orders">
 
 <?php include 'header.php'; ?>
 
