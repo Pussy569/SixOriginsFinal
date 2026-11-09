@@ -339,7 +339,7 @@ $authImages = [
 .customization-intro-icon{width:54px;height:54px;display:grid;place-items:center;flex:none;border-radius:16px;background:var(--primary-red);color:#fff;font-size:1.35rem;box-shadow:0 8px 20px color-mix(in srgb,var(--primary-red) 22%,transparent)}
 .customization-intro h1{color:var(--dark-brown);margin:0 0 5px;font-size:clamp(1.45rem,2.4vw,2rem)}
 .customization-intro p,.customization-help{margin:0;color:var(--gray-brown);line-height:1.6}
-.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:22px}
+.customization-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:22px}
 .customization-card{min-width:0;background:var(--site-surface)!important;color:var(--site-text);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;padding:clamp(20px,2.4vw,30px);display:flex;flex-direction:column;gap:15px;box-shadow:0 8px 24px rgba(30,20,16,.035);transition:border-color .18s,box-shadow .18s}
 .customization-card:hover{border-color:color-mix(in srgb,var(--primary-red) 24%,var(--gray-brown));box-shadow:0 12px 30px rgba(30,20,16,.06)}
 .customization-card>p{line-height:1.55}
