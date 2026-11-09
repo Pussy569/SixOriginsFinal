@@ -22,17 +22,17 @@
   const style = document.createElement('style');
   style.textContent = `
     .account-security-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(28,20,18,.7)}
-    .account-security-card{width:min(100%,460px);padding:28px;border-radius:18px;background:#fffaf5;color:#421b13;box-shadow:0 18px 60px rgba(0,0,0,.3);font:500 16px/1.55 Montserrat,Arial,sans-serif}
-    .account-security-card h2{margin:0 0 12px;font-size:1.35rem}
-    .account-security-card p{margin:0 0 20px;color:#664c47}
+    .account-security-card{width:min(100%,460px);padding:28px;border-radius:18px;background:var(--site-surface,#fffaf5);color:var(--site-text,#421b13);box-shadow:0 18px 60px rgba(0,0,0,.3);font:500 16px/1.55 Montserrat,Arial,sans-serif}
+    .account-security-card h2{margin:0 0 12px;font-size:1.35rem;color:var(--dark-brown,#421b13)}
+    .account-security-card p{margin:0 0 20px;color:var(--gray-brown,#664c47)}
     .account-security-actions{display:flex;gap:12px;flex-wrap:wrap}
     .account-security-actions button{flex:1;min-width:140px;padding:12px 16px;border:0;border-radius:10px;font:700 15px Montserrat,Arial,sans-serif;cursor:pointer}
     .account-security-approve{background:#2d5a3d;color:#fff}
-    .account-security-reject{background:#f0e6d8;color:#421b13}
-    .account-security-email{background:#C6453E;color:#fff}
+    .account-security-reject{background:var(--site-page-bg,#f0e6d8);color:var(--dark-brown,#421b13)}
+    .account-security-email{background:var(--primary-red,#C6453E);color:var(--site-navbar-text,#fff)}
     .account-security-actions button:disabled{opacity:.6;cursor:wait}
-    .account-security-code{width:100%;margin:0 0 16px;padding:13px 14px;border:1px solid #d8c9b8;border-radius:10px;font:600 20px Montserrat,Arial,sans-serif;letter-spacing:.25em;text-align:center}
-    .account-security-status{min-height:24px;font-size:14px}
+    .account-security-code{width:100%;margin:0 0 16px;padding:13px 14px;border:1px solid color-mix(in srgb,var(--gray-brown,#664c47) 35%,var(--site-surface,#fffaf5));border-radius:10px;background:var(--site-surface,#fffaf5);color:var(--site-text,#302923);font:600 20px Montserrat,Arial,sans-serif;letter-spacing:.25em;text-align:center}
+    .account-security-status{min-height:24px;font-size:14px;color:var(--site-text,#302923)}
   `;
   document.head.append(style);
 

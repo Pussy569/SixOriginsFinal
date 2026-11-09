@@ -85,7 +85,7 @@ function notifyOrderStatusByEmail(array $orderInfo, string $status): bool {
         'special_instructions' => parseSpecialInstructions($orderInfo['special_instructions'] ?? null),
     ];
 
-    return sendReceiptEmail($orderData['email'], $orderData['name'], $orderData);
+    return sendReceiptEmail($orderData['email'], $orderData['name'], $orderData, get_site_customization($GLOBALS['conn']));
 }
 
 // ==================== MARK ORDER AS "DONE PREPARING" (ADMIN QUICK ACTION) ====================

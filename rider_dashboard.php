@@ -105,7 +105,7 @@ if (isset($_POST['complete_order'])) {
          'status' => 'Completed',
          'products' => $product_list
       ];
-      sendReceiptEmail($order_data['email'], $order_data['name'], $order_data);
+      sendReceiptEmail($order_data['email'], $order_data['name'], $order_data, get_site_customization($conn));
 
       $customer_phone = isset($order_info['number']) ? trim($order_info['number']) : '';
       $is_guest_order = strpos($order_info['user_id'], 'guest_') === 0;

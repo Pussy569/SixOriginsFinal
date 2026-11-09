@@ -545,7 +545,7 @@ if (isset($_POST['order_btn'])) {
       .receipt-cafe-name {
         font-size: 1.15rem;
         font-weight: 900;
-        color: #fff;
+        color: var(--site-navbar-text,#fff);
         letter-spacing: -0.5px;
         margin-bottom: 2px;
         text-shadow: 0 2px 8px rgba(0,0,0,0.25);
@@ -613,7 +613,7 @@ if (isset($_POST['order_btn'])) {
 
       .receipt-divider {
         border: none;
-        border-top: 2px dashed #F0E6D8;
+        border-top: 2px dashed color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg));
         margin: 12px 0;
       }
 
@@ -625,8 +625,8 @@ if (isset($_POST['order_btn'])) {
       }
 
       .receipt-info-item {
-        background: #FFFAF5;
-        border: 1px solid #F0E6D8;
+        background: var(--site-page-bg,#FFFAF5);
+        border: 1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-page-bg));
         border-radius: 8px;
         padding: 8px 10px;
       }
@@ -666,7 +666,7 @@ if (isset($_POST['order_btn'])) {
         align-items: flex-start;
         gap: 8px;
         padding: 6px 0;
-        border-bottom: 1px solid #F5EDE4;
+        border-bottom: 1px solid color-mix(in srgb,var(--gray-brown) 18%,var(--site-page-bg));
       }
 
       .receipt-item-row:last-child {
@@ -698,8 +698,8 @@ if (isset($_POST['order_btn'])) {
       }
 
       .receipt-totals {
-        background: #FFFAF5;
-        border: 1px solid #F0E6D8;
+        background: var(--site-page-bg,#FFFAF5);
+        border: 1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-page-bg));
         border-radius: 8px;
         padding: 12px 12px;
         margin-top: 14px;
@@ -720,7 +720,7 @@ if (isset($_POST['order_btn'])) {
       }
 
       .receipt-total-row.grand {
-        border-top: 1.5px solid #E8D5C4;
+        border-top: 1.5px solid color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg));
         margin-top: 6px;
         padding-top: 8px;
         font-size: 0.9rem;
@@ -743,7 +743,7 @@ if (isset($_POST['order_btn'])) {
         align-items: center;
         margin-top: 14px;
         padding-top: 14px;
-        border-top: 2px dashed #F0E6D8;
+        border-top: 2px dashed color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg));
       }
 
       .receipt-barcode-lines {
@@ -767,6 +767,7 @@ if (isset($_POST['order_btn'])) {
         letter-spacing: 1.5px;
         font-weight: 600;
       }
+      .receipt-brand-logo { width:42px;height:42px;object-fit:contain;display:block;margin:0 auto 6px;border-radius:8px;background:#fff;padding:3px; }
 
       /* Modal action buttons */
       .receipt-modal-actions {
@@ -1054,8 +1055,9 @@ if (isset($_POST['order_btn'])) {
 
       <!-- Header -->
       <div class="receipt-header">
-        <div class="receipt-cafe-name">☕ Six Origins Cafe</div>
-        <div class="receipt-cafe-tagline">Where Every Cup Tells a Story</div>
+        <img class="receipt-brand-logo" src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="">
+        <div class="receipt-cafe-name"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
+        <div class="receipt-cafe-tagline"><?php echo escapeOutput($site_customization['brand_tagline']); ?></div>
         <div class="receipt-success-badge">
           <span class="check-icon">✓</span>
           Order Confirmed

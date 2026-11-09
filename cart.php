@@ -933,13 +933,13 @@ $open_checkout_on_load = isset($_GET['checkout']);
      .checkout-place-actions .btn { flex: 1; min-width: 140px; justify-content: center; }
 
      /* Receipt modal */
-     .receipt-modal { background: #fff; border-radius: 20px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(94,31,19,0.35); transform: translateY(40px); opacity: 0; animation: modalSlideUp .45s cubic-bezier(.22,1,.36,1) forwards; scrollbar-width: thin; scrollbar-color: #F0E6D8 transparent; }
+     .receipt-modal { background: #fff; border-radius: 20px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(94,31,19,0.35); transform: translateY(40px); opacity: 0; animation: modalSlideUp .45s cubic-bezier(.22,1,.36,1) forwards; scrollbar-width: thin; scrollbar-color: var(--gray-brown) transparent; }
      .receipt-modal::-webkit-scrollbar { width: 6px; }
      .receipt-modal::-webkit-scrollbar-thumb { background: #F0E6D8; border-radius: 4px; }
      #receipt-printable { padding: 0; font-size: 12px; }
      .receipt-header { background: linear-gradient(135deg,var(--primary-red) 0%,#8B2020 100%); padding: 18px 16px 14px; text-align: center; position: relative; border-radius: 20px 20px 0 0; }
      .receipt-header::after { content:''; position:absolute; bottom:-10px; left:0; right:0; height:20px; background:#fff; clip-path: ellipse(55% 100% at 50% 100%); }
-     .receipt-cafe-name { font-size: 1.15rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin-bottom: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+     .receipt-cafe-name { font-size: 1.15rem; font-weight: 900; color: var(--site-navbar-text,#fff); letter-spacing: -0.5px; margin-bottom: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
      .receipt-cafe-tagline { font-size: .65rem; color: rgba(255,255,255,0.8); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
      .receipt-success-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 50px; padding: 4px 12px; margin-top: 10px; color: #fff; font-size: .7rem; font-weight: 700; letter-spacing: .5px; }
      .receipt-success-badge .check-icon { width: 16px; height: 16px; background: #4ade80; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .6rem; flex-shrink: 0; }
@@ -947,28 +947,28 @@ $open_checkout_on_load = isset($_GET['checkout']);
      .receipt-order-id { text-align: center; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px dashed #E8B4AB; }
      .receipt-order-id .order-num { font-size: 1.4rem; font-weight: 900; color: var(--dark-brown); letter-spacing: -0.5px; }
      .receipt-order-id .order-date { font-size: .7rem; color: var(--gray-brown); margin-top: 3px; font-weight: 500; }
-     .receipt-divider { border: none; border-top: 2px dashed #F0E6D8; margin: 12px 0; }
+     .receipt-divider { border: none; border-top: 2px dashed color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg)); margin: 12px 0; }
      .receipt-info-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-bottom: 14px; }
-     .receipt-info-item { background: #FFFAF5; border: 1px solid #F0E6D8; border-radius: 8px; padding: 8px 10px; }
+     .receipt-info-item { background: var(--site-page-bg,#FFFAF5); border: 1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-page-bg)); border-radius: 8px; padding: 8px 10px; }
      .receipt-info-item .info-label { font-size: .6rem; color: var(--gray-brown); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; margin-bottom: 2px; }
      .receipt-info-item .info-value { font-size: .75rem; font-weight: 700; color: var(--dark-brown); word-break: break-word; }
      .receipt-info-item.full-width { grid-column: 1/-1; }
      .receipt-items-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .8px; color: var(--gray-brown); font-weight: 800; margin-bottom: 8px; }
-     .receipt-item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #F5EDE4; }
+     .receipt-item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid color-mix(in srgb,var(--gray-brown) 18%,var(--site-page-bg)); }
      .receipt-item-row:last-child { border-bottom: none; }
      .receipt-item-row .item-desc { flex: 1; }
      .receipt-item-row .item-name { font-size: .75rem; font-weight: 700; color: var(--dark-brown); }
      .receipt-item-row .item-meta2 { font-size: .65rem; color: var(--gray-brown); margin-top: 1px; font-weight: 500; }
      .receipt-item-row .item-custom { font-size: .65rem; color: var(--primary-red); margin-top: 2px; font-weight: 600; }
      .receipt-item-row .item-sub { font-size: .75rem; font-weight: 800; color: var(--dark-brown); white-space: nowrap; }
-     .receipt-notes-box { background:#FFF7ED; border:1px dashed #E8C99A; border-radius:8px; padding:8px 10px; margin-top:10px; font-size:.68rem;  }
-     .receipt-notes-box p { font-size:.68rem; color:#8a5a1f; font-weight:600; margin:2px 0; }
-     .receipt-totals { background: #FFFAF5; border: 1px solid #F0E6D8; border-radius: 8px; padding: 12px 12px; margin-top: 14px; }
+     .receipt-notes-box { background:color-mix(in srgb,var(--site-page-bg) 75%,var(--site-surface)); border:1px dashed color-mix(in srgb,var(--accent_color,#E8C99A) 55%,var(--site-page-bg)); border-radius:8px; padding:8px 10px; margin-top:10px; font-size:.68rem;  }
+     .receipt-notes-box p { font-size:.68rem; color:var(--site-text); font-weight:600; margin:2px 0; }
+     .receipt-totals { background: var(--site-page-bg,#FFFAF5); border: 1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-page-bg)); border-radius: 8px; padding: 12px 12px; margin-top: 14px; }
      .receipt-total-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: .73rem; color: var(--gray-brown); font-weight: 600; }
      .receipt-total-row.discount-row { color: #16a34a; }
-     .receipt-total-row.grand { border-top: 1.5px solid #E8D5C4; margin-top: 6px; padding-top: 8px; font-size: .9rem; font-weight: 900; color: var(--primary-red); }
+     .receipt-total-row.grand { border-top: 1.5px solid color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg)); margin-top: 6px; padding-top: 8px; font-size: .9rem; font-weight: 900; color: var(--primary-red); }
      .receipt-footer-note { text-align: center; margin-top: 14px; font-size: .65rem; color: var(--gray-brown); font-weight: 500; line-height: 1.5; }
-     .receipt-barcode-area { display: flex; flex-direction: column; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 2px dashed #F0E6D8; }
+     .receipt-barcode-area { display: flex; flex-direction: column; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 2px dashed color-mix(in srgb,var(--gray-brown) 30%,var(--site-page-bg)); }
      .receipt-barcode-lines { display: flex; gap: 1.5px; height: 24px; align-items: flex-end; margin-bottom: 4px; }
      .receipt-barcode-lines span { display: block; width: 2px; background: var(--dark-brown); border-radius: .5px; }
      .receipt-barcode-num { font-size: .6rem; color: var(--gray-brown); letter-spacing: 1.5px; font-weight: 600; }
@@ -978,6 +978,7 @@ $open_checkout_on_load = isset($_GET['checkout']);
      .btn-close-modal::before { display: none; }
      .btn-close-modal:hover { background: var(--dark-brown); color: #fff; border-color: var(--dark-brown); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(94,31,19,0.2); }
      .payment-pill { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg,#FFF2E0,#FFE5C4); border: 1px solid #E8C99A; border-radius: 50px; padding: 2px 8px; font-size: .7rem; font-weight: 700; color: var(--dark-brown); }
+     .receipt-brand-logo { width:42px;height:42px;object-fit:contain;display:block;margin:0 auto 6px;border-radius:8px;background:#fff;padding:3px; }
 
      /* ============================================
         RESPONSIVE
@@ -1314,8 +1315,9 @@ $open_checkout_on_load = isset($_GET['checkout']);
   <div class="receipt-modal" id="receiptModal">
     <div id="receipt-printable">
       <div class="receipt-header">
-        <div class="receipt-cafe-name">☕ Six Origins Cafe</div>
-        <div class="receipt-cafe-tagline">Where Every Cup Tells a Story</div>
+        <img class="receipt-brand-logo" src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="">
+        <div class="receipt-cafe-name"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
+        <div class="receipt-cafe-tagline"><?php echo escapeOutput($site_customization['brand_tagline']); ?></div>
         <div class="receipt-success-badge"><span class="check-icon">✓</span> Order Confirmed</div>
       </div>
 

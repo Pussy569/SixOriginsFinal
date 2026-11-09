@@ -1,5 +1,7 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$site_customization = get_site_customization($conn);
 
 $admin_id = $_SESSION['admin_id'];
 if(!isset($admin_id)){
@@ -12,7 +14,7 @@ if(!isset($admin_id)){
 <head>
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width,initial-scale=1">
-   <title>Six Origins Cafe — Admin Dashboard</title>
+   <title><?php echo escapeOutput($site_customization['brand_name']); ?> — Admin Dashboard</title>
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link rel="icon" type="image/png" href="images/logos.png">

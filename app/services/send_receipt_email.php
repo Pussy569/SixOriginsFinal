@@ -1,7 +1,17 @@
 <?php
 require_once __DIR__ . '/mail_helper.php';
+require_once dirname(__DIR__) . '/helpers/site_customization.php';
 
-function sendReceiptEmail($toEmail, $toName, $orderData): bool {
+function sendReceiptEmail($toEmail, $toName, $orderData, ?array $siteCustomization = null): bool {
+        $siteCustomization = $siteCustomization ?? site_customization_defaults();
+        $brandName = htmlspecialchars($siteCustomization['brand_name'], ENT_QUOTES, 'UTF-8');
+        $brandTagline = htmlspecialchars($siteCustomization['brand_tagline'], ENT_QUOTES, 'UTF-8');
+        $primaryColor = htmlspecialchars($siteCustomization['primary_color'], ENT_QUOTES, 'UTF-8');
+        $secondaryColor = htmlspecialchars($siteCustomization['secondary_color'], ENT_QUOTES, 'UTF-8');
+        $accentColor = htmlspecialchars($siteCustomization['accent_color'], ENT_QUOTES, 'UTF-8');
+        $pageColor = htmlspecialchars($siteCustomization['page_background'], ENT_QUOTES, 'UTF-8');
+        $surfaceColor = htmlspecialchars($siteCustomization['surface_color'], ENT_QUOTES, 'UTF-8');
+        $textColor = htmlspecialchars($siteCustomization['text_color'], ENT_QUOTES, 'UTF-8');
 
         // ✅ NEW: normalize special instructions into a clean array regardless
         // of whether the caller passed an array or a raw newline-separated string
@@ -41,25 +51,25 @@ function sendReceiptEmail($toEmail, $toName, $orderData): bool {
             padding: 32px 24px;
             border-radius: 14px;
             box-shadow: 0 4px 32px rgba(40,40,70,0.08);
-            background: #f9fafb;
-            border: 1px solid #ececec;'
+            background: {$pageColor};
+            border: 1px solid {$accentColor};'
         >
             <div style='text-align:center; margin-bottom: 24px;'>
                 <h2 style='
-                    color: #4c51bf;
+                    color: {$primaryColor};
                     font-size: 2rem;
                     margin: 0 0 8px 0;
                     letter-spacing: 1px;
                     font-weight: bold;
-                '>Six Origins Order Update</h2>
+                '>{$brandName} Order Update</h2>
                 <span style='
-                    color: #a0aec0;
+                    color: {$accentColor};
                     font-size: 1rem;
                     letter-spacing: 0.5px;
-                '>Your trusted Coffee Shop</span>
+                '>{$brandTagline}</span>
             </div>
-            <p style='font-size:1.1rem; color: #333; margin:16px 0 10px 0;'>Hi " . htmlspecialchars($toName) . ",</p>
-            <p style='font-size:1.07rem; color: #444; margin:0 0 22px 0;'>
+            <p style='font-size:1.1rem; color: {$textColor}; margin:16px 0 10px 0;'>Hi " . htmlspecialchars($toName) . ",</p>
+            <p style='font-size:1.07rem; color: {$textColor}; margin:0 0 22px 0;'>
                 Your order status has been updated to:
                 <span style='
                     color: #38a169;
@@ -70,21 +80,21 @@ function sendReceiptEmail($toEmail, $toName, $orderData): bool {
                     margin-left: 2px;
                 '>" . htmlspecialchars($orderData['status']) . "</span>.
             </p>
-            <div style='background: #fff; border-radius: 8px; border: 1px solid #f1f1f1; padding:18px 20px; margin-bottom: 24px;'>
-                <h3 style='color:#4c51bf; font-size:1.15rem; margin:0 0 12px 0;'>Receipt</h3>
+            <div style='background: {$surfaceColor}; color: {$textColor}; border-radius: 8px; border: 1px solid {$accentColor}; padding:18px 20px; margin-bottom: 24px;'>
+                <h3 style='color:{$primaryColor}; font-size:1.15rem; margin:0 0 12px 0;'>Receipt</h3>
                 <table style='width:100%; border-collapse:collapse; font-size:1rem;'>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>Order ID:</strong></td><td>" . htmlspecialchars($orderData['order_id']) . "</td></tr>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>Name:</strong></td><td>" . htmlspecialchars($orderData['name']) . "</td></tr>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>Address:</strong></td><td>" . htmlspecialchars($orderData['address']) . "</td></tr>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>Payment Method:</strong></td><td>" . htmlspecialchars($orderData['method']) . "</td></tr>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>Total:</strong></td><td style='font-weight:600;'>₱" . number_format($orderData['total'], 2) . "</td></tr>
-                    <tr><td style='padding:8px 0; color:#555;'><strong>New Status:</strong></td><td style='color: #38a169; font-weight: bold;'>" . htmlspecialchars($orderData['status']) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>Order ID:</strong></td><td>" . htmlspecialchars($orderData['order_id']) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>Name:</strong></td><td>" . htmlspecialchars($orderData['name']) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>Address:</strong></td><td>" . htmlspecialchars($orderData['address']) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>Payment Method:</strong></td><td>" . htmlspecialchars($orderData['method']) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>Total:</strong></td><td style='font-weight:600;color:{$textColor};'>₱" . number_format($orderData['total'], 2) . "</td></tr>
+                    <tr><td style='padding:8px 0; color:{$accentColor};'><strong>New Status:</strong></td><td style='color: {$primaryColor}; font-weight: bold;'>" . htmlspecialchars($orderData['status']) . "</td></tr>
                 </table>
             </div>
             <div style='margin-bottom:18px;'>
-                <h4 style='margin:0 0 10px 0; color:#444;'>Products Ordered:</h4>
+                <h4 style='margin:0 0 10px 0; color:{$secondaryColor};'>Products Ordered:</h4>
                 <ul style='
-                    background: #f7fafc;
+                    background: {$pageColor};
                     border-radius: 8px;
                     padding: 16px 24px;
                     list-style: disc inside;
@@ -92,7 +102,7 @@ function sendReceiptEmail($toEmail, $toName, $orderData): bool {
                 '>";
         foreach ($orderData['products'] as $product) {
             [$base_line, $custom_tags] = parseProductCustomizations(trim($product));
-            $body .= "<li style='padding: 3px 0; color:#222;'>" . htmlspecialchars($base_line);
+            $body .= "<li style='padding: 3px 0; color:{$textColor};'>" . htmlspecialchars($base_line);
             if (!empty($custom_tags)) {
                 $body .= "<div style='margin-top:4px;'>";
                 foreach ($custom_tags as $tag) {
@@ -100,9 +110,9 @@ function sendReceiptEmail($toEmail, $toName, $orderData): bool {
                         display:inline-block;
                         font-size:0.8rem;
                         font-weight:600;
-                        color:#4c51bf;
-                        background:#eef0fd;
-                        border:1px solid #d6dafb;
+                        color:{$primaryColor};
+                        background:{$pageColor};
+                        border:1px solid {$accentColor};
                         border-radius:20px;
                         padding:2px 10px;
                         margin:2px 6px 2px 0;
@@ -119,25 +129,25 @@ function sendReceiptEmail($toEmail, $toName, $orderData): bool {
         if (!empty($special_instructions)) {
             $body .= "
             <div style='margin-bottom:18px;'>
-                <h4 style='margin:0 0 10px 0; color:#444;'>Special Instructions:</h4>
+                <h4 style='margin:0 0 10px 0; color:{$secondaryColor};'>Special Instructions:</h4>
                 <ul style='
-                    background: #fff7ed;
-                    border: 1px dashed #e8c99a;
+                    background: {$pageColor};
+                    border: 1px dashed {$accentColor};
                     border-radius: 8px;
                     padding: 16px 24px;
                     list-style: disc inside;
                     margin: 0;
                 '>";
             foreach ($special_instructions as $note) {
-                $body .= "<li style='padding: 3px 0; color:#8a5a1f;'>" . htmlspecialchars($note) . "</li>";
+                $body .= "<li style='padding: 3px 0; color:{$secondaryColor};'>" . htmlspecialchars($note) . "</li>";
             }
             $body .= "</ul>
             </div>";
         }
 
         $body .= "
-            <p style='margin-top: 22px; font-size:1.1rem; color:#4c51bf; font-weight:500; text-align:center;'>
-                Thank you for choosing Six Origins!
+            <p style='margin-top: 22px; font-size:1.1rem; color:{$primaryColor}; font-weight:500; text-align:center;'>
+                Thank you for choosing {$brandName}!
             </p>
         </div>";
 

@@ -92,7 +92,7 @@ function site_customization_css(array $settings): string
     $navbarText = escapeOutput($settings['navbar_text']);
 
     return "<style id=\"site-customization-theme\">
-:root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important}
+:root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important;--site-accent-color:{$accent}!important}
 html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .header-wrap,.header-wrap.scrolled,.admin-header{background:var(--site-navbar-bg)!important;color:var(--site-navbar-text)}
 .header-wrap .brand,.header-wrap .brand .logo-main,.header-wrap .brand .logo-sub,.header-wrap .nav a,.header-wrap .icon-btn,.header-wrap .profile-btn,.admin-header .brand .logo-main,.admin-header .brand .logo-sub,.admin-header .nav-link,.admin-header .nav-dropdown-toggle,.admin-header .icon-btn{color:var(--site-navbar-text)}
@@ -101,6 +101,48 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .form-panel{background:var(--site-surface)!important}
 .logo-text h3,.form-header .title,.form-panel label{color:var(--site-text)}
 .home-btn,.guide-btn,.form-panel .btn,.form-panel button[type=submit]{background:var(--primary-red)}
+.form-panel .btn:not(.secondary),.modal-actions .btn:not(.secondary),.weekly-special-admin .btn:not(.secondary){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.form-panel .btn.secondary,.modal-actions .btn.secondary,.weekly-special-admin .btn.secondary{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.form-panel input[type=file]::file-selector-button{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border:0!important;border-radius:8px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
+.form-panel input[type=file]::file-selector-button:hover{filter:brightness(.94)}
+.weekly-special-admin{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.weekly-special-admin label{color:{$secondary}!important}
+.weekly-special-admin textarea{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$surface})!important}
+.page .btn-primary{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.page .btn-primary:hover{background:{$secondary}!important;color:{$navbarText}!important}
+.page .btn-ghost{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.page .btn-ghost:hover{background:{$primary}!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.page .table-wrapper thead th{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.page .table-wrapper tbody td{border-color:color-mix(in srgb,{$accent} 18%,{$page})!important;color:{$text}}
+.page .btn.refresh,.page .btn.approve,.page .btn.view{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.page .btn.reject{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.page .btn.refresh:hover,.page .btn.approve:hover,.page .btn.view:hover{background:{$secondary}!important;color:{$navbarText}!important}
+.dashboard-header{background:linear-gradient(135deg,{$primary} 0%,{$secondary} 100%)!important;color:{$navbarText}!important;box-shadow:0 14px 34px color-mix(in srgb,{$primary} 28%,transparent)!important}
+.dashboard-header .title,.dashboard-header .title i,.dashboard-header .sub,.dashboard-header .sub>i{color:{$navbarText}!important}
+.dashboard-header .action-btn:not(.secondary){background:{$surface}!important;color:{$secondary}!important}
+.dashboard-header .action-btn.secondary{color:{$navbarText}!important}
+.dashboard-header .action-btn:hover{background:{$surface}!important;color:{$secondary}!important}
+.account-security-card{background:{$surface}!important;color:{$secondary}!important}
+.account-security-card h2{color:{$secondary}!important}
+.account-security-card p{color:{$accent}!important}
+.account-security-code{background:{$page}!important;color:{$text}!important;border-color:{$accent}!important}
+.account-security-reject{background:{$page}!important;color:{$secondary}!important}
+.account-security-email{background:{$primary}!important;color:{$navbarText}!important}
+.receipt-modal,#receipt-printable,.receipt-body{background:{$surface}!important;color:{$text}!important}
+.receipt-header{background:linear-gradient(135deg,{$primary} 0%,{$secondary} 100%)!important}
+.receipt-header::after{background:{$surface}!important}
+.receipt-brand-logo{background:{$surface}!important}
+.receipt-cafe-name,.receipt-cafe-tagline,.receipt-success-badge,.receipt-modal-actions .btn-close-modal:hover{color:{$navbarText}!important}
+.receipt-info-item,.receipt-totals{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.payment-pill{background:{$page}!important;border-color:color-mix(in srgb,{$accent} 35%,{$page})!important;color:{$secondary}!important}
+.receipt-info-item .info-value,.receipt-order-id .order-num,.receipt-item-row .item-name,.receipt-item-row .item-sub,.receipt-barcode-lines span{color:{$secondary}!important}
+.receipt-total-row,.receipt-order-id .order-date,.receipt-info-item .info-label,.receipt-items-title,.receipt-item-row .item-meta,.receipt-item-row .item-meta2,.receipt-footer-note,.receipt-barcode-num{color:{$accent}!important}
+.receipt-item-row .item-custom,.receipt-total-row.grand{color:{$primary}!important}
+.receipt-modal-actions .btn-primary{background:{$primary}!important;color:{$navbarText}!important}
+.receipt-table{background:{$surface}!important;color:{$text}!important}
+.receipt-table thead{background:{$primary}!important;color:{$navbarText}!important}
+.receipt-divider,.receipt-order-id,.receipt-barcode-area{border-color:color-mix(in srgb,{$accent} 35%,{$page})!important}
+.receipt-modal-actions .btn-close-modal{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
 </style>";
 }
 
@@ -256,11 +298,14 @@ function site_customization_chatbot_css(array $settings): string
 #chatbot-root #cb-messages{background:{$panel}}
 #chatbot-root .cb-msg-bubble{background:{$panel}!important;color:{$text}!important}
 #chatbot-root .cb-header,#chatbot-root #chatbot-launcher,#chatbot-root .cb-quick-btn.hot,#chatbot-root .cb-msg-row.user .cb-msg-bubble,#chatbot-root .cb-msg-row.user .cb-avatar{background:{$primary};color:{$headerText}}
+#chatbot-root #chatbot-launcher{background:linear-gradient(135deg,{$primary},{$primary})!important;color:{$headerText}!important}
+#chatbot-root #chatbot-launcher:hover{background:linear-gradient(135deg,{$primary},{$text})!important;color:{$headerText}!important}
 #chatbot-root .cb-name,#chatbot-root .cb-status,#chatbot-root .cb-icon-btn,#chatbot-root .cb-quick-btn.hot,#chatbot-root .cb-msg-row.user .cb-msg-bubble{color:{$headerText}}
 #chatbot-root .cb-msg-bubble,#chatbot-root .cb-quick-btn:not(.hot){color:{$text}}
 #chatbot-root .cb-msg-bubble a,#chatbot-root .cb-quick-btn i{color:{$primary}}
 .chatbot-fab,.chatbot-header{background:{$primary}!important;color:{$headerText}!important}
-.chatbot-fab.active{background:{$primary}!important;color:{$headerText}!important}
+.chatbot-fab,.chatbot-fab.active{background:linear-gradient(135deg,{$primary},{$primary})!important;color:{$headerText}!important}
+.chatbot-fab:hover{background:linear-gradient(135deg,{$primary},{$text})!important;color:{$headerText}!important}
 .chatbot-window{background:{$panel}!important}
 .chatbot-messages{background:{$panel}}
 .chatbot-window .cb-message-content,.chatbot-window .bot-response-text,.chatbot-window .cb-quick-btn{color:{$text}}
