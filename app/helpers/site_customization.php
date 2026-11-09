@@ -219,8 +219,27 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .site-footer{background:linear-gradient(135deg,{$navbar},{$secondary})!important}
 .team .member .role,.team .member .social-btn{background:{$page}!important;color:{$primary}!important}
 .team .member h4{color:{$secondary}!important}
-.promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
-.hero .btn,.promo-btn,.contact-cta .btn,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta,.about-grid>.card,.main-layout>.card,.products-section .product-card,.cart-wrap>.card,.cart-item,.topup-wrap>.card,.gcash-card,.password-panel{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.hero .btn,.promo .promo-btn:not(.promo-btn-ghost),.contact-cta a,.facts-cta,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled),.main-layout .btn-primary:not(:disabled),.price-badge,.cart-wrap .btn-primary:not(:disabled),.topup-wrap .btn-primary:not(:disabled),.profile-wrap .toggle-btn{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.promo .promo-btn-ghost,.main-layout .btn-outline,.cart-wrap .btn-ghost,.cart-wrap .btn-outline,.topup-wrap .btn-ghost,.profile-wrap .btn-ghost{background:{$page}!important;color:{$primary}!important;border:1px solid color-mix(in srgb,{$primary} 55%,{$page})!important}
+.promo .promo-btn:hover,.facts-cta:hover,.main-layout .btn-primary:hover:not(:disabled),.cart-wrap .btn-primary:hover:not(:disabled),.topup-wrap .btn-primary:hover:not(:disabled),.profile-wrap .btn-primary:hover,.profile-wrap .toggle-btn:hover{background:{$secondary}!important;color:{$navbarText}!important;border-color:{$secondary}!important}
+.main-layout .card h2 i,.main-layout .product-details .special-product-label,.main-layout .product-details .size-type-tag,.main-layout .product-card label,.main-layout .stock,.cart-wrap .item-price,.cart-wrap .summary .grand span,.topup-wrap .gcash-number,.profile-wrap .helper i{color:{$primary}!important}
+.main-layout .product-details .special-product-label,.main-layout .product-details .size-type-tag,.cart-wrap .item-customization .customization-line,.cart-wrap .payment-pill{background:{$page}!important;border-color:color-mix(in srgb,{$primary} 25%,{$page})!important}
+.main-layout .product-card,.main-layout .contact-cta{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.cart-wrap .cart-item,.cart-wrap .summary-row,.cart-wrap .item-title,.cart-wrap .summary h3,.cart-wrap .summary .grand{color:{$text}!important}
+.cart-wrap .cart-item input,.cart-wrap .cart-item select,.topup-wrap input,.topup-wrap select,.topup-wrap textarea,.profile-wrap .password-form input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.cart-wrap .checkout-modal,.cart-wrap .receipt-modal,.checkout-wrapper .receipt-modal{background:{$surface}!important;color:{$text}!important}
+.cart-wrap .checkout-modal-header,.checkout-wrapper .receipt-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.cart-wrap .checkout-modal-header h2,.cart-wrap .checkout-modal-header button,.checkout-wrapper .receipt-header .receipt-cafe-name,.checkout-wrapper .receipt-header .receipt-cafe-tagline,.checkout-wrapper .receipt-header .receipt-success-badge{color:{$navbarText}!important}
+.cart-wrap .receipt-table,.checkout-wrapper .receipt-table{background:{$surface}!important;color:{$text}!important}
+.cart-wrap .receipt-table thead,.checkout-wrapper .receipt-table thead{background:{$primary}!important;color:{$navbarText}!important}
+.cart-wrap .receipt-table tfoot td,.checkout-wrapper .receipt-table tfoot td{background:{$page}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.cart-wrap .grand-total td,.checkout-wrapper .grand-total td{color:{$primary}!important}
+.checkout-wrapper .btn-primary:not(:disabled),.checkout-wrapper .discount-form .btn,.receipt-modal-actions .btn-primary,.cart-wrap .checkout-modal .btn-primary:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.checkout-wrapper .btn-ghost,.receipt-modal-actions .btn-ghost,.cart-wrap .checkout-modal .btn-ghost{background:{$page}!important;color:{$primary}!important;border-color:color-mix(in srgb,{$primary} 35%,{$page})!important}
+.profile-wrap .toggle-btn[aria-expanded=true]{background:{$secondary}!important;color:{$navbarText}!important}
+.topup-wrap .gcash-card strong,.topup-wrap .info-box i{color:{$primary}!important}
+.topup-wrap .gcash-card,.topup-wrap .info-box{border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
 .order-card .card-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
 .receipt-table tbody td,.order-card .card-body,.contact-grid p,.profile-wrap p,.checkout-wrapper p,.sx-body .sx-description{color:{$text}}
 </style>";
