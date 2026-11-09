@@ -58,6 +58,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from the current `database/schema.sql` already include these fields. The saved system palette is also applied to customer order history, contact, shop/catalog, checkout, profile, and inventory screens.
 
+The order-card header text color can be customized independently from the general system text and navbar colors; it applies to both customer order history and admin order management. Back up existing databases, then apply `database/migrations/20261109_site_customization_order_header_text.sql` after the site customization table exists:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization_order_header_text.sql
+```
+
+Fresh databases initialized from the current `database/schema.sql` already include this setting.
+
 To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients have their own product-wide form and are deducted for every option. Use the separate **Add Packaging for a Product Option** button to manually select an inventory item, the matching customer option, and the per-sale quantity. Items from any inventory category can be selected, including Consumable. Only orders for that selected option deduct the assigned amount, so a Small Cup mapping does not affect Medium or Large. Leave options unmapped when no additional inventory deduction is needed.
 
 Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:

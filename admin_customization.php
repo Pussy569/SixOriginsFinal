@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Choose a valid loading animation.');
         }
         $newSettings['loading_style'] = $loadingStyle;
-        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text'] as $key) {
+        foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'order_header_text_color'] as $key) {
             $value = (string)($_POST[$key] ?? '');
             if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
                 throw new RuntimeException('Choose a valid six-digit hex color for each color setting.');
@@ -347,6 +347,10 @@ $authImages = [
                 'navbar_text' => [
                     'label' => 'Navbar text',
                     'description' => 'Text and icons in the navigation bars; contrast it with the navbar background.',
+                ],
+                'order_header_text_color' => [
+                    'label' => 'Order card header text',
+                    'description' => 'Customer and admin order names, order numbers, dates, and totals shown over the colored order header.',
                 ],
             ];
             foreach ($colorFields as $key => $colorInfo):

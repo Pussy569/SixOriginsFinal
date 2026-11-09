@@ -31,6 +31,7 @@ function site_customization_defaults(): array
         'text_color' => '#3D2B27',
         'navbar_background' => '#5E1F13',
         'navbar_text' => '#FFFFFF',
+        'order_header_text_color' => '#FFFFFF',
         'hero_media_path' => null,
         'hero_media_type' => 'video',
     ];
@@ -56,7 +57,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -117,7 +118,7 @@ function get_site_customization(mysqli $conn): array
         }
     }
 
-    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'showcase_background', 'showcase_heading_color', 'showcase_text_color', 'chatbot_primary_color', 'chatbot_panel_color', 'chatbot_text_color', 'chatbot_header_text_color'] as $color_key) {
+    foreach (['primary_color', 'secondary_color', 'accent_color', 'page_background', 'surface_color', 'text_color', 'navbar_background', 'navbar_text', 'order_header_text_color', 'showcase_background', 'showcase_heading_color', 'showcase_text_color', 'chatbot_primary_color', 'chatbot_panel_color', 'chatbot_text_color', 'chatbot_header_text_color'] as $color_key) {
         if (!is_string($settings[$color_key]) || !preg_match('/^#[0-9A-Fa-f]{6}$/', $settings[$color_key])) {
             $settings[$color_key] = site_customization_defaults()[$color_key];
         }
@@ -143,6 +144,7 @@ function site_customization_css(array $settings): string
     $text = escapeOutput($settings['text_color']);
     $navbar = escapeOutput($settings['navbar_background']);
     $navbarText = escapeOutput($settings['navbar_text']);
+    $orderHeaderText = escapeOutput($settings['order_header_text_color']);
 
     return "<style id=\"site-customization-theme\">
 :root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--red:{$primary}!important;--red-dark:{$secondary}!important;--brown:{$secondary}!important;--brown-mid:{$accent}!important;--cream:{$page}!important;--cream-light:{$page}!important;--cream-mid:{$surface}!important;--border:color-mix(in srgb,{$accent} 30%,{$page})!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important;--site-accent-color:{$accent}!important}
@@ -366,6 +368,7 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .topup-wrap .gcash-card strong,.topup-wrap .info-box i{color:{$primary}!important}
 .topup-wrap .gcash-card,.topup-wrap .info-box{border-color:color-mix(in srgb,{$accent} 24%,{$page})!important}
 .order-card .card-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.orders-grid .order-card .card-header .order-title,.orders-grid .order-card .card-header .order-title-sub,.orders-grid .order-card .card-header .date-badge,.orders-grid .order-card .card-header .date-badge i,.orders-grid .order-card .card-header .order-total-badge,.orders-grid .order-card .card-header .order-total-badge strong,.orders-grid .order-card .card-header .order-id-badge{color:{$orderHeaderText}!important}
 .receipt-table tbody td,.order-card .card-body,.contact-grid p,.profile-wrap p,.checkout-wrapper p,.sx-body .sx-description{color:{$text}}
 .rider-badge,.order-card,.empty-note{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
 .topbar h1,.section-title,.rider-badge i,.order-line>i{color:{$secondary}!important}
@@ -478,8 +481,8 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
     }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, order_header_text_color, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
@@ -494,10 +497,11 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             primary_color = VALUES(primary_color), secondary_color = VALUES(secondary_color), accent_color = VALUES(accent_color),
             page_background = VALUES(page_background), surface_color = VALUES(surface_color), text_color = VALUES(text_color),
             navbar_background = VALUES(navbar_background), navbar_text = VALUES(navbar_text),
+            order_header_text_color = VALUES(order_header_text_color),
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 30) . 'i',
+        str_repeat('s', 31) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
@@ -526,6 +530,7 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
         $settings['text_color'],
         $settings['navbar_background'],
         $settings['navbar_text'],
+        $settings['order_header_text_color'],
         $settings['hero_media_path'],
         $settings['hero_media_type'],
         $adminId

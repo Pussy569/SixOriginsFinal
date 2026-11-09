@@ -246,6 +246,7 @@ CREATE TABLE `site_customization` (
   `text_color` char(7) NOT NULL DEFAULT '#3D2B27',
   `navbar_background` char(7) NOT NULL DEFAULT '#5E1F13',
   `navbar_text` char(7) NOT NULL DEFAULT '#FFFFFF',
+  `order_header_text_color` char(7) NOT NULL DEFAULT '#FFFFFF',
   `hero_media_path` varchar(255) DEFAULT NULL,
   `hero_media_type` enum('video','image') NOT NULL DEFAULT 'video',
   `updated_by` int DEFAULT NULL,
