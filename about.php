@@ -1,6 +1,11 @@
 <?php
 include __DIR__ . '/config.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
+$siteCustomization = get_site_customization($conn);
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+$aboutHeroImageUrl = site_customization_auth_image_url($siteCustomization['about_hero_image_path'], 'images/aboback.png');
+$aboutCafeImageUrl = site_customization_auth_image_url($siteCustomization['about_cafe_image_path'], 'images/promo-cafe.png');
+$aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['about_product_image_path'], 'images/promo-product.png');
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -929,7 +934,7 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 <?php include 'header.php'; ?>
 
 <!-- HERO SECTION WITH BACKGROUND IMAGE - FULL WIDTH AT TOP -->
-<section class="hero" aria-labelledby="aboutTitle">
+<section class="hero" aria-labelledby="aboutTitle" style="background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.65) 100%), url('<?php echo escapeOutput($aboutHeroImageUrl); ?>');">
   <div class="hero-content">
     <h1 id="aboutTitle">Six Origins Making Every Day Better</h1>
     <p>Experience quality coffee and apparel crafted with passion.</p>
@@ -1006,7 +1011,7 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     <!-- PROMO 1 — Featured Blend (dark panel, photo on the left) -->
     <section class="promo promo--dark" aria-labelledby="promo1Title">
       <div class="promo-media">
-        <img src="images/promo-cafe.png" alt="Six Origins featured coffee blend" loading="lazy">
+        <img src="<?php echo escapeOutput($aboutCafeImageUrl); ?>" alt="Six Origins featured coffee blend" loading="lazy">
       </div>
       <div class="promo-body">
         <span class="promo-tag"><i class="fa-solid fa-mug-hot"></i> Featured Blend</span>
@@ -1061,7 +1066,7 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     <!-- PROMO 2 — New Merch Drop (light panel, photo on the right) -->
     <section class="promo promo--light promo--flip" aria-labelledby="promo2Title">
       <div class="promo-media">
-        <img src="images/promo-product.png" alt="Six Origins merchandise collection" loading="lazy">
+        <img src="<?php echo escapeOutput($aboutProductImageUrl); ?>" alt="Six Origins merchandise collection" loading="lazy">
       </div>
       <div class="promo-body">
         <span class="promo-tag"><i class="fa-solid fa-bag-shopping"></i> New Merch Drop</span>
@@ -1085,18 +1090,12 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
       <p>A passionate crew that brings Six Origins to life every single day, with dedication and a smile.</p>
       <div class="team-grid" role="list" aria-label="Team members">
         <?php
-          $members = [
-            ['name' => 'Dag-ay, Victor', 'image' => 'vic.jpg', 'role' => 'Founder & Visionary', 'bio' => 'Started Six Origins with one goal: coffee worth gathering around.'],
-            ['name' => 'Camiller, Antonette', 'image' => 'ton.jpg', 'role' => 'Operations Lead', 'bio' => 'Keeps every shift, order, and detail running smoothly.'],
-            ['name' => 'Velasco, Mark Jazper', 'image' => 'mjj.jpg', 'role' => 'Head Barista', 'bio' => 'Pulls every shot with the same care as the first.'],
-            ['name' => 'Zafran, Michaella', 'image' => 'miks.jpg', 'role' => 'Creative Director', 'bio' => 'Shapes how Six Origins looks, feels, and sounds.'],
-            ['name' => 'Biscocho, Dan Samuel', 'image' => 'dan.jpg', 'role' => 'Supply Manager', 'bio' => 'Sources every bean, keeping quality and freshness consistent.'],
-            ['name' => 'Jacinto, Emerson', 'image' => 'eme.jpg', 'role' => 'Customer Care', 'bio' => 'The friendly face making sure every visit feels right.'],
-          ];
-          foreach ($members as $m):
+          $members = $siteCustomization['team_members'];
+          foreach ($members as $memberIndex => $m):
+            $memberImageUrl = site_customization_auth_image_url($m['image'], site_customization_default_team_members()[$memberIndex]['image']);
         ?>
         <div class="member" role="listitem" aria-label="<?php echo htmlspecialchars($m['name']); ?>">
-          <img src="images/<?php echo htmlspecialchars($m['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+          <img src="<?php echo escapeOutput($memberImageUrl); ?>" alt="<?php echo htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
           <h4><?php echo htmlspecialchars($m['name']); ?></h4>
           <span class="role"><?php echo htmlspecialchars($m['role']); ?></span>
           <p class="bio"><?php echo htmlspecialchars($m['bio']); ?></p>

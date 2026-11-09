@@ -89,6 +89,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $oldAboutImages = [];
+        foreach ([
+            'about_hero_image_path' => 'about_hero_image',
+            'about_cafe_image_path' => 'about_cafe_image',
+            'about_product_image_path' => 'about_product_image',
+        ] as $settingKey => $uploadKey) {
+            $oldAboutImages[$settingKey] = $settings[$settingKey];
+            $uploadedAboutImage = save_site_customization_upload($_FILES[$uploadKey] ?? [], 'image', __DIR__);
+            if ($uploadedAboutImage !== null) {
+                $newUploads[] = $uploadedAboutImage;
+                $newSettings[$settingKey] = $uploadedAboutImage;
+            } elseif (!empty($_POST['reset_' . $uploadKey])) {
+                $newSettings[$settingKey] = site_customization_defaults()[$settingKey];
+            }
+        }
+
+        $oldTeamMembers = $settings['team_members'];
+        $postedNames = $_POST['team_name'] ?? [];
+        $postedRoles = $_POST['team_role'] ?? [];
+        $postedBios = $_POST['team_bio'] ?? [];
+        $newTeamMembers = [];
+        foreach ($oldTeamMembers as $index => $oldMember) {
+            $nameValue = $postedNames[$index] ?? '';
+            $roleValue = $postedRoles[$index] ?? '';
+            $bioValue = $postedBios[$index] ?? '';
+            if (!is_string($nameValue) || !is_string($roleValue) || !is_string($bioValue)) {
+                throw new RuntimeException('Enter valid text for each team member.');
+            }
+            $name = trim($nameValue);
+            $role = trim($roleValue);
+            $bio = trim($bioValue);
+            if ($name === '' || strlen($name) > 100 || $role === '' || strlen($role) > 60 || $bio === '' || strlen($bio) > 250) {
+                throw new RuntimeException('Each team member needs a name, role, and bio within the displayed character limits.');
+            }
+
+            $teamImage = $oldMember['image'];
+            $teamPhotoFile = [];
+            foreach (['name', 'type', 'tmp_name', 'error', 'size'] as $fileKey) {
+                $teamPhotoFile[$fileKey] = $_FILES['team_photo'][$fileKey][$index] ?? null;
+            }
+            $uploadedTeamPhoto = save_site_customization_upload($teamPhotoFile, 'image', __DIR__);
+            if ($uploadedTeamPhoto !== null) {
+                $newUploads[] = $uploadedTeamPhoto;
+                $teamImage = $uploadedTeamPhoto;
+            } elseif (!empty($_POST['reset_team_photo'][$index])) {
+                $teamImage = site_customization_default_team_members()[$index]['image'];
+            }
+            $newTeamMembers[] = ['name' => $name, 'role' => $role, 'bio' => $bio, 'image' => $teamImage];
+        }
+        $newSettings['team_members'] = $newTeamMembers;
+
         $oldMedia = $settings['hero_media_path'];
         if (!empty($_POST['reset_hero_media'])) {
             $newSettings['hero_media_path'] = null;
@@ -110,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         log_admin_activity(
             (int)$_SESSION['admin_id'],
             'Updated Site Customization',
-            'Updated site branding, colors, or homepage media.',
+            'Updated site branding, colors, homepage media, or About page content.',
             'success',
             'site_customization',
             1,
@@ -122,6 +173,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($oldMedia !== $newSettings['hero_media_path']) {
             delete_site_customization_upload($oldMedia, __DIR__);
+        }
+        foreach ($oldAboutImages as $settingKey => $oldAboutImage) {
+            if ($oldAboutImage !== $newSettings[$settingKey]) {
+                delete_site_customization_upload($oldAboutImage, __DIR__);
+            }
+        }
+        foreach ($oldTeamMembers as $index => $oldMember) {
+            if ($oldMember['image'] !== $newTeamMembers[$index]['image']) {
+                delete_site_customization_upload($oldMember['image'], __DIR__);
+            }
         }
         foreach ($oldAuthImages as $settingKey => $oldAuthImage) {
             if ($oldAuthImage !== $newSettings[$settingKey]) {
@@ -157,6 +218,10 @@ if ($logoUrl !== 'images/logos.png') {
 }
 $mediaUrl = site_customization_video_url($settings['hero_media_path']);
 $hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['hero_media_path'] !== null;
+$aboutHeroImageUrl = site_customization_auth_image_url($settings['about_hero_image_path'], 'images/aboback.png');
+$aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
+$aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
+$teamMembers = $settings['team_members'];
 $authImages = [
     'login_image_path' => ['title' => 'Login page picture', 'input' => 'login_image', 'default' => 'images/logback.jpeg'],
     'register_image_path' => ['title' => 'Customer registration picture', 'input' => 'register_image', 'default' => 'images/logback.jpeg'],
@@ -185,6 +250,56 @@ $authImages = [
             <label>Logo picture <input type="file" name="logo" accept="image/jpeg,image/png,image/webp"></label>
             <div class="customization-preview-row"><img class="customization-logo-preview" src="<?php echo escapeOutput($logoUrl); ?>" alt="Current logo"><span>Current logo</span></div>
             <label class="customization-check"><input type="checkbox" name="reset_logo" value="1"> Restore the default logo</label>
+        </section>
+        <section class="customization-card customization-about-team">
+            <h2><i class="fa-solid fa-people-group"></i> About page and team</h2>
+            <p class="customization-help">Change the About page hero image and the six team profiles shown to customers. Leave an image upload empty to keep its current picture.</p>
+            <div class="customization-about-hero-setting">
+                <label for="about-hero-image">About page background image
+                    <input id="about-hero-image" type="file" name="about_hero_image" accept="image/jpeg,image/png,image/webp">
+                </label>
+                <div class="customization-preview-row">
+                    <img class="customization-about-preview" src="<?php echo escapeOutput($aboutHeroImageUrl); ?>" alt="Current About page background">
+                    <span>Current About page background</span>
+                </div>
+                <label class="customization-check"><input type="checkbox" name="reset_about_hero_image" value="1"> Restore default About page image</label>
+            </div>
+            <div class="customization-auth-image-grid">
+                <?php foreach ([
+                    'about_cafe_image_path' => ['title' => 'Featured cafe image', 'input' => 'about_cafe_image', 'url' => $aboutCafeImageUrl, 'default' => 'images/promo-cafe.png'],
+                    'about_product_image_path' => ['title' => 'Featured product image', 'input' => 'about_product_image', 'url' => $aboutProductImageUrl, 'default' => 'images/promo-product.png'],
+                ] as $settingKey => $imageConfig): ?>
+                    <div class="customization-image-setting">
+                        <label><?php echo escapeOutput($imageConfig['title']); ?>
+                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <div class="customization-preview-row">
+                            <img class="customization-auth-preview" src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                            <span>Current image</span>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="customization-team-grid">
+                <?php foreach ($teamMembers as $index => $member):
+                    $teamImageUrl = site_customization_auth_image_url($member['image'], site_customization_default_team_members()[$index]['image']);
+                ?>
+                    <fieldset class="customization-team-member">
+                        <legend>Team member <?php echo $index + 1; ?></legend>
+                        <label>Name <input type="text" name="team_name[<?php echo $index; ?>]" maxlength="100" required value="<?php echo escapeOutput($member['name']); ?>"></label>
+                        <label>Role <input type="text" name="team_role[<?php echo $index; ?>]" maxlength="60" required value="<?php echo escapeOutput($member['role']); ?>"></label>
+                        <label>Bio <textarea name="team_bio[<?php echo $index; ?>]" maxlength="250" rows="3" required><?php echo escapeOutput($member['bio']); ?></textarea></label>
+                        <label>Profile picture <input type="file" name="team_photo[<?php echo $index; ?>]" accept="image/jpeg,image/png,image/webp"></label>
+                        <div class="customization-preview-row">
+                            <img class="customization-team-preview" src="<?php echo escapeOutput($teamImageUrl); ?>" alt="<?php echo escapeOutput($member['name']); ?> current profile picture">
+                            <span>Current profile picture</span>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_team_photo[<?php echo $index; ?>]" value="1"> Restore default picture</label>
+                    </fieldset>
+                <?php endforeach; ?>
+            </div>
+            <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
         </section>
         <section class="customization-card customization-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
@@ -380,14 +495,24 @@ $authImages = [
 .customization-auth-image-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .customization-image-setting{min-width:0;display:grid;align-content:start;gap:14px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
 .customization-auth-preview{width:100%;height:150px;object-fit:cover;border-radius:9px;background:#eee}
+.customization-about-team{grid-column:1/-1}
+.customization-about-hero-setting{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:14px 22px;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
+.customization-about-hero-setting .customization-check{grid-column:1/-1}
+.customization-about-preview{width:100%;height:130px;object-fit:cover;border-radius:9px;background:#eee}
+.customization-team-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.customization-team-member{min-width:0;display:grid;align-content:start;gap:12px;margin:0;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-page-bg) 40%,var(--site-surface))}
+.customization-team-member legend{padding:0 6px;color:var(--dark-brown);font-weight:800}
+.customization-team-member textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit;resize:vertical}
+.customization-team-preview{width:68px;height:68px;object-fit:cover;border:1px solid #eee4dd;border-radius:50%;background:#fff}
 .customization-save{grid-column:1/-1;min-height:52px;padding:13px 18px;border:0;border-radius:10px;background:var(--primary-red);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 20%,transparent);transition:transform .18s,box-shadow .18s}
 .customization-save:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 28%,transparent)}
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
 .customization-message.error{background:#fde8e7;color:#8a1f19}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
+@media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
 @media(max-width:720px){.customization-auth-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.customization-extra-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
+@media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors,.customization-team-grid,.customization-about-hero-setting{grid-template-columns:1fr}.customization-about-hero-setting .customization-check{grid-column:auto}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
 <script>
 document.querySelectorAll('.customization-color-control').forEach((control) => {

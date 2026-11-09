@@ -6,6 +6,10 @@ function site_customization_defaults(): array
         'brand_name' => 'Six Origins',
         'brand_tagline' => 'Cafe',
         'logo_path' => 'images/logos.png',
+        'about_hero_image_path' => 'images/aboback.png',
+        'about_cafe_image_path' => 'images/promo-cafe.png',
+        'about_product_image_path' => 'images/promo-product.png',
+        'team_members' => site_customization_default_team_members(),
         'login_image_path' => 'images/logback.jpeg',
         'register_image_path' => 'images/logback.jpeg',
         'admin_register_image_path' => 'images/logback.jpeg',
@@ -32,6 +36,18 @@ function site_customization_defaults(): array
     ];
 }
 
+function site_customization_default_team_members(): array
+{
+    return [
+        ['name' => 'Dag-ay, Victor', 'image' => 'images/vic.jpg', 'role' => 'Founder & Visionary', 'bio' => 'Started Six Origins with one goal: coffee worth gathering around.'],
+        ['name' => 'Camiller, Antonette', 'image' => 'images/ton.jpg', 'role' => 'Operations Lead', 'bio' => 'Keeps every shift, order, and detail running smoothly.'],
+        ['name' => 'Velasco, Mark Jazper', 'image' => 'images/mjj.jpg', 'role' => 'Head Barista', 'bio' => 'Pulls every shot with the same care as the first.'],
+        ['name' => 'Zafran, Michaella', 'image' => 'images/miks.jpg', 'role' => 'Creative Director', 'bio' => 'Shapes how Six Origins looks, feels, and sounds.'],
+        ['name' => 'Biscocho, Dan Samuel', 'image' => 'images/dan.jpg', 'role' => 'Supply Manager', 'bio' => 'Sources every bean, keeping quality and freshness consistent.'],
+        ['name' => 'Jacinto, Emerson', 'image' => 'images/eme.jpg', 'role' => 'Customer Care', 'bio' => 'The friendly face making sure every visit feels right.'],
+    ];
+}
+
 function get_site_customization(mysqli $conn): array
 {
     static $settings = null;
@@ -40,7 +56,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -51,6 +67,43 @@ function get_site_customization(mysqli $conn): array
         && (!is_string($settings['logo_path']) || !preg_match('#^images/site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings['logo_path']))) {
         $settings['logo_path'] = 'images/logos.png';
     }
+    if ($settings['about_hero_image_path'] !== 'images/aboback.png'
+        && (!is_string($settings['about_hero_image_path']) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings['about_hero_image_path']))) {
+        $settings['about_hero_image_path'] = 'images/aboback.png';
+    }
+    foreach (['about_cafe_image_path' => 'images/promo-cafe.png', 'about_product_image_path' => 'images/promo-product.png'] as $imageKey => $defaultImage) {
+        if ($settings[$imageKey] !== $defaultImage
+            && (!is_string($settings[$imageKey]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$imageKey]))) {
+            $settings[$imageKey] = $defaultImage;
+        }
+    }
+    $teamMembers = is_string($settings['team_members']) ? json_decode($settings['team_members'], true) : $settings['team_members'];
+    $defaultTeamMembers = site_customization_default_team_members();
+    if (!is_array($teamMembers) || count($teamMembers) !== count($defaultTeamMembers)) {
+        $teamMembers = $defaultTeamMembers;
+    } else {
+        foreach ($defaultTeamMembers as $index => $defaultMember) {
+            $member = $teamMembers[$index] ?? [];
+            foreach (['name' => 100, 'role' => 60, 'bio' => 250] as $field => $maxLength) {
+                if (!isset($member[$field]) || !is_string($member[$field]) || trim($member[$field]) === '' || strlen($member[$field]) > $maxLength) {
+                    $member[$field] = $defaultMember[$field];
+                }
+            }
+            $imagePath = $member['image'] ?? '';
+            if (!is_string($imagePath)
+                || (!preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $imagePath)
+                    && !preg_match('#^images/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp)$#', $imagePath))) {
+                $imagePath = $defaultMember['image'];
+            }
+            $teamMembers[$index] = [
+                'name' => $member['name'],
+                'role' => $member['role'],
+                'bio' => $member['bio'],
+                'image' => $imagePath,
+            ];
+        }
+    }
+    $settings['team_members'] = $teamMembers;
     foreach ([
         'login_image_path' => 'images/logback.jpeg',
         'register_image_path' => 'images/logback.jpeg',
@@ -92,7 +145,7 @@ function site_customization_css(array $settings): string
     $navbarText = escapeOutput($settings['navbar_text']);
 
     return "<style id=\"site-customization-theme\">
-:root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important;--site-accent-color:{$accent}!important}
+:root{--primary-red:{$primary}!important;--dark-brown:{$secondary}!important;--gray-brown:{$accent}!important;--light-cream:{$page}!important;--white:{$surface}!important;--red:{$primary}!important;--red-dark:{$secondary}!important;--brown:{$secondary}!important;--brown-mid:{$accent}!important;--cream:{$page}!important;--cream-light:{$page}!important;--cream-mid:{$surface}!important;--border:color-mix(in srgb,{$accent} 30%,{$page})!important;--site-page-bg:{$page}!important;--site-surface:{$surface}!important;--site-text:{$text}!important;--site-navbar-bg:{$navbar}!important;--site-navbar-text:{$navbarText}!important;--site-accent-color:{$accent}!important}
 html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .header-wrap,.header-wrap.scrolled,.admin-header{background:var(--site-navbar-bg)!important;color:var(--site-navbar-text)}
 .header-wrap .brand,.header-wrap .brand .logo-main,.header-wrap .brand .logo-sub,.header-wrap .nav a,.header-wrap .icon-btn,.header-wrap .profile-btn,.admin-header .brand .logo-main,.admin-header .brand .logo-sub,.admin-header .nav-link,.admin-header .nav-dropdown-toggle,.admin-header .icon-btn{color:var(--site-navbar-text)}
@@ -143,6 +196,33 @@ html,body{background:var(--site-page-bg)!important;color:var(--site-text)}
 .receipt-table thead{background:{$primary}!important;color:{$navbarText}!important}
 .receipt-divider,.receipt-order-id,.receipt-barcode-area{border-color:color-mix(in srgb,{$accent} 35%,{$page})!important}
 .receipt-modal-actions .btn-close-modal{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.controls,.order-card,.contact-grid>.card,.contact-grid .info-card,.contact-grid .thread-row,.contact-grid .thread-list,.contact-grid .reply-admin,.contact-grid .reply-user,.modal .modal-content,.modal .original-message,.modal .reply-admin,.modal .reply-user,.checkout-wrapper>.card,.profile-wrap>.card,.sx-card,.sx-hero,.member,.stat-card,.table-panel,.products-catalog-card,.products-section .product-card,.products-section .contact-cta{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.order-card .card-header,.order-card .order-total-badge,.contact-grid .btn:not(.btn-ghost-small),.contact-grid .thread-row .btn,.sx-btn-primary,.profile-wrap .btn-primary,.checkout-wrapper .btn-primary{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.order-card .card-body,.order-card .card-footer,.contact-grid .thread-row,.contact-grid .thread-list,.profile-wrap .profile-summary,.checkout-wrapper .checkout-summary{background:{$surface}!important;color:{$text}!important}
+.order-card .card-body,.order-card .card-footer,.contact-grid .thread-row,.profile-wrap .profile-summary{border-color:color-mix(in srgb,{$accent} 20%,{$page})!important}
+.controls input,.controls select,.contact-grid input,.contact-grid textarea,.contact-grid select,.checkout-wrapper input,.checkout-wrapper textarea,.checkout-wrapper select,.profile-wrap input,.profile-wrap textarea,.profile-wrap select,.sx-body input,.sx-body select,.products-section input,.products-section select,.page-wrapper .field input,.page-wrapper .field select,.page-wrapper .search-box input,.page-wrapper .filter-select,.page-wrapper .modal-field input{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 30%,{$page})!important}
+.controls label,.order-card .order-title,.order-card .order-title-sub,.contact-grid h2,.contact-grid h3,.contact-grid h4,.checkout-wrapper h2,.checkout-wrapper h3,.profile-wrap h2,.profile-wrap h3,.sx-body h2,.sx-body h3,.sx-body .sx-price{color:{$secondary}!important}
+.summary-pill{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.checkout-wrapper .discount-section,.profile-wrap .profile-actions,.sx-body .sx-tab{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 25%,{$page})!important}
+.sx-body .sx-tab.active{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.sx-body .sx-btn-outline,.profile-wrap .btn-ghost,.checkout-wrapper .btn-ghost,.contact-grid .btn-ghost-small,.products-section .btn-outline{background:{$page}!important;color:{$secondary}!important;border-color:color-mix(in srgb,{$accent} 28%,{$page})!important}
+.products-section .btn-primary{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.contact-grid .thread-row-header,.contact-grid .reply-header,.contact-grid .thread-name,.contact-grid .inbox-header-title,.contact-grid .original-message-title{color:{$secondary}!important}
+.contact-grid .reply-text,.contact-grid .thread-preview,.contact-grid .original-message,.contact-grid .reply-admin,.contact-grid .reply-user,.modal .modal-content,.modal .original-message,.modal .reply-admin,.modal .reply-user{color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.team .member,.sx-card .sx-body-card,.checkout-wrapper .card,.profile-wrap .card,.contact-grid>.card{box-shadow:0 8px 24px color-mix(in srgb,{$secondary} 8%,transparent)!important}
+.stat-card h3,.stat-card .stat-value,.table-panel .toolbar h2,.page-header-left h1{color:{$secondary}!important}
+.form-panel-header,.btn-submit:not(:disabled),.btn-modal-save:not(:disabled),.modal-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.table-panel thead th{background:{$page}!important;color:{$secondary}!important}
+.page-wrapper .form-panel,.page-wrapper .table-panel,.page-wrapper .stat-card{border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.page-wrapper .field label,.page-wrapper .modal-field label,.page-wrapper .toolbar h2{color:{$secondary}!important}
+.page-wrapper .btn-edit-icon{background:{$page}!important;color:{$primary}!important}
+.site-footer{background:linear-gradient(135deg,{$navbar},{$secondary})!important}
+.team .member .role,.team .member .social-btn{background:{$page}!important;color:{$primary}!important}
+.team .member h4{color:{$secondary}!important}
+.promo,.promo--light .promo-body,.quick-facts,.facts-card,.contact-cta{background:{$surface}!important;color:{$text}!important;border-color:color-mix(in srgb,{$accent} 22%,{$page})!important}
+.hero .btn,.promo-btn,.contact-cta .btn,.quick-facts .btn,.thread-actions a,.cancel-customer-btn:not(:disabled){background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important;border-color:{$primary}!important}
+.order-card .card-header{background:linear-gradient(135deg,{$primary},{$secondary})!important;color:{$navbarText}!important}
+.receipt-table tbody td,.order-card .card-body,.contact-grid p,.profile-wrap p,.checkout-wrapper p,.sx-body .sx-description{color:{$text}}
 </style>";
 }
 
@@ -178,12 +258,18 @@ function site_customization_logo_url(?string $path): string
 
 function save_site_customization(mysqli $conn, array $settings, int $adminId): void
 {
+    $teamMembers = json_encode($settings['team_members'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($teamMembers === false) {
+        throw new RuntimeException('Team information could not be encoded for saving.');
+    }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
+            about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
+            about_product_image_path = VALUES(about_product_image_path), team_members = VALUES(team_members),
             login_image_path = VALUES(login_image_path), register_image_path = VALUES(register_image_path),
             admin_register_image_path = VALUES(admin_register_image_path), loading_style = VALUES(loading_style),
             showcase_image_path = VALUES(showcase_image_path), showcase_background = VALUES(showcase_background),
@@ -197,10 +283,14 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 26) . 'i',
+        str_repeat('s', 30) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
+        $settings['about_hero_image_path'],
+        $settings['about_cafe_image_path'],
+        $settings['about_product_image_path'],
+        $teamMembers,
         $settings['login_image_path'],
         $settings['register_image_path'],
         $settings['admin_register_image_path'],
@@ -241,7 +331,7 @@ function save_site_customization_upload(array $file, string $kind, string $proje
 
     $maxBytes = $kind === 'hero' ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
     if (!isset($file['size']) || (int)$file['size'] < 1 || (int)$file['size'] > $maxBytes) {
-        throw new RuntimeException($kind === 'hero' ? 'Homepage video must be no larger than 50 MB.' : 'The logo must be no larger than 5 MB.');
+        throw new RuntimeException($kind === 'hero' ? 'Homepage video must be no larger than 50 MB.' : 'The selected image must be no larger than 5 MB.');
     }
 
     $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));

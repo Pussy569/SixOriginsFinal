@@ -569,7 +569,7 @@ unset($_SESSION['message']);
          </div>
       </aside>
 
-      <article class="card" aria-labelledby="productsHeading">
+      <article class="card products-catalog-card" aria-labelledby="productsHeading">
          <h2 id="productsHeading"><i class="fa-solid fa-shopping-bag"></i> Featured Products</h2>
          <section class="products-section">
             <div class="grid" role="list">

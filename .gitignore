@@ -13,6 +13,7 @@ finalshopdatabase.sql
 !/database/migrations/20261109_site_customization.sql
 !/database/migrations/20261109_site_customization_experience.sql
 !/database/migrations/20261109_site_customization_chatbots.sql
+!/database/migrations/20261109_site_customization_about_team.sql
 *.sqlite
 *.sqlite3
 *.db
