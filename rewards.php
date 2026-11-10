@@ -89,8 +89,9 @@ if (!$user) {
 
 $points = (int)$user['points_balance'];
 $loyaltySettings = loyalty_get_settings($conn);
-$pointsRate = max(1, (int)$loyaltySettings['points_per_wallet_peso']);
-$maxWalletRedeem = intdiv($points, $pointsRate) * $pointsRate;
+$pointsRate = max(0.01, (float)$loyaltySettings['points_per_wallet_peso']);
+$pointsRateLabel = rtrim(rtrim(number_format($pointsRate, 2, '.', ''), '0'), '.');
+$maxWalletRedeem = $points;
 $dailyState = loyalty_get_daily_state($conn, $userId);
 $stmt = $conn->prepare(
     'SELECT d.name, d.code, d.amount, d.type, d.reward_type, d.minimum_spend, d.valid_until, p.name AS product_name
@@ -225,14 +226,14 @@ function rewards_offer_description(array $offer): string
     <section class="rewards-columns">
         <article class="rewards-panel">
             <div class="section-title"><span class="section-icon"><i class="fa-solid fa-wallet"></i></span><div><span class="rewards-kicker">Use your points</span><h2>Redeem to wallet</h2></div></div>
-            <p><?php echo $pointsRate; ?> points = ₱1.00 added to your wallet. Points are redeemed in whole-peso amounts.</p>
+            <p><?php echo escapeOutput($pointsRateLabel); ?> points = ₱1.00 added to your wallet. Choose any whole-point amount; wallet credit is rounded to the nearest cent.</p>
             <form method="post" class="redeem-form">
                 <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
                 <input type="hidden" name="action" value="redeem_wallet">
                 <input type="hidden" name="reference" value="<?php echo escapeOutput($_SESSION['loyalty_reference_wallet']); ?>">
                 <label for="wallet-points">Points to redeem</label>
-                <input id="wallet-points" type="number" name="points" min="<?php echo $pointsRate; ?>" max="<?php echo max($pointsRate, $maxWalletRedeem); ?>" step="<?php echo $pointsRate; ?>" value="<?php echo $maxWalletRedeem >= $pointsRate ? $pointsRate : ''; ?>" <?php echo $maxWalletRedeem < $pointsRate ? 'disabled' : ''; ?> required>
-                <button class="rewards-button" type="submit" <?php echo $maxWalletRedeem < $pointsRate ? 'disabled' : ''; ?>>Redeem wallet balance</button>
+                <input id="wallet-points" type="number" name="points" min="1" max="<?php echo max(1, $maxWalletRedeem); ?>" step="1" value="<?php echo $maxWalletRedeem > 0 ? min($maxWalletRedeem, max(1, (int)ceil($pointsRate))) : ''; ?>" <?php echo $maxWalletRedeem < 1 ? 'disabled' : ''; ?> required>
+                <button class="rewards-button" type="submit" <?php echo $maxWalletRedeem < 1 ? 'disabled' : ''; ?>>Redeem wallet balance</button>
             </form>
         </article>
         <article class="rewards-panel">

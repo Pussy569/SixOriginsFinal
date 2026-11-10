@@ -20,6 +20,7 @@ finalshopdatabase.sql
 !/database/migrations/20261110_home_about_carousel_images.sql
 !/database/migrations/20261110_loyalty_rewards.sql
 !/database/migrations/20261110_checkout_payment_methods.sql
+!/database/migrations/20261110_loyalty_fractional_wallet_rate.sql
 *.sqlite
 *.sqlite3
 *.db

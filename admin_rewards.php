@@ -127,12 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'save_settings') {
-            $pointsPerPeso = filter_var($_POST['points_per_wallet_peso'] ?? null, FILTER_VALIDATE_INT);
+            $pointsPerPeso = filter_var($_POST['points_per_wallet_peso'] ?? null, FILTER_VALIDATE_FLOAT);
             $voucherCost = filter_var($_POST['points_voucher_cost'] ?? null, FILTER_VALIDATE_INT);
             $voucherPercent = filter_var($_POST['points_voucher_percent'] ?? null, FILTER_VALIDATE_INT);
             $voucherMinimum = (float)($_POST['points_voucher_minimum_spend'] ?? -1);
             $voucherValidity = filter_var($_POST['points_voucher_validity_days'] ?? null, FILTER_VALIDATE_INT);
-            if ($pointsPerPeso === false || $pointsPerPeso < 1 || $pointsPerPeso > 10000
+            if ($pointsPerPeso === false || $pointsPerPeso < 0.01 || $pointsPerPeso > 10000
+                || round($pointsPerPeso, 2) !== (float)$pointsPerPeso
                 || $voucherCost === false || $voucherCost < 1 || $voucherCost > 1000000
                 || $voucherPercent === false || $voucherPercent < 1 || $voucherPercent > 100
                 || $voucherMinimum < 0
@@ -146,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  WHERE id = 1'
             );
             $adminId = (int)$_SESSION['admin_id'];
-            $stmt->bind_param('iiidii', $pointsPerPeso, $voucherCost, $voucherPercent, $voucherMinimum, $voucherValidity, $adminId);
+            $stmt->bind_param('diidii', $pointsPerPeso, $voucherCost, $voucherPercent, $voucherMinimum, $voucherValidity, $adminId);
             $stmt->execute();
             $stmt->close();
             $message = 'Points redemption settings saved.';
@@ -366,7 +367,7 @@ while (count($prizes) < 3) {
             <p>Create automatic offers for verified sign-ups and qualifying completed orders, then manage points and daily login rewards.</p></div>
         <div class="rewards-overview" aria-label="Rewards overview">
             <div class="overview-stat"><span>Active offers</span><strong><?php echo $activeCampaignCount; ?></strong></div>
-            <div class="overview-stat"><span>Points exchange</span><strong><?php echo (int)$loyaltySettings['points_per_wallet_peso']; ?> <small>pts / ₱1</small></strong></div>
+            <div class="overview-stat"><span>Points exchange</span><strong><?php echo rtrim(rtrim(number_format((float)$loyaltySettings['points_per_wallet_peso'], 2, '.', ''), '0'), '.'); ?> <small>pts / ₱1</small></strong></div>
         </div>
     </header>
     <?php if ($message !== ''): ?>
@@ -380,7 +381,7 @@ while (count($prizes) < 3) {
         <form method="post" class="rewards-grid">
             <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
             <input type="hidden" name="action" value="save_settings">
-            <label>Points for ₱1 wallet balance<input type="number" min="1" max="10000" name="points_per_wallet_peso" required value="<?php echo (int)$loyaltySettings['points_per_wallet_peso']; ?>"></label>
+            <label>Points for ₱1 wallet balance<input type="number" min="0.01" max="10000" step="0.01" name="points_per_wallet_peso" required value="<?php echo escapeOutput($loyaltySettings['points_per_wallet_peso']); ?>"></label>
             <label>Points cost for voucher<input type="number" min="1" max="1000000" name="points_voucher_cost" required value="<?php echo (int)$loyaltySettings['points_voucher_cost']; ?>"></label>
             <label>Voucher discount (%)<input type="number" min="1" max="100" name="points_voucher_percent" required value="<?php echo (int)$loyaltySettings['points_voucher_percent']; ?>"></label>
             <label>Voucher minimum spend (₱)<input type="number" min="0" step="1" name="points_voucher_minimum_spend" required value="<?php echo escapeOutput($loyaltySettings['points_voucher_minimum_spend']); ?>"></label>

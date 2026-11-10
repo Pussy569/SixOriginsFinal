@@ -453,18 +453,20 @@ function loyalty_claim_daily_reward(mysqli $conn, int $userId, ?string $gameType
     }
 }
 
-function loyalty_redeem_wallet_points(mysqli $conn, int $userId, int $points, string $reference): int
+function loyalty_redeem_wallet_points(mysqli $conn, int $userId, int $points, string $reference): float
 {
     if ($points < 1 || $reference === '') {
         throw new InvalidArgumentException('Choose a valid points amount to redeem.');
     }
     $settings = loyalty_get_settings($conn);
-    $rate = max(1, (int)$settings['points_per_wallet_peso']);
-    $points = intdiv($points, $rate) * $rate;
-    if ($points < $rate) {
-        throw new RuntimeException('Redeem at least ' . $rate . ' points for ₱1.00 wallet balance.');
+    $rate = (float)$settings['points_per_wallet_peso'];
+    if ($rate <= 0) {
+        throw new RuntimeException('The points-to-wallet conversion rate is not configured correctly.');
     }
-    $walletCredit = intdiv($points, $rate);
+    $walletCredit = round($points / $rate, 2);
+    if ($walletCredit < 0.01) {
+        throw new RuntimeException('Redeem more points to receive at least ₱0.01 wallet balance.');
+    }
 
     $conn->begin_transaction();
     try {

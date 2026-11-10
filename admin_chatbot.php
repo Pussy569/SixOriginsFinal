@@ -498,7 +498,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
         $entities = [];
         if ($intent === 'create_voucher') {
             if (preg_match('/\b(?:name|called|named)\s*[:=]?\s*["\']([^"\']{1,100})["\']/i', $query, $m)
-                || preg_match('/\bvoucher\s+["\']([^"\']{1,100})["\']/i', $query, $m)) {
+                || preg_match('/\bvoucher\s+["“‘]([^"”’]{1,100})["”’]/u', $query, $m)) {
                 $entities['name'] = trim($m[1]);
             }
             if (preg_match('/\b(sign[\s-]?up|welcome|new account)\b/i', $query)) {
@@ -516,30 +516,31 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
                 if (preg_match('/\bproduct(?:\s+id)?\s*#?\s*(\d+)\b/i', $query, $m)) {
                     $entities['free_product_id'] = (int)$m[1];
                 }
+            } elseif (preg_match('/(?:\x{20B1}|php)\s*([\d,]+(?:\.\d+)?)\s*(?:off|discount)\b/iu', $query, $m)) {
+                $entities['reward_type'] = 'fixed';
+                $entities['reward_amount'] = clean_number($m[1]);
             } elseif (preg_match('/\b(\d+(?:\.\d+)?)\s*%/', $query, $m)) {
                 $entities['reward_type'] = 'percentage';
                 $entities['reward_amount'] = (float)$m[1];
-            } elseif (preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d+)?)/i', $query, $m)) {
-                $entities['reward_type'] = 'fixed';
-                $entities['reward_amount'] = clean_number($m[1]);
             }
-            if (preg_match('/\b(?:spend|minimum spend|min spend)\s*(?:of|at least|:|=)?\s*(?:₱|php)?\s*([\d,]+(?:\.\d+)?)/i', $query, $m)) {
+            if (preg_match('/\b(?:minimum spend|min spend)\s*(?:of|at least|:|=)?\s*(?:\x{20B1}|php)?\s*([\d,]+(?:\.\d+)?)/iu', $query, $m)) {
                 $entities['minimum_spend'] = clean_number($m[1]);
-                if (($entities['trigger_type'] ?? '') === 'order' && !preg_match('/\bminimum|min spend\b/i', $query)) {
-                    $entities['condition_type'] = 'spend';
-                    $entities['threshold_value'] = clean_number($m[1]);
-                }
+            }
+            if (preg_match('/\bspend\s+(?:at least\s+)?(?:\x{20B1}|php)?\s*([\d,]+(?:\.\d+)?)/iu', $query, $m)
+                && ($entities['trigger_type'] ?? '') === 'order') {
+                $entities['condition_type'] = 'spend';
+                $entities['threshold_value'] = clean_number($m[1]);
             }
             if (preg_match('/\b(?:buy|purchase)\s+(\d+)\s+(?:or more\s+)?products?\b/i', $query, $m)) {
                 $entities['condition_type'] = 'products';
                 $entities['threshold_value'] = (int)$m[1];
             }
-            if (preg_match('/\b(\d{1,3})\s*days?\b/i', $query, $m)) {
+            if (preg_match('/\bvalid\s+(?:for\s+)?(\d{1,3})\s*days?\b/i', $query, $m)) {
                 $entities['validity_days'] = (int)$m[1];
             }
         } elseif ($intent === 'edit_loyalty_settings') {
             $patterns = [
-                'points_per_wallet_peso' => '/\b(?:every\s+)?(\d+)\s*points?\s*(?:per|=|for)\s*(?:(?:\x{20B1})?1|peso|balance|wallet)\b|\b(?:every|each)\s+(\d+)\s+points?\b.*\b(?:(?:\x{20B1})?1|one)\s*(?:peso|balance|wallet)\b/iu',
+                'points_per_wallet_peso' => '/\b(?:every\s+)?(\d+(?:\.\d+)?)\s*points?\s*(?:per|=|for)\s*(?:\x{20B1}|php)?\s*(\d+(?:\.\d+)?)\s*(?:peso|balance|wallet)?\b/iu',
                 'points_voucher_cost' => '/\b(?:voucher|redeem(?:ing)?)\s*(?:cost|for|at|requires?)\s*(\d+)\s*points?\b|\b(\d+)\s*[- ]points?\s+(?:(?:for\s+(?:a\s+)?\d+%\s+)?(?:off|discount|voucher)|\d{1,3}\s*%\s+voucher)\b|\b(\d+)\s+points?\s+to\s+(?:get|have)\b/i',
                 'points_voucher_percent' => '/\b(\d{1,3})\s*%\s*(?:off|voucher|discount)\b/i',
                 'points_voucher_minimum_spend' => '/\b(?:minimum|min)\s*(?:spend)?\s*(?:₱|php)?\s*([\d,]+(?:\.\d+)?)/i',
@@ -547,12 +548,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             ];
             foreach ($patterns as $key => $pattern) {
                 if (preg_match($pattern, $query, $m)) {
-                    $value = $m[1] ?? '';
-                    if ($value === '') {
-                        $value = $m[2] ?? '';
-                    }
-                    if ($value === '') {
-                        $value = $m[3] ?? '';
+                    if ($key === 'points_per_wallet_peso') {
+                        $value = (float)($m[2] ?? 0) > 0 ? (float)$m[1] / (float)$m[2] : null;
+                    } else {
+                        $value = $m[1] ?? '';
+                        if ($value === '') {
+                            $value = $m[2] ?? '';
+                        }
+                        if ($value === '') {
+                            $value = $m[3] ?? '';
+                        }
                     }
                     $entities[$key] = clean_number($value);
                 }
@@ -909,7 +914,7 @@ SYS;
 
         $current = loyalty_get_settings($conn);
         $fields = [
-            'points_per_wallet_peso' => [1, 10000],
+            'points_per_wallet_peso' => [0.01, 10000],
             'points_voucher_cost' => [1, 1000000],
             'points_voucher_percent' => [1, 100],
             'points_voucher_minimum_spend' => [0, 1000000],
@@ -923,7 +928,9 @@ SYS;
                 continue;
             }
             if (!is_numeric($value) || (float)$value < $minimum || (float)$value > $maximum
-                || ($field !== 'points_voucher_minimum_spend' && (float)$value !== (float)(int)$value)) {
+                || ($field !== 'points_voucher_minimum_spend' && $field !== 'points_per_wallet_peso'
+                    && (float)$value !== (float)(int)$value)
+                || ($field === 'points_per_wallet_peso' && round((float)$value, 2) !== (float)$value)) {
                 return ['success' => false, 'message' => 'One or more requested points settings are invalid or outside the supported range.'];
             }
             $updated[$field] = $value;
@@ -940,13 +947,13 @@ SYS;
                      points_voucher_minimum_spend = ?, points_voucher_validity_days = ?, updated_by = ?
                  WHERE id = 1'
             );
-            $pointsPerPeso = (int)$updated['points_per_wallet_peso'];
+            $pointsPerPeso = (float)$updated['points_per_wallet_peso'];
             $voucherCost = (int)$updated['points_voucher_cost'];
             $voucherPercent = (int)$updated['points_voucher_percent'];
             $minimumSpend = (float)$updated['points_voucher_minimum_spend'];
             $validityDays = (int)$updated['points_voucher_validity_days'];
             $adminId = (int)$_SESSION['admin_id'];
-            $stmt->bind_param('iiidii', $pointsPerPeso, $voucherCost, $voucherPercent, $minimumSpend, $validityDays, $adminId);
+            $stmt->bind_param('diidii', $pointsPerPeso, $voucherCost, $voucherPercent, $minimumSpend, $validityDays, $adminId);
             $stmt->execute();
             $stmt->close();
         } catch (mysqli_sql_exception $e) {
@@ -957,7 +964,8 @@ SYS;
         if (function_exists('log_admin_activity')) {
             log_admin_activity($adminId, 'Updated Points Redemption Settings', 'Changed points redemption via chatbot.', 'success', 'loyalty_settings', 1, $current, $updated);
         }
-        return ['success' => true, 'message' => 'Points-redemption settings updated. ' . $pointsPerPeso . ' points = ₱1 wallet balance; voucher: ' . $voucherCost . ' points for ' . $voucherPercent . '% off, minimum spend ₱' . number_format($minimumSpend, 2) . ', valid ' . $validityDays . ' days.'];
+        $rateLabel = rtrim(rtrim(number_format($pointsPerPeso, 2, '.', ''), '0'), '.');
+        return ['success' => true, 'message' => 'Points-redemption settings updated. ' . $rateLabel . ' points = ₱1 wallet balance; voucher: ' . $voucherCost . ' points for ' . $voucherPercent . '% off, minimum spend ₱' . number_format($minimumSpend, 2) . ', valid ' . $validityDays . ' days.'];
     }
 
     function execute_edit_price($conn, $entities) {
@@ -1546,7 +1554,17 @@ SYS;
                 $entities['min_stock_level'] = clean_number($entities['min_stock_level']);
             }
         } elseif (in_array($intent, ['create_voucher', 'edit_loyalty_settings'], true)) {
-            $entities = merge_entities($entities, regex_extract_reward_entities($intent, $query));
+            $fallbackEntities = regex_extract_reward_entities($intent, $query);
+            $entities = array_merge($entities, $fallbackEntities);
+            $numericFields = $intent === 'create_voucher'
+                ? ['threshold_value', 'reward_amount', 'minimum_spend', 'validity_days']
+                : ['points_per_wallet_peso', 'points_voucher_cost', 'points_voucher_percent', 'points_voucher_minimum_spend', 'points_voucher_validity_days'];
+            foreach ($numericFields as $field) {
+                if (isset($entities[$field]) && is_numeric($entities[$field]) && (float)$entities[$field] <= 0
+                    && !array_key_exists($field, $fallbackEntities)) {
+                    unset($entities[$field]);
+                }
+            }
         }
 
         // ==================== INVENTORY QUERIES (finished products) ====================

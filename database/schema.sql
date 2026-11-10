@@ -270,7 +270,7 @@ CREATE TABLE `points_transactions` (
 
 CREATE TABLE `loyalty_settings` (
   `id` tinyint NOT NULL DEFAULT 1,
-  `points_per_wallet_peso` int unsigned NOT NULL DEFAULT 5,
+  `points_per_wallet_peso` decimal(8,2) unsigned NOT NULL DEFAULT 5.00,
   `points_voucher_cost` int unsigned NOT NULL DEFAULT 100,
   `points_voucher_percent` int unsigned NOT NULL DEFAULT 20,
   `points_voucher_minimum_spend` decimal(10,2) NOT NULL DEFAULT 0.00,

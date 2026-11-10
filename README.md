@@ -92,6 +92,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from the current `database/schema.sql` already include the reward tables and an initial seven-day cycle. Customer registration now requires email verification; configure `RESEND_API_KEY`, `MAIL_FROM_EMAIL`, and `MAIL_FROM_NAME` for the verification code to be delivered. A welcome voucher is granted after verification. Order-based campaigns use one order's product subtotal or item quantity and are granted once per customer when an admin marks a qualifying order **Completed**; when multiple tiers for the same condition qualify, only the highest tier is granted. Cancelling an order revokes its unused campaign vouchers; already-redeemed vouchers are not clawed back. Daily rewards follow calendar dates, so missed days are skipped. The next seven-day cycle must be published by the Head Admin.
 
+The wallet-points conversion can use fractional point rates (for example, 2.50 points per ₱1, equivalent to 5 points for ₱2). For an existing database, back it up and apply this migration after the loyalty rewards migration and before deploying code that changes the wallet conversion:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261110_loyalty_fractional_wallet_rate.sql
+```
+
+Wallet credits from points are rounded to the nearest cent; customers may redeem whole-point amounts.
+
 The Head Admin can also control whether Cash on Delivery, wallet-paid delivery, and wallet-paid store pickup are offered. Existing databases must apply the checkout-method migration after the loyalty rewards migration:
 
 ```sh
