@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/helpers/loyalty.php';
 
 // ============= VALIDATE REQUEST METHOD =============
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -123,7 +124,11 @@ if (isset($_POST['apply_discount'])) {
                 $_SESSION['apply_discount'] = [
                     'code' => $d['code'],
                     'amount' => $d['amount'],
-                    'type' => $d['type']
+                    'type' => $d['type'],
+                    'reward_type' => $d['reward_type'] ?? 'discount',
+                    'minimum_spend' => (float)($d['minimum_spend'] ?? 0),
+                    'free_product_id' => $d['free_product_id'] ?? null,
+                    'name' => $d['name'] ?? '',
                 ];
                 logSecurityEvent('DISCOUNT_APPLIED', ['code' => $d['code']]);
                 break;
@@ -157,7 +162,7 @@ $cart_total = 0;
 $cart_products = [];
 $cart_items_detail = []; // NEW: detailed cart items for receipt
 
-$stmt = $conn->prepare("SELECT name, price, quantity, size FROM `cart` WHERE user_id = ?");
+$stmt = $conn->prepare("SELECT product_id, name, price, quantity, size FROM `cart` WHERE user_id = ?");
 if (!$stmt) {
     logSecurityEvent('DATABASE_ERROR', ['error' => 'Cart fetch prepare failed']);
     die('Database error. Please try again later.');
@@ -177,9 +182,11 @@ if ($select_cart->num_rows > 0) {
         $cart_total += $sub_total;
         // NEW: store detailed item info for receipt
         $cart_items_detail[] = [
+            'product_id' => (int)$cart_item['product_id'],
             'name' => $cart_item['name'],
             'size' => $cart_item['size'],
             'qty'  => (int)$cart_item['quantity'],
+            'quantity' => (int)$cart_item['quantity'],
             'price'=> (float)$cart_item['price'],
             'sub'  => $sub_total
         ];
@@ -208,16 +215,30 @@ if (!$is_guest && $user_status === 'approved') {
 $code_discount_amount = 0;
 $code_discount_label = '';
 $discount_code = '';
+$discountData = null;
+$discount_error = '';
 
 if (isset($_SESSION['apply_discount'])) {
     $discount_data = $_SESSION['apply_discount'];
     $discount_code = $discount_data['code'];
-    $code_discount_label = 'Promo Code (' . escapeOutput($discount_code) . ')';
-    
-    if ($discount_data['type'] === 'percentage') {
-        $code_discount_amount = ($cart_total + $vat + $delivery_fee) * ((float)$discount_data['amount'] / 100);
-    } else {
-        $code_discount_amount = (float)$discount_data['amount'];
+    $code_discount_label = 'Voucher (' . escapeOutput($discount_code) . ')';
+    if (!$is_guest) {
+        $discountData = loyalty_get_user_discount($conn, (int)$user_id, (string)$discount_code);
+        if ($discountData) {
+            $code_discount_label = (string)($discountData['name'] ?: 'Voucher') . ' (' . escapeOutput($discount_code) . ')';
+            try {
+                $discountItems = array_map(static fn(array $item): array => [
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['qty'],
+                    'price' => $item['price'],
+                ], $cart_items_detail);
+                $code_discount_amount = loyalty_calculate_discount($discountData, (float)$cart_total, (float)$vat, (float)$delivery_fee, 'delivery', $discountItems);
+            } catch (RuntimeException $e) {
+                $discount_error = $e->getMessage();
+            }
+        } else {
+            $discount_error = 'This voucher is no longer available. Choose another voucher.';
+        }
     }
 }
 
@@ -242,6 +263,9 @@ if (isset($_POST['order_btn'])) {
         $placed_on = date('d-M-Y');
 
         $validation_errors = [];
+        if ($discount_error !== '') {
+            $validation_errors[] = $discount_error;
+        }
         
         if (empty($name)) {
             $validation_errors[] = 'Name is required.';
@@ -268,6 +292,24 @@ if (isset($_POST['order_btn'])) {
 
         if ($cart_total == 0) {
             $validation_errors[] = 'Your cart is empty';
+        }
+
+        if ($discount_code !== '' && empty($validation_errors)) {
+            try {
+                $discountData = loyalty_get_user_discount($conn, (int)$user_id, $discount_code);
+                if (!$discountData) {
+                    throw new RuntimeException('This voucher is no longer available. Choose another voucher.');
+                }
+                $discountItems = array_map(static fn(array $item): array => [
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['qty'],
+                    'price' => $item['price'],
+                ], $cart_items_detail);
+                $code_discount_amount = loyalty_calculate_discount($discountData, (float)$cart_total, (float)$vat, (float)$delivery_fee, $method, $discountItems);
+                $final_total = max(0, $cart_total + $vat + $delivery_fee - $auto_discount_amount - $code_discount_amount);
+            } catch (RuntimeException $e) {
+                $validation_errors[] = $e->getMessage();
+            }
         }
 
         if (!empty($validation_errors)) {
@@ -310,11 +352,12 @@ if (isset($_POST['order_btn'])) {
                 }
 
                 $stmt = $conn->prepare("
-                    INSERT INTO `orders`(user_id, name, number, email, method, address, total_products, total_price, placed_on) 
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO `orders`(user_id, name, number, email, method, address, total_products, total_price, subtotal_amount, item_count, discount_used, placed_on)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 if (!$stmt) throw new Exception('Database prepare failed: ' . $conn->error);
-                $stmt->bind_param("sssssssds", $user_identifier, $name, $number, $email, $method, $address, $total_products, $final_total, $placed_on);
+                $itemCount = array_sum(array_column($cart_items_detail, 'qty'));
+                $stmt->bind_param("sssssssddids", $user_identifier, $name, $number, $email, $method, $address, $total_products, $final_total, $cart_total, $itemCount, $code_discount_amount, $placed_on);
                 if (!$stmt->execute()) throw new Exception('Order insertion failed: ' . $stmt->error);
                 
                 $order_id = $conn->insert_id;
@@ -327,16 +370,28 @@ if (isset($_POST['order_btn'])) {
                 $stmt->close();
 
                 if (!$is_guest && !empty($discount_code)) {
+                    $discountId = (int)($discountData['id'] ?? 0);
+                    if ($discountId <= 0) {
+                        throw new Exception('The selected voucher is no longer available.');
+                    }
                     $stmt = $conn->prepare("
                         UPDATE `user_discounts` 
                         SET used = 1 
                         WHERE user_id = ? 
-                        AND discount_id = (SELECT id FROM `discounts` WHERE code = ?)
+                        AND discount_id = ? AND used = 0
                     ");
                     if (!$stmt) throw new Exception('Database prepare failed: ' . $conn->error);
-                    $stmt->bind_param("is", $user_id, $discount_code);
+                    $stmt->bind_param("ii", $user_id, $discountId);
                     if (!$stmt->execute()) throw new Exception('Discount update failed: ' . $stmt->error);
+                    if ($stmt->affected_rows !== 1) {
+                        throw new Exception('The selected voucher has already been used.');
+                    }
                     $stmt->close();
+
+                    $claimStmt = $conn->prepare("UPDATE voucher_claims SET status = 'redeemed' WHERE discount_id = ? AND status = 'assigned'");
+                    $claimStmt->bind_param('i', $discountId);
+                    if (!$claimStmt->execute()) throw new Exception('Voucher claim update failed: ' . $claimStmt->error);
+                    $claimStmt->close();
                     
                     logSecurityEvent('DISCOUNT_MARKED_USED', [
                         'user_id' => $user_id,
@@ -963,9 +1018,11 @@ if (isset($_POST['order_btn'])) {
                 <option value="" disabled selected>Select a discount code</option>
                 <?php foreach ($discounts as $d): 
                   $amount_display = ($d['type'] === 'percentage') ? $d['amount'].'%' : '₱'.number_format($d['amount'], 2);
+                  $reward_label = ($d['reward_type'] ?? 'discount') === 'free_shipping' ? 'Free delivery' : ((($d['reward_type'] ?? 'discount') === 'free_product') ? 'Free product' : $amount_display);
+                  $voucher_name = $d['name'] !== '' ? $d['name'] : $d['code'];
                 ?>
                   <option value="<?php echo escapeOutput($d['code']); ?>" <?php echo (isset($discount_code) && $discount_code === $d['code']) ? 'selected' : ''; ?>>
-                    <?php echo escapeOutput($d['code']) . ' — ' . $amount_display; ?>
+                    <?php echo escapeOutput($voucher_name) . ' — ' . $reward_label; ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -974,6 +1031,7 @@ if (isset($_POST['order_btn'])) {
                 <button type="submit" name="remove_discount" class="btn btn-ghost">Remove</button>
               <?php endif; ?>
             </form>
+            <?php if ($discount_error !== ''): ?><p class="small" role="status"><?php echo escapeOutput($discount_error); ?></p><?php endif; ?>
           </div>
           <?php endif; ?>
 

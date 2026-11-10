@@ -18,6 +18,7 @@ finalshopdatabase.sql
 !/database/migrations/20261109_site_customization_page_backgrounds.sql
 !/database/migrations/20261109_site_customization_navbar_hover_colors.sql
 !/database/migrations/20261110_home_about_carousel_images.sql
+!/database/migrations/20261110_loyalty_rewards.sql
 *.sqlite
 *.sqlite3
 *.db
@@ -47,4 +48,5 @@ finalshopdatabase.sql
 /images/user_*
 /images/victor.jpg
 /verify_*
+!/verify_signup.php
 /storage/

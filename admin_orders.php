@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/helpers/loyalty.php';
 
 $admin_id = $_SESSION['admin_id'] ?? null;
 if (!isset($admin_id)) {
@@ -199,6 +200,17 @@ if (isset($_POST['update_order'])) {
             log_admin_activity((int)$admin_id, 'Update Order Status', 'Failed to change order status.', 'failure', 'order', $order_update_id, $previous_status !== null ? ['payment_status' => $previous_status] : null, ['payment_status' => $new_status]);
         } else {
             log_admin_activity((int)$admin_id, 'Update Order Status', 'Changed order status.', 'success', 'order', $order_update_id, ['payment_status' => $previous_status], ['payment_status' => $new_status]);
+            if ($new_status === 'completed' && $previous_status !== 'completed') {
+                try {
+                    $earnedVouchers = loyalty_award_order_vouchers($conn, $order_update_id);
+                    foreach ($earnedVouchers as $earnedVoucher) {
+                        $message[] = '🎁 Automatic voucher granted: ' . htmlspecialchars($earnedVoucher['name'], ENT_QUOTES, 'UTF-8');
+                    }
+                } catch (Throwable $e) {
+                    error_log('Completed order voucher grant failed for order ' . $order_update_id . ': ' . $e->getMessage());
+                    $message[] = '⚠️ Order completed, but an automatic voucher could not be issued. Please review the rewards settings.';
+                }
+            }
             $info_stmt = $conn->prepare("SELECT * FROM `orders` WHERE id = ?");
             $info_stmt->bind_param("i", $order_update_id);
             $info_stmt->execute();
@@ -319,6 +331,15 @@ if (isset($_GET['cancel_order'])) {
                 $cancel_stmt->close();
 
                 if ($cancel_update) {
+                    try {
+                        $revokedVouchers = loyalty_revoke_order_vouchers($conn, $order_id);
+                        if ($revokedVouchers > 0) {
+                            $message[] = 'Unused automatic voucher(s) earned from this order were revoked.';
+                        }
+                    } catch (Throwable $e) {
+                        error_log('Order voucher revocation failed for order ' . $order_id . ': ' . $e->getMessage());
+                        $message[] = '⚠️ Order cancelled, but an unused reward voucher could not be revoked.';
+                    }
                     log_admin_activity((int)$admin_id, 'Cancel Order', 'Cancelled order #' . $order_id, 'success', 'order', $order_id, ['payment_status' => $current_status], ['payment_status' => 'cancelled']);
                     $email_sent = notifyOrderStatusByEmail($order, 'cancelled');
                     $message[] = $email_sent

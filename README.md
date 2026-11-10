@@ -80,6 +80,18 @@ Existing databases must also add the separate navbar hover text and border color
 mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization_navbar_hover_colors.sql
 ```
 
+### Automatic vouchers and customer rewards
+
+The Head Admin can manage welcome vouchers, completed-order spend/item-count offers, the points exchange rates, and the 7-day daily reward cycle from **Rewards & Vouchers** in the admin profile menu. Customers use **Rewards & Points** in their profile menu to claim daily rewards, see available vouchers, and exchange points for wallet balance or a discount voucher. The reward pages use the configured system color palette.
+
+For an existing database or one initialized from the private database seed, back it up and apply `database/migrations/20261110_loyalty_rewards.sql` before deploying these features:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261110_loyalty_rewards.sql
+```
+
+Fresh databases initialized from the current `database/schema.sql` already include the reward tables and an initial seven-day cycle. Customer registration now requires email verification; configure `RESEND_API_KEY`, `MAIL_FROM_EMAIL`, and `MAIL_FROM_NAME` for the verification code to be delivered. A welcome voucher is granted after verification. Order-based campaigns use one order's product subtotal or item quantity and are granted once per customer when an admin marks a qualifying order **Completed**; when multiple tiers for the same condition qualify, only the highest tier is granted. Cancelling an order revokes its unused campaign vouchers; already-redeemed vouchers are not clawed back. Daily rewards follow calendar dates, so missed days are skipped. The next seven-day cycle must be published by the Head Admin.
+
 To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients have their own product-wide form and are deducted for every option. Use the separate **Add Packaging for a Product Option** button to manually select an inventory item, the matching customer option, and the per-sale quantity. Items from any inventory category can be selected, including Consumable. Only orders for that selected option deduct the assigned amount, so a Small Cup mapping does not affect Medium or Large. Leave options unmapped when no additional inventory deduction is needed.
 
 Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:

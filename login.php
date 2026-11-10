@@ -189,10 +189,10 @@ if (isset($_POST['submit'])) {
 
     // Fetch user from database
     dbg("Searching for user in database...");
-    if ($stmt = mysqli_prepare($conn, "SELECT id, name, email, password, user_type, status, twofa_email_enabled FROM users WHERE email = ? LIMIT 1")) {
+    if ($stmt = mysqli_prepare($conn, "SELECT id, name, email, password, user_type, status, twofa_email_enabled, email_verified FROM users WHERE email = ? LIMIT 1")) {
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
-        mysqli_stmt_bind_result($stmt, $id, $name, $db_email, $db_password, $user_type, $status, $twofa_enabled);
+        mysqli_stmt_bind_result($stmt, $id, $name, $db_email, $db_password, $user_type, $status, $twofa_enabled, $email_verified);
         $found = mysqli_stmt_fetch($stmt);
         mysqli_stmt_close($stmt);
 
@@ -305,6 +305,12 @@ if (isset($_POST['submit'])) {
                 }
             } else {
                 // Regular user
+                if ((int)$email_verified !== 1) {
+                    $_SESSION['pending_signup_email'] = (string)$db_email;
+                    $_SESSION['message'] = 'Please verify your email address before signing in.';
+                    header('Location: verify_signup.php');
+                    exit();
+                }
                 if (!empty($twofa_enabled) && intval($twofa_enabled) === 1) {
                     dbg("2FA is enabled for this user");
 

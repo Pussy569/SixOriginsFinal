@@ -105,6 +105,22 @@ function send_welcome_email($name, $email) {
    return send_six_origins_mail($email, $name, $subject, six_origins_email_layout($title, $body));
 }
 
+function send_signup_verification_mail(string $name, string $email, string $code): bool {
+   $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+   $body = '<p>Hi <strong>' . $safeName . '</strong>,</p>
+            <p>Enter this one-time code to verify your Six Origins account and unlock your welcome rewards:</p>
+            <p style="font-size:28px;font-weight:800;letter-spacing:8px;color:#5E1F13;">' . $safeCode . '</p>
+            <p>This code expires in 15 minutes. If you did not create an account, you can ignore this message.</p>';
+   return send_six_origins_mail(
+      $email,
+      $name,
+      'Verify your Six Origins account',
+      six_origins_email_layout('Your verification code', $body),
+      'Your Six Origins verification code is ' . $code . '. It expires in 15 minutes.'
+   );
+}
+
 /** Notify a customer who previously ordered a product about its updated details. */
 function send_product_update_email(string $name, string $email, string $productName, $price, string $details): bool {
    $safeName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

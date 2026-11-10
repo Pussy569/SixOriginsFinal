@@ -3,6 +3,7 @@
 session_start();
 include 'config.php';
 require_once __DIR__ . '/app/helpers/site_customization.php';
+require_once __DIR__ . '/app/helpers/loyalty.php';
 $site_customization = get_site_customization($conn);
 
 if(isset($_POST['submit'])){
@@ -51,13 +52,18 @@ if(isset($_POST['submit'])){
 
    $hash = password_hash($pass, PASSWORD_DEFAULT);
 
-   $ins = mysqli_prepare($conn, "INSERT INTO users(name, email, password, user_type, status, verification_image) VALUES(?, ?, ?, ?, ?, NULL)");
+   $ins = mysqli_prepare($conn, "INSERT INTO users(name, email, password, user_type, status, email_verified, verification_image) VALUES(?, ?, ?, ?, ?, 0, NULL)");
    mysqli_stmt_bind_param($ins, "sssss", $name, $email, $hash, $type, $status);
 
    if(mysqli_stmt_execute($ins)){
+      $user_id = mysqli_insert_id($conn);
       mysqli_stmt_close($ins);
-      $_SESSION['message'] = 'Registration successful! You can now sign in.';
-      header('location:login.php');
+      $_SESSION['pending_signup_email'] = $email;
+      $sent = loyalty_send_signup_verification($conn, (int)$user_id);
+      $_SESSION['message'] = $sent
+         ? 'Account created. Enter the verification code sent to your email to activate it and receive your welcome voucher.'
+         : 'Account created, but the verification email could not be sent yet. Use the resend option to try again.';
+      header('location:verify_signup.php');
       exit();
    } else {
       $err = mysqli_stmt_error($ins);

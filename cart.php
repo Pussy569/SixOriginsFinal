@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/app/helpers/loyalty.php';
 
 if (!function_exists('sanitizeInput')) {
     function sanitizeInput($data) {
@@ -356,6 +357,10 @@ if (isset($_POST['apply_discount'])) {
                     'code'   => $d['code'],
                     'amount' => $d['amount'],
                     'type'   => $d['type'] ?? 'fixed',
+                    'reward_type' => $d['reward_type'] ?? 'discount',
+                    'minimum_spend' => (float)($d['minimum_spend'] ?? 0),
+                    'free_product_id' => $d['free_product_id'] ?? null,
+                    'name' => $d['name'] ?? '',
                 ];
                 logSecurityEvent('DISCOUNT_APPLIED', ['code' => $d['code']]);
                 break;
@@ -470,15 +475,27 @@ if (isset($_POST['order_btn'])) {
     $code_discount_amount = 0;
     $code_discount_label  = '';
     $discount_code        = '';
+    $discountData = null;
     if (isset($_SESSION['apply_discount'])) {
         $discount_data = $_SESSION['apply_discount'];
         $discount_code = $discount_data['code'];
-        $code_discount_label = 'Promo Code (' . $discount_code . ')';
-        $d_type = $discount_data['type'] ?? 'fixed';
-        if ($d_type === 'percentage') {
-            $code_discount_amount = ($order_cart_total + $vat + $delivery_fee) * ((float)$discount_data['amount'] / 100);
-        } else {
-            $code_discount_amount = (float)$discount_data['amount'];
+        $code_discount_label = 'Voucher (' . $discount_code . ')';
+        try {
+            $discountData = $is_guest ? null : loyalty_get_user_discount($conn, (int)$auth_user_id, (string)$discount_code);
+            if (!$discountData) {
+                throw new RuntimeException('This voucher is no longer available. Choose another voucher.');
+            }
+            $code_discount_label = (string)($discountData['name'] ?: 'Voucher') . ' (' . $discount_code . ')';
+            $code_discount_amount = loyalty_calculate_discount(
+                $discountData,
+                (float)$order_cart_total,
+                (float)$vat,
+                (float)$delivery_fee,
+                (string)$method,
+                $order_items
+            );
+        } catch (RuntimeException $e) {
+            $validation_errors[] = $e->getMessage();
         }
     }
 
@@ -574,15 +591,15 @@ if (isset($_POST['order_btn'])) {
 
         $stmt = $conn->prepare("
             INSERT INTO `orders`
-                (user_id, name, number, email, method, address, total_products, special_instructions, total_price, placed_on)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (user_id, name, number, email, method, address, total_products, special_instructions, total_price, subtotal_amount, item_count, discount_used, placed_on)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         if (!$stmt) {
             throw new Exception('Database prepare failed.');
         }
         $stmt->bind_param(
-            "ssssssssds",
-            $cart_user_key, $name, $number, $email, $method, $address, $total_products, $special_instructions_combined, $final_total, $placed_on
+            "ssssssssddids",
+            $cart_user_key, $name, $number, $email, $method, $address, $total_products, $special_instructions_combined, $final_total, $order_cart_total, array_sum(array_map(static fn(array $item): int => (int)$item['quantity'], $order_items)), $code_discount_amount, $placed_on
         );
         if (!$stmt->execute()) {
             throw new Exception('Order insertion failed.');
@@ -598,15 +615,31 @@ if (isset($_POST['order_btn'])) {
         $stmt->close();
 
         if (!$is_guest && !empty($discount_code)) {
+            $discountId = (int)($discountData['id'] ?? 0);
+            if ($discountId <= 0) {
+                throw new Exception('The selected voucher is no longer available.');
+            }
             $stmt = $conn->prepare("
                 UPDATE `user_discounts`
                 SET used = 1
                 WHERE user_id = ?
-                AND discount_id = (SELECT id FROM `discounts` WHERE code = ?)
+                AND discount_id = ? AND used = 0
             ");
-            $stmt->bind_param("is", $auth_user_id, $discount_code);
-            $stmt->execute();
+            $stmt->bind_param("ii", $auth_user_id, $discountId);
+            if (!$stmt->execute()) {
+                throw new Exception('Discount update failed: ' . $stmt->error);
+            }
+            if ($stmt->affected_rows !== 1) {
+                throw new Exception('The selected voucher has already been used.');
+            }
             $stmt->close();
+
+            $claimStmt = $conn->prepare('UPDATE voucher_claims SET status = \'redeemed\' WHERE discount_id = ? AND status = \'assigned\'');
+            $claimStmt->bind_param('i', $discountId);
+            if (!$claimStmt->execute()) {
+                throw new Exception('Voucher claim update failed: ' . $claimStmt->error);
+            }
+            $claimStmt->close();
 
             logSecurityEvent('DISCOUNT_MARKED_USED', ['user_id' => $auth_user_id, 'code' => $discount_code]);
         }
@@ -710,16 +743,36 @@ $preview_code_discount_label  = '';
 $active_discount_code         = '';
 $active_discount_type         = 'fixed';
 $active_discount_raw_amount   = 0;
+$active_discount_reward_type  = 'discount';
 if (isset($_SESSION['apply_discount'])) {
     $dd = $_SESSION['apply_discount'];
     $active_discount_code       = $dd['code'];
     $active_discount_type       = $dd['type'] ?? 'fixed';
     $active_discount_raw_amount = (float)$dd['amount'];
-    $preview_code_discount_label = 'Promo Code (' . $dd['code'] . ')';
-    if ($active_discount_type === 'percentage') {
-        $preview_code_discount_amount = ($grand_total + $preview_vat + $preview_delivery_fee) * ($active_discount_raw_amount / 100);
-    } else {
-        $preview_code_discount_amount = $active_discount_raw_amount;
+    $active_discount_reward_type = $dd['reward_type'] ?? 'discount';
+    $preview_code_discount_label = 'Voucher (' . $dd['code'] . ')';
+    if (!$is_guest) {
+        $previewDiscount = loyalty_get_user_discount($conn, (int)$auth_user_id, (string)$dd['code']);
+        if ($previewDiscount) {
+            $preview_code_discount_label = (string)($previewDiscount['name'] ?: 'Voucher') . ' (' . $dd['code'] . ')';
+            try {
+                $preview_code_discount_amount = loyalty_calculate_discount(
+                    $previewDiscount,
+                    (float)$grand_total,
+                    (float)$preview_vat,
+                    (float)$preview_delivery_fee,
+                    'delivery',
+                    $cart_items
+                );
+                if ($active_discount_reward_type === 'free_product') {
+                    $active_discount_raw_amount = $preview_code_discount_amount;
+                }
+            } catch (RuntimeException $e) {
+                $preview_code_discount_amount = 0;
+            }
+        } else {
+            unset($_SESSION['apply_discount']);
+        }
     }
 }
 
@@ -1232,9 +1285,11 @@ $open_checkout_on_load = isset($_GET['checkout']);
               <?php foreach ($discounts as $d):
                  $d_type_disp = $d['type'] ?? 'fixed';
                  $amount_display = ($d_type_disp === 'percentage') ? $d['amount'] . '%' : '₱' . number_format($d['amount'], 2);
+                 $reward_label = ($d['reward_type'] ?? 'discount') === 'free_shipping' ? 'Free delivery' : ((($d['reward_type'] ?? 'discount') === 'free_product') ? 'Free product' : $amount_display);
+                 $voucher_name = $d['name'] !== '' ? $d['name'] : $d['code'];
               ?>
                 <option value="<?php echo escapeOutput($d['code']); ?>" <?php echo ($active_discount_code === $d['code']) ? 'selected' : ''; ?>>
-                  <?php echo escapeOutput($d['code']) . ' — ' . $amount_display; ?>
+                  <?php echo escapeOutput($voucher_name) . ' — ' . $reward_label; ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -1436,6 +1491,7 @@ $open_checkout_on_load = isset($_GET['checkout']);
     var AUTO_DISCOUNT       = <?php echo json_encode($preview_auto_discount_amount); ?>;
     var CODE_DISCOUNT_TYPE  = <?php echo json_encode($active_discount_type); ?>;
     var CODE_DISCOUNT_RAW   = <?php echo json_encode($active_discount_raw_amount); ?>;
+    var CODE_DISCOUNT_REWARD = <?php echo json_encode($active_discount_reward_type); ?>;
     var WALLET_BALANCE      = <?php echo json_encode($wallet_balance); ?>;
     var IS_GUEST             = <?php echo json_encode($is_guest); ?>;
 
@@ -1470,7 +1526,9 @@ $open_checkout_on_load = isset($_GET['checkout']);
       if (feeValue) feeValue.textContent = '₱' + money(deliveryFee);
 
       var codeDiscount = 0;
-      if (CODE_DISCOUNT_RAW > 0) {
+      if (CODE_DISCOUNT_REWARD === 'free_shipping') {
+        codeDiscount = isPickup ? 0 : deliveryFee;
+      } else if (CODE_DISCOUNT_RAW > 0) {
         codeDiscount = (CODE_DISCOUNT_TYPE === 'percentage')
           ? (CART_TOTAL + VAT + deliveryFee) * (CODE_DISCOUNT_RAW / 100)
           : CODE_DISCOUNT_RAW;

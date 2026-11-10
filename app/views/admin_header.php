@@ -479,6 +479,9 @@ html { -webkit-text-size-adjust: 100%; }
                             <i class="fa-solid fa-boxes"></i> Inventory Management
                         </a>
                         <?php if ($show_admin_activity): ?>
+                            <a href="admin_rewards.php" class="icon-btn <?php echo $current_page === 'admin_rewards.php' ? 'active' : ''; ?>">
+                                <i class="fa-solid fa-gift"></i> Rewards &amp; Vouchers
+                            </a>
                             <a href="admin_customization.php" class="icon-btn <?php echo $current_page === 'admin_customization.php' ? 'active' : ''; ?>">
                                 <i class="fa-solid fa-palette"></i> Site Customization
                             </a>

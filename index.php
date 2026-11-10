@@ -1,6 +1,7 @@
 <?php
 // index.php — main storefront page (fits header.php and footer.php)
 include 'config.php';
+require_once __DIR__ . '/app/helpers/loyalty.php';
 
 // Allow both logged-in users and guests
 $user_id = $_SESSION['user_id'] ?? null;
@@ -122,11 +123,13 @@ function validate_and_summarize_selections(mysqli $conn, int $product_id, $poste
 }
 
 $message = [];
+$showDailyRewardPrompt = false;
 
 // ✅ WELCOME MESSAGE FOR NEWLY LOGGED-IN USERS
 if (isset($_SESSION['just_logged_in']) && $_SESSION['just_logged_in'] === true) {
    $user_name = $_SESSION['user_name'] ?? 'Guest';
    $message[] = ' Welcome back, ' . htmlspecialchars($user_name) . '! Enjoy exploring our menu.';
+   $showDailyRewardPrompt = !empty($_SESSION['user_id']);
    unset($_SESSION['just_logged_in']);
 }
 
@@ -270,6 +273,9 @@ img, video { max-width: 100%; }
   padding: 0 24px 64px;
   width: 100%;
 }
+.login-reward-prompt{display:flex;align-items:center;gap:14px;width:min(760px,100%);margin:18px auto;padding:15px 18px;border:1px solid color-mix(in srgb,var(--primary-red) 25%,transparent);border-radius:14px;background:var(--site-surface,#fff);color:var(--dark-brown);text-decoration:none;box-shadow:0 10px 24px rgba(61,43,39,.08)}
+.login-reward-prompt>span:nth-child(2){display:grid;gap:4px;flex:1}.login-reward-prompt strong{color:var(--dark-brown)}.login-reward-prompt small{color:var(--gray-brown)}
+.login-reward-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--primary-red);color:#fff;font-size:1.1rem}
 
 /* Hero Section */
 .hero {
@@ -1315,6 +1321,17 @@ img, video { max-width: 100%; }
          <a href="Item.php" class="cta-btn"><i class="fa-solid fa-bag-shopping"></i> Shop Now</a>
       </div>
    </section>
+
+   <?php if ($showDailyRewardPrompt):
+      $loginRewardState = loyalty_get_daily_state($conn, (int)$_SESSION['user_id']);
+      if (!empty($loginRewardState['available']) && empty($loginRewardState['claimed'])):
+   ?>
+      <a class="login-reward-prompt" href="rewards.php">
+         <span class="login-reward-icon"><i class="fa-solid fa-gift"></i></span>
+         <span><strong>Your Day <?php echo (int)$loginRewardState['day_number']; ?> reward is ready!</strong><small><?php echo escapeOutput($loginRewardState['reward']['title']); ?> · Claim today's surprise</small></span>
+         <i class="fa-solid fa-arrow-right"></i>
+      </a>
+   <?php endif; endif; ?>
 
    <?php if ($is_guest): ?>
       <div class="guest-badge" role="status">
