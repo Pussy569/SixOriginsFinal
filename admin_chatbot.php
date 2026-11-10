@@ -384,15 +384,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             $entities['stock'] = (int)$m[1];
         }
 
-        // --- size: "size M", "size: Large" ---
-        if (preg_match('/\bsize\b\s*(?:is|:|=)?\s*([A-Za-z0-9]+)/i', $q, $m)) {
-            $entities['size'] = $m[1];
+        // --- size: "size M", "size: Large", "size 1 Slice" ---
+        if (preg_match('/\bsize\b\s*(?:is|:|=)?\s*([^,\r\n]+?)(?=\s*,|\s+\b(?:price|for|at|stock|description|type)\b|[\r\n.!?;]|$)/iu', $q, $m)) {
+            $entities['size'] = trim($m[1]);
         }
 
         // --- product name (depends on the command) ---
         if ($intent === 'add_product') {
-            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|\s*$)/iu', $q, $m)
-                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|\s*$)/iu', $q, $m)) {
+            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:[\s,]+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|[\s,]*$)/iu', $q, $m)
+                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:[\s,]+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|[\s,]*$)/iu', $q, $m)) {
                 $entities['product_name'] = preg_replace('/\s+with$/i', '', trim($m[1]));
             }
 
@@ -489,7 +489,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
                 || preg_match('/\bvoucher\s+["“‘]([^"”’]{1,100})["”’]/u', $query, $m)) {
                 $entities['name'] = trim($m[1]);
             }
-            if (preg_match('/\b(sign[\s-]?up|welcome|new account)\b/i', $query)) {
+            if (preg_match('/\b(?:sign[\s-]?ups?|new\s+accounts?|welcome\s+(?:offer|voucher|reward))\b/i', $query)) {
                 $entities['trigger_type'] = 'signup';
                 $entities['condition_type'] = 'none';
             } elseif (preg_match('/\b(order|purchase|buy)\b/i', $query)) {
