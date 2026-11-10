@@ -478,7 +478,7 @@ while (count($prizes) < 3) {
     </section>
 </main>
 <style>
-    .rewards-admin{display:grid;gap:24px;max-width:1440px;padding-top:30px;padding-bottom:60px}
+    .rewards-admin{display:grid;gap:24px;width:100%;max-width:1488px;margin-inline:auto;padding:30px 24px 60px}
     .rewards-intro,.rewards-card{min-width:0;padding:clamp(22px,3vw,36px);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:22px;background:var(--site-surface);box-shadow:0 14px 36px rgba(61,43,39,.07)}
     .rewards-intro{display:flex;align-items:center;justify-content:space-between;gap:28px;overflow:hidden;background:radial-gradient(ellipse at 92% 10%,color-mix(in srgb,var(--primary-red) 18%,transparent),transparent 38%),linear-gradient(125deg,color-mix(in srgb,var(--primary-red) 7%,var(--site-surface)),var(--site-surface))}
     .rewards-eyebrow{color:var(--primary-red);font-size:.74rem;font-weight:900;letter-spacing:.15em;text-transform:uppercase}
@@ -502,6 +502,6 @@ while (count($prizes) < 3) {
     .publish-cycle-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,.55fr) auto;align-items:end;gap:16px;margin-top:28px;padding:22px;border:1px solid color-mix(in srgb,var(--primary-red) 18%,transparent);border-radius:16px;background:color-mix(in srgb,var(--primary-red) 4%,var(--site-surface))}
     .publish-cycle-form h3,.publish-cycle-form p{grid-column:1/-1}.publish-cycle-form h3{margin:0;color:var(--dark-brown)}.publish-cycle-form p{margin:-8px 0 0}
     @media(max-width:1100px){.rewards-intro{align-items:flex-start;flex-direction:column}.rewards-grid,.campaign-form{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-cycle-form .day-editor{grid-column:span 1}.reward-cycle-form .prize-editor{grid-column:span 1}}
-    @media(max-width:680px){.rewards-admin{gap:16px;padding-top:18px}.rewards-intro,.rewards-card{padding:20px;border-radius:17px}.rewards-overview{width:100%}.overview-stat{flex:1;min-width:0}.rewards-grid,.campaign-form,.reward-cycle-form,.publish-cycle-form{grid-template-columns:1fr}.reward-cycle-form .day-editor,.reward-cycle-form .prize-editor{grid-column:auto}.full-span,.publish-cycle-form h3,.publish-cycle-form p{grid-column:auto}.campaign-item summary{align-items:flex-start;flex-direction:column}.campaign-item summary::after{margin:0}.publish-cycle-form{padding:17px}.rewards-button{width:100%}}
+    @media(max-width:680px){.rewards-admin{gap:16px;padding:18px 16px 42px}.rewards-intro,.rewards-card{padding:20px;border-radius:17px}.rewards-overview{width:100%}.overview-stat{flex:1;min-width:0}.rewards-grid,.campaign-form,.reward-cycle-form,.publish-cycle-form{grid-template-columns:1fr}.reward-cycle-form .day-editor,.reward-cycle-form .prize-editor{grid-column:auto}.full-span,.publish-cycle-form h3,.publish-cycle-form p{grid-column:auto}.campaign-item summary{align-items:flex-start;flex-direction:column}.campaign-item summary::after{margin:0}.publish-cycle-form{padding:17px}.rewards-button{width:100%}}
 </style>
 <?php include 'admin_footer.php'; ?>

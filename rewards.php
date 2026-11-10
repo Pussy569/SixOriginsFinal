@@ -267,7 +267,7 @@ function rewards_offer_description(array $offer): string
     </section>
 </main>
 <style>
-    .rewards-page{display:grid;gap:22px;max-width:1320px;padding-top:30px;padding-bottom:64px;color:var(--site-text)}
+    .rewards-page{display:grid;gap:22px;width:100%;max-width:1368px;margin-inline:auto;padding:30px 24px 64px;color:var(--site-text)}
     .rewards-hero,.rewards-panel{min-width:0;padding:clamp(22px,3vw,34px);border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:22px;background:var(--site-surface);box-shadow:0 14px 36px rgba(61,43,39,.07)}
     .rewards-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.82fr);align-items:center;gap:28px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 9% 0%,color-mix(in srgb,var(--primary-red) 14%,transparent),transparent 42%),linear-gradient(125deg,color-mix(in srgb,var(--site-page-bg) 78%,var(--site-surface)),var(--site-surface))}
     .rewards-welcome{position:relative;z-index:1}.rewards-kicker{display:block;color:var(--primary-red);font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.rewards-kicker i{margin-right:5px}
@@ -299,7 +299,7 @@ function rewards_offer_description(array $offer): string
     .reward-reveal div:last-child{display:grid;gap:5px}.reward-reveal span{color:var(--gray-brown);font-size:.82rem}.reward-reveal strong{color:var(--dark-brown);font-size:1.2rem}
     @keyframes rewardSpin{to{transform:rotate(720deg) scale(1.08)}}@keyframes rewardScratch{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
     @media(max-width:900px){.rewards-hero{grid-template-columns:1fr}.rewards-balances{max-width:600px;width:100%}}
-    @media(max-width:650px){.rewards-page{gap:16px;padding-top:20px;padding-bottom:42px}.rewards-hero,.rewards-panel{padding:20px;border-radius:17px}.rewards-columns{grid-template-columns:1fr;gap:16px}.reward-progress{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 9px;scroll-snap-type:x mandatory}.reward-day{flex:0 0 78px;padding:11px 5px;scroll-snap-align:start}.reward-day i{width:31px;height:31px}.panel-heading{align-items:flex-start}.section-title{gap:10px}.section-icon{width:40px;height:40px;border-radius:12px}.day-chip{font-size:.7rem}.game-actions{display:grid}.game-actions form{width:100%}.reward-reveal{padding:15px}.rewards-button{width:100%}}
+    @media(max-width:650px){.rewards-page{gap:16px;padding:20px 16px 42px}.rewards-hero,.rewards-panel{padding:20px;border-radius:17px}.rewards-columns{grid-template-columns:1fr;gap:16px}.reward-progress{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 9px;scroll-snap-type:x mandatory}.reward-day{flex:0 0 78px;padding:11px 5px;scroll-snap-align:start}.reward-day i{width:31px;height:31px}.panel-heading{align-items:flex-start}.section-title{gap:10px}.section-icon{width:40px;height:40px;border-radius:12px}.day-chip{font-size:.7rem}.game-actions{display:grid}.game-actions form{width:100%}.reward-reveal{padding:15px}.rewards-button{width:100%}}
     @media(max-width:400px){.rewards-balances{grid-template-columns:1fr}.balance-card{padding:15px}.panel-heading{flex-direction:column}.day-chip{align-self:flex-start}}
 </style>
 <?php include 'footer.php'; ?>
