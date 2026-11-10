@@ -403,8 +403,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
 
         // --- product name (depends on the command) ---
         if ($intent === 'add_product') {
-            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|₱|php)\b|\s*$)/i', $q, $m)
-                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|₱|php)\b|\s*$)/i', $q, $m)) {
+            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|\s*$)/iu', $q, $m)
+                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|\x{20B1}|php)\b|\s*$)/iu', $q, $m)) {
                 $entities['product_name'] = preg_replace('/\s+with$/i', '', trim($m[1]));
             }
 
@@ -1529,6 +1529,9 @@ SYS;
             if (isset($entities['price']) && floatval($entities['price']) <= 0) {
                 unset($entities['price']);
             }
+            if ($intent === 'add_product' && isset($entities['stock']) && (int)$entities['stock'] <= 0) {
+                unset($entities['stock']);
+            }
 
             $entities = merge_entities($entities, regex_extract_product_entities($intent, $query));
             if (isset($entities['price'])) {
@@ -1929,28 +1932,35 @@ SYS;
             if ($intent === 'add_product') {
                 if (empty($entities['product_name'])) $missing[] = 'product name';
                 $variants = $entities['variants'] ?? [];
-                if (!is_array($variants) || count($variants) === 0) {
-                    if (empty($entities['size'])) $missing[] = 'size or size name';
-                    if (!isset($entities['price']) || (float)$entities['price'] <= 0) $missing[] = 'variant price';
-                    if (!isset($entities['stock']) || (int)$entities['stock'] <= 0) $missing[] = 'variant stock';
-                    if (empty($missing)) {
-                        $entities['variants'] = [[
-                            'size' => $entities['size'],
-                            'price' => $entities['price'],
-                            'stock' => $entities['stock'],
-                        ]];
-                    }
-                } elseif (count($variants) > 10) {
-                    $missing[] = 'no more than 10 variants';
-                } else {
+                $hasCompleteVariants = is_array($variants) && count($variants) > 0 && count($variants) <= 10;
+                if ($hasCompleteVariants) {
                     foreach ($variants as $variant) {
                         if (!is_array($variant) || trim((string)($variant['size'] ?? '')) === ''
                             || !isset($variant['price']) || (float)$variant['price'] <= 0
                             || !isset($variant['stock']) || (int)$variant['stock'] <= 0) {
-                            $missing[] = 'complete size, price, and stock details for every variant';
+                            $hasCompleteVariants = false;
                             break;
                         }
                     }
+                }
+                if (!$hasCompleteVariants && !empty($entities['size'])
+                    && isset($entities['price']) && (float)$entities['price'] > 0
+                    && isset($entities['stock']) && (int)$entities['stock'] > 0) {
+                    $entities['variants'] = [[
+                        'size' => $entities['size'],
+                        'price' => $entities['price'],
+                        'stock' => $entities['stock'],
+                    ]];
+                    $variants = $entities['variants'];
+                    $hasCompleteVariants = true;
+                }
+                if (!$hasCompleteVariants) {
+                    if (empty($entities['size'])) $missing[] = 'size or size name';
+                    if (!isset($entities['price']) || (float)$entities['price'] <= 0) $missing[] = 'variant price';
+                    if (!isset($entities['stock']) || (int)$entities['stock'] <= 0) $missing[] = 'variant stock';
+                }
+                if (is_array($variants) && count($variants) > 10) {
+                    $missing[] = 'no more than 10 variants';
                 }
             } elseif ($intent === 'edit_price') {
                 if (empty($entities['product_name'])) $missing[] = 'product name';
