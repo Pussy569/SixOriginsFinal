@@ -1,6 +1,8 @@
 <?php
 include 'config.php';
 require_once __DIR__ . '/app/helpers/loyalty.php';
+require_once __DIR__ . '/app/helpers/payment_methods.php';
+$enabled_payment_methods = get_checkout_payment_methods($conn);
 
 // ============= VALIDATE REQUEST METHOD =============
 if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -198,7 +200,9 @@ $stmt->close();
 
 // ============= CALCULATE TOTALS =============
 $vat = $cart_total * 0.12;
-$delivery_fee = 39.00;
+$method = (string)($_POST['method'] ?? '');
+$is_pickup = $method === 'pickup';
+$delivery_fee = $is_pickup ? 0.00 : 39.00;
 
 $auto_discount_amount = 0;
 $auto_discount_label = '';
@@ -232,7 +236,7 @@ if (isset($_SESSION['apply_discount'])) {
                     'quantity' => $item['qty'],
                     'price' => $item['price'],
                 ], $cart_items_detail);
-                $code_discount_amount = loyalty_calculate_discount($discountData, (float)$cart_total, (float)$vat, (float)$delivery_fee, 'delivery', $discountItems);
+                $code_discount_amount = loyalty_calculate_discount($discountData, (float)$cart_total, (float)$vat, (float)$delivery_fee, $is_pickup ? 'pickup' : 'delivery', $discountItems);
             } catch (RuntimeException $e) {
                 $discount_error = $e->getMessage();
             }
@@ -244,6 +248,15 @@ if (isset($_SESSION['apply_discount'])) {
 
 $final_total = $cart_total + $vat + $delivery_fee - $auto_discount_amount - $code_discount_amount;
 if ($final_total < 0) $final_total = 0;
+$free_product_discount_value = 0.0;
+if (($discountData['reward_type'] ?? '') === 'free_product') {
+    foreach ($cart_items_detail as $item) {
+        if ((int)$item['product_id'] === (int)($discountData['free_product_id'] ?? 0)) {
+            $free_product_discount_value = (float)$item['price'] * 1.12;
+            break;
+        }
+    }
+}
 
 // ============= PLACE ORDER =============
 if (isset($_POST['order_btn'])) {
@@ -259,7 +272,7 @@ if (isset($_POST['order_btn'])) {
         $street   = sanitizeInput($_POST['street'] ?? '');
         $city     = sanitizeInput($_POST['city'] ?? '');
         $pin_code = sanitizeInput($_POST['pin_code'] ?? '');
-        $address  = 'flat no. ' . $flat . ', ' . $street . ', ' . $city . ', ' . $pin_code;
+        $address  = $is_pickup ? 'Store Pickup — Six Origins Cafe, Cainta, Rizal' : 'flat no. ' . $flat . ', ' . $street . ', ' . $city . ', ' . $pin_code;
         $placed_on = date('d-M-Y');
 
         $validation_errors = [];
@@ -281,12 +294,16 @@ if (isset($_POST['order_btn'])) {
             $validation_errors[] = 'Invalid email address.';
         }
 
-        if ($method !== 'cash on delivery' && !($method === 'wallet balance' && !$is_guest)) {
-            $validation_errors[] = 'Invalid payment method.';
+        if (!isset($enabled_payment_methods[$method]) || !$enabled_payment_methods[$method]) {
+            $validation_errors[] = 'That payment method is currently unavailable. Please choose another option.';
             logSecurityEvent('INVALID_PAYMENT_METHOD', ['method' => $method]);
         }
 
-        if (empty($flat) || empty($street) || empty($city) || empty($pin_code)) {
+        if (in_array($method, ['wallet balance', 'pickup'], true) && $is_guest) {
+            $validation_errors[] = 'Please sign in to use wallet payment or store pickup.';
+        }
+
+        if (!$is_pickup && (empty($flat) || empty($street) || empty($city) || empty($pin_code))) {
             $validation_errors[] = 'All address fields are required.';
         }
 
@@ -323,7 +340,7 @@ if (isset($_POST['order_btn'])) {
             $conn->begin_transaction();
 
             try {
-                if ($method == 'wallet balance') {
+                if (in_array($method, ['wallet balance', 'pickup'], true)) {
                     if ($is_guest) {
                         throw new Exception('Guests cannot use wallet payment. Please choose Cash on Delivery.');
                     }
@@ -986,8 +1003,8 @@ if (isset($_POST['order_btn'])) {
                   <td>₱<?php echo number_format($vat, 2); ?></td>
                 </tr>
                 <tr>
-                  <td colspan="4" style="text-align:right;">Delivery Fee:</td>
-                  <td>₱<?php echo number_format($delivery_fee, 2); ?></td>
+                  <td colspan="4" style="text-align:right;" id="checkout-fee-label"><?php echo $is_pickup ? 'Pickup Fee:' : 'Delivery Fee:'; ?></td>
+                  <td id="checkout-fee-value">₱<?php echo number_format($delivery_fee, 2); ?></td>
                 </tr>
                 <?php if ($auto_discount_amount > 0): ?>
                 <tr>
@@ -995,15 +1012,15 @@ if (isset($_POST['order_btn'])) {
                   <td>-₱<?php echo number_format($auto_discount_amount, 2); ?></td>
                 </tr>
                 <?php endif; ?>
-                <?php if ($code_discount_amount > 0): ?>
-                <tr>
+                <?php if ($discount_code !== ''): ?>
+                <tr id="checkout-discount-row" style="<?php echo $code_discount_amount > 0 ? '' : 'display:none;'; ?>">
                   <td colspan="4" style="text-align:right;"><?php echo escapeOutput($code_discount_label); ?>:</td>
-                  <td>-₱<?php echo number_format($code_discount_amount, 2); ?></td>
+                  <td id="checkout-discount-value">-₱<?php echo number_format($code_discount_amount, 2); ?></td>
                 </tr>
                 <?php endif; ?>
                 <tr class="grand-total">
                   <td colspan="4" style="text-align:right;"><strong>Total:</strong></td>
-                  <td><strong>₱<?php echo number_format($final_total, 2); ?></strong></td>
+                  <td><strong>₱<span id="checkout-grand-total"><?php echo number_format($final_total, 2); ?></span></strong></td>
                 </tr>
               </tfoot>
             </table>
@@ -1068,22 +1085,31 @@ if (isset($_POST['order_btn'])) {
           
           <label for="payment-method">Payment Method</label>
           <select name="method" id="payment-method" class="box" required>
-            <option value="" disabled selected>-- Select Payment Method --</option>
-            <option value="cash on delivery" <?php if (($_POST['method'] ?? '') === 'cash on delivery') echo 'selected'; ?>>Cash on Delivery</option>
-            <?php if (!$is_guest): ?>
-            <option value="wallet balance"   <?php if (($_POST['method'] ?? '') === 'wallet balance')   echo 'selected'; ?>>Wallet Balance</option>
+            <option value="" disabled <?php echo $method === '' ? 'selected' : ''; ?>>-- Select Payment Method --</option>
+            <?php if ($enabled_payment_methods['cash on delivery']): ?>
+            <option value="cash on delivery" <?php if ($method === 'cash on delivery') echo 'selected'; ?>>Cash on Delivery</option>
+            <?php endif; ?>
+            <?php if (!$is_guest && $enabled_payment_methods['wallet balance']): ?>
+            <option value="wallet balance" <?php if ($method === 'wallet balance') echo 'selected'; ?>>Wallet Balance (Delivery)</option>
+            <?php endif; ?>
+            <?php if (!$is_guest && $enabled_payment_methods['pickup']): ?>
+            <option value="pickup" <?php if ($method === 'pickup') echo 'selected'; ?>>Store Pickup (Pay via Wallet)</option>
             <?php endif; ?>
           </select>
-          
+          <?php if (empty(array_filter($enabled_payment_methods))): ?>
+            <div class="payment-option-note">Checkout is temporarily unavailable. Please contact the store.</div>
+          <?php endif; ?>
           <div id="wallet-info" class="wallet-panel" style="display:none;margin-top:12px;">
             <strong>Wallet balance:</strong> ₱<?php echo number_format($wallet_balance, 2); ?>
           </div>
           
-          <label style="margin-top:16px;">Delivery Address</label>
-          <input type="text" name="flat"     placeholder="Flat No." required class="box" value="<?php echo escapeOutput($_POST['flat']     ?? ''); ?>" maxlength="50"  />
-          <input type="text" name="street"   placeholder="Street"   required class="box" value="<?php echo escapeOutput($_POST['street']   ?? ''); ?>" maxlength="100" />
-          <input type="text" name="city"     placeholder="City"     required class="box" value="<?php echo escapeOutput($_POST['city']     ?? ''); ?>" maxlength="50"  />
-          <input type="text" name="pin_code" placeholder="Pin Code" required class="box" value="<?php echo escapeOutput($_POST['pin_code'] ?? ''); ?>" maxlength="10"  />
+          <div id="delivery-address-section" style="<?php echo $is_pickup ? 'display:none;' : ''; ?>">
+            <label style="margin-top:16px;">Delivery Address</label>
+            <input type="text" name="flat" id="checkout-flat" placeholder="Flat No." <?php echo $is_pickup ? '' : 'required'; ?> class="box" value="<?php echo escapeOutput($_POST['flat'] ?? ''); ?>" maxlength="50" />
+            <input type="text" name="street" id="checkout-street" placeholder="Street" <?php echo $is_pickup ? '' : 'required'; ?> class="box" value="<?php echo escapeOutput($_POST['street'] ?? ''); ?>" maxlength="100" />
+            <input type="text" name="city" id="checkout-city" placeholder="City" <?php echo $is_pickup ? '' : 'required'; ?> class="box" value="<?php echo escapeOutput($_POST['city'] ?? ''); ?>" maxlength="50" />
+            <input type="text" name="pin_code" id="checkout-pin" placeholder="Pin Code" <?php echo $is_pickup ? '' : 'required'; ?> class="box" value="<?php echo escapeOutput($_POST['pin_code'] ?? ''); ?>" maxlength="10" />
+          </div>
           
           <div class="form-group">
             <a href="cart.php" class="btn btn-ghost">Back to Cart</a>
@@ -1252,14 +1278,56 @@ if (isset($_POST['order_btn'])) {
     const methodSelect   = document.getElementById('payment-method');
     const walletInfo     = document.getElementById('wallet-info');
     const walletSummary  = document.getElementById('wallet-summary');
+    const addressSection = document.getElementById('delivery-address-section');
     const walletBalance  = parseFloat("<?= floatval($wallet_balance) ?>");
-    const finalTotal     = parseFloat("<?= floatval($final_total) ?>");
+    const cartTotal      = parseFloat("<?= floatval($cart_total) ?>");
+    const vat            = parseFloat("<?= floatval($vat) ?>");
+    const autoDiscount   = parseFloat("<?= floatval($auto_discount_amount) ?>");
+    const voucherType    = <?= json_encode($discountData['type'] ?? 'fixed') ?>;
+    const voucherReward  = <?= json_encode($discountData['reward_type'] ?? '') ?>;
+    const voucherAmount  = parseFloat("<?= floatval($discountData['amount'] ?? 0) ?>");
+    const freeProductValue = parseFloat("<?= floatval($free_product_discount_value) ?>");
+    const hasVoucher     = <?= json_encode($discountData !== null && $discount_error === '') ?>;
+    let finalTotal       = parseFloat("<?= floatval($final_total) ?>");
     const remainingEl    = document.getElementById('remainingBalance');
+    const feeLabel       = document.getElementById('checkout-fee-label');
+    const feeValue       = document.getElementById('checkout-fee-value');
+    const discountRow    = document.getElementById('checkout-discount-row');
+    const discountValue  = document.getElementById('checkout-discount-value');
+    const grandTotal     = document.getElementById('checkout-grand-total');
+    const walletOrderTotal = document.getElementById('orderTotal');
     const isGuest        = <?= json_encode($is_guest) ?>;
     
     function updateWalletInfo() {
       if (!methodSelect) return;
-      if (methodSelect.value === 'wallet balance' && !isGuest) {
+      const isPickup = methodSelect.value === 'pickup';
+      const deliveryFee = isPickup ? 0 : 39;
+      const orderBeforeDiscount = cartTotal + vat + deliveryFee;
+      let discount = 0;
+      if (hasVoucher) {
+        if (voucherReward === 'free_shipping') {
+          discount = isPickup ? 0 : deliveryFee;
+        } else if (voucherReward === 'free_product') {
+          discount = Math.min(orderBeforeDiscount, freeProductValue + deliveryFee);
+        } else if (voucherType === 'percentage') {
+          discount = orderBeforeDiscount * (voucherAmount / 100);
+        } else {
+          discount = Math.min(orderBeforeDiscount, voucherAmount);
+        }
+      }
+      finalTotal = Math.max(0, orderBeforeDiscount - autoDiscount - discount);
+      if (feeLabel) feeLabel.textContent = isPickup ? 'Pickup Fee:' : 'Delivery Fee:';
+      if (feeValue) feeValue.textContent = '₱' + deliveryFee.toFixed(2);
+      if (discountRow) discountRow.style.display = discount > 0 ? '' : 'none';
+      if (discountValue) discountValue.textContent = '-₱' + discount.toFixed(2);
+      if (grandTotal) grandTotal.textContent = finalTotal.toFixed(2);
+      if (walletOrderTotal) walletOrderTotal.textContent = finalTotal.toFixed(2);
+      if (addressSection) addressSection.style.display = isPickup ? 'none' : '';
+      ['checkout-flat', 'checkout-street', 'checkout-city', 'checkout-pin'].forEach(function(id) {
+        const field = document.getElementById(id);
+        if (field) field.required = !isPickup;
+      });
+      if ((methodSelect.value === 'wallet balance' || isPickup) && !isGuest) {
         if (walletInfo)    walletInfo.style.display    = 'block';
         if (walletSummary) walletSummary.style.display = 'block';
         if (remainingEl) {

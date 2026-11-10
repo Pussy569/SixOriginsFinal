@@ -92,6 +92,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from the current `database/schema.sql` already include the reward tables and an initial seven-day cycle. Customer registration now requires email verification; configure `RESEND_API_KEY`, `MAIL_FROM_EMAIL`, and `MAIL_FROM_NAME` for the verification code to be delivered. A welcome voucher is granted after verification. Order-based campaigns use one order's product subtotal or item quantity and are granted once per customer when an admin marks a qualifying order **Completed**; when multiple tiers for the same condition qualify, only the highest tier is granted. Cancelling an order revokes its unused campaign vouchers; already-redeemed vouchers are not clawed back. Daily rewards follow calendar dates, so missed days are skipped. The next seven-day cycle must be published by the Head Admin.
 
+The Head Admin can also control whether Cash on Delivery, wallet-paid delivery, and wallet-paid store pickup are offered. Existing databases must apply the checkout-method migration after the loyalty rewards migration:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261110_checkout_payment_methods.sql
+```
+
+Fresh databases initialized from the current `database/schema.sql` already include the payment settings. The admin chatbot can create products with up to 10 size/price/stock variants, create automatic signup/order voucher campaigns, and update points redemption settings. Voucher campaigns and points settings are restricted to the Head Admin and require explicit chatbot confirmation before saving.
+
 To manage sizes later, open a product's Edit dialog to add new product-specific options with their own names, prices, and starting stock, or hide/unhide an existing option. Names are free-form (for example, “Small,” “1 Slice,” or “Whole Cake”); they do not have to be standard cup sizes. Hidden options are no longer offered to customers, but their records and order history are retained. Under Manage Ingredients, recipe ingredients have their own product-wide form and are deducted for every option. Use the separate **Add Packaging for a Product Option** button to manually select an inventory item, the matching customer option, and the per-sale quantity. Items from any inventory category can be selected, including Consumable. Only orders for that selected option deduct the assigned amount, so a Small Cup mapping does not affect Medium or Large. Leave options unmapped when no additional inventory deduction is needed.
 
 Existing databases must apply the size-packaging and inventory-category migration before using these features. Back up the database first, then run the migration against the application database:

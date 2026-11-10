@@ -350,7 +350,18 @@ CREATE TABLE `signup_email_verifications` (
   KEY `idx_signup_verification_user` (`user_id`,`used`,`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `checkout_payment_settings` (
+  `id` tinyint NOT NULL DEFAULT 1,
+  `cash_on_delivery` tinyint NOT NULL DEFAULT 1,
+  `wallet_delivery` tinyint NOT NULL DEFAULT 1,
+  `store_pickup_wallet` tinyint NOT NULL DEFAULT 1,
+  `updated_by` int DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO `loyalty_settings` (`id`) VALUES (1);
+INSERT INTO `checkout_payment_settings` (`id`) VALUES (1);
 INSERT INTO `voucher_campaigns`
   (`name`, `trigger_type`, `condition_type`, `threshold_value`, `reward_type`, `reward_amount`, `minimum_spend`, `validity_days`, `active`)
 VALUES

@@ -160,6 +160,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
 // ==================== CHATBOT API BACKEND ====================
 if (isset($_GET['action']) && $_GET['action'] === 'query') {
     include 'config.php';
+    require_once __DIR__ . '/app/helpers/loyalty.php';
+    require_once __DIR__ . '/app/services/admin_log_activity.php';
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -379,11 +381,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
         $q = $query;
 
         // --- price: "price 599", "₱599", "for 599 pesos", "to 599", "at 599" ---
-        if (preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d+)?)/i', $q, $m)
-            || preg_match('/\b(?:price|cost)\b\s*(?:is|of|:|=)?\s*₱?\s*([\d,]+(?:\.\d+)?)/i', $q, $m)
-            || preg_match('/\bto\s+₱?\s*([\d,]+(?:\.\d+)?)\b/i', $q, $m)
-            || preg_match('/\bat\s+₱?\s*([\d,]+(?:\.\d+)?)\b/i', $q, $m)
-            || preg_match('/\bfor\s+₱?\s*([\d,]+(?:\.\d+)?)\s*(?:pesos?)?\b/i', $q, $m)
+        if (preg_match('/(?:\x{20B1}|php)\s*([\d,]+(?:\.\d+)?)/iu', $q, $m)
+            || preg_match('/\b(?:price|cost)\b\s*(?:is|of|:|=)?\s*(?:\x{20B1})?\s*([\d,]+(?:\.\d+)?)/iu', $q, $m)
+            || preg_match('/\bto\s+(?:\x{20B1})?\s*([\d,]+(?:\.\d+)?)\b/iu', $q, $m)
+            || preg_match('/\bat\s+(?:\x{20B1})?\s*([\d,]+(?:\.\d+)?)\b/iu', $q, $m)
+            || preg_match('/\bfor\s+(?:\x{20B1})?\s*([\d,]+(?:\.\d+)?)\s*(?:pesos?)?\b/iu', $q, $m)
             || preg_match('/([\d,]+(?:\.\d+)?)\s*pesos?\b/i', $q, $m)) {
             $entities['price'] = clean_number($m[1]);
         }
@@ -401,9 +403,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
 
         // --- product name (depends on the command) ---
         if ($intent === 'add_product') {
-            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|₱|php)|\s*$)/i', $q, $m)
-                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|₱|php)|\s*$)/i', $q, $m)) {
-                $entities['product_name'] = trim($m[1]);
+            if (preg_match('/product\s+(?:called|named)\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|₱|php)\b|\s*$)/i', $q, $m)
+                || preg_match('/add\s+(?:a\s+|new\s+)?product\s+"?([A-Za-z0-9 \'\-\.]+?)"?(?:\s+(?:price|for|at|size|stock|description|type|₱|php)\b|\s*$)/i', $q, $m)) {
+                $entities['product_name'] = preg_replace('/\s+with$/i', '', trim($m[1]));
             }
 
             // --- size_type: "slice"/"pieces"/"cake" vs "cup"/"drink" ---
@@ -492,6 +494,73 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
         return $primary;
     }
 
+    function regex_extract_reward_entities($intent, $query) {
+        $entities = [];
+        if ($intent === 'create_voucher') {
+            if (preg_match('/\b(?:name|called|named)\s*[:=]?\s*["\']([^"\']{1,100})["\']/i', $query, $m)
+                || preg_match('/\bvoucher\s+["\']([^"\']{1,100})["\']/i', $query, $m)) {
+                $entities['name'] = trim($m[1]);
+            }
+            if (preg_match('/\b(sign[\s-]?up|welcome|new account)\b/i', $query)) {
+                $entities['trigger_type'] = 'signup';
+                $entities['condition_type'] = 'none';
+            } elseif (preg_match('/\b(order|purchase|buy)\b/i', $query)) {
+                $entities['trigger_type'] = 'order';
+            }
+            if (preg_match('/\bfree[\s-]?shipping\b/i', $query)) {
+                $entities['reward_type'] = 'free_shipping';
+                $entities['reward_amount'] = 0;
+            } elseif (preg_match('/\bfree[\s-]?product\b/i', $query)) {
+                $entities['reward_type'] = 'free_product';
+                $entities['reward_amount'] = 0;
+                if (preg_match('/\bproduct(?:\s+id)?\s*#?\s*(\d+)\b/i', $query, $m)) {
+                    $entities['free_product_id'] = (int)$m[1];
+                }
+            } elseif (preg_match('/\b(\d+(?:\.\d+)?)\s*%/', $query, $m)) {
+                $entities['reward_type'] = 'percentage';
+                $entities['reward_amount'] = (float)$m[1];
+            } elseif (preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d+)?)/i', $query, $m)) {
+                $entities['reward_type'] = 'fixed';
+                $entities['reward_amount'] = clean_number($m[1]);
+            }
+            if (preg_match('/\b(?:spend|minimum spend|min spend)\s*(?:of|at least|:|=)?\s*(?:₱|php)?\s*([\d,]+(?:\.\d+)?)/i', $query, $m)) {
+                $entities['minimum_spend'] = clean_number($m[1]);
+                if (($entities['trigger_type'] ?? '') === 'order' && !preg_match('/\bminimum|min spend\b/i', $query)) {
+                    $entities['condition_type'] = 'spend';
+                    $entities['threshold_value'] = clean_number($m[1]);
+                }
+            }
+            if (preg_match('/\b(?:buy|purchase)\s+(\d+)\s+(?:or more\s+)?products?\b/i', $query, $m)) {
+                $entities['condition_type'] = 'products';
+                $entities['threshold_value'] = (int)$m[1];
+            }
+            if (preg_match('/\b(\d{1,3})\s*days?\b/i', $query, $m)) {
+                $entities['validity_days'] = (int)$m[1];
+            }
+        } elseif ($intent === 'edit_loyalty_settings') {
+            $patterns = [
+                'points_per_wallet_peso' => '/\b(?:every\s+)?(\d+)\s*points?\s*(?:per|=|for)\s*(?:(?:\x{20B1})?1|peso|balance|wallet)\b|\b(?:every|each)\s+(\d+)\s+points?\b.*\b(?:(?:\x{20B1})?1|one)\s*(?:peso|balance|wallet)\b/iu',
+                'points_voucher_cost' => '/\b(?:voucher|redeem(?:ing)?)\s*(?:cost|for|at|requires?)\s*(\d+)\s*points?\b|\b(\d+)\s*[- ]points?\s+(?:(?:for\s+(?:a\s+)?\d+%\s+)?(?:off|discount|voucher)|\d{1,3}\s*%\s+voucher)\b|\b(\d+)\s+points?\s+to\s+(?:get|have)\b/i',
+                'points_voucher_percent' => '/\b(\d{1,3})\s*%\s*(?:off|voucher|discount)\b/i',
+                'points_voucher_minimum_spend' => '/\b(?:minimum|min)\s*(?:spend)?\s*(?:₱|php)?\s*([\d,]+(?:\.\d+)?)/i',
+                'points_voucher_validity_days' => '/\bvalid(?:ity)?\s*(?:for)?\s*(\d+)\s*days?\b/i',
+            ];
+            foreach ($patterns as $key => $pattern) {
+                if (preg_match($pattern, $query, $m)) {
+                    $value = $m[1] ?? '';
+                    if ($value === '') {
+                        $value = $m[2] ?? '';
+                    }
+                    if ($value === '') {
+                        $value = $m[3] ?? '';
+                    }
+                    $entities[$key] = clean_number($value);
+                }
+            }
+        }
+        return $entities;
+    }
+
     // Safety net for typed (non-button) messages: the LLM sometimes classifies
     // an ingredient-stock question ("check ingredient stock") as "inventory"
     // because both mention "stock". If the message clearly refers to
@@ -531,17 +600,27 @@ Valid intents:
 - delete_product: a command to remove a product
 - add_ingredient: a command to add a new RAW ingredient/packaging item to the ingredient
   inventory (not a menu product)
+- create_voucher: create an automatic signup or order-reward voucher campaign
+- edit_loyalty_settings: change points-to-wallet or points-voucher redemption settings
 - general: greetings, small talk, follow-up questions ("explain that", "why", "tell me more",
   "what does that mean", "can you elaborate"), or open-ended reasoning questions that don't fit above
 
-For add_product, extract entities: product_name, price, description, stock, size,
-size_type ("cup" or "slice", null if not given), allow_special_instructions (1 or 0, null if not given).
+For add_product, extract entities: product_name, description, size_type ("cup" or "slice"),
+allow_special_instructions (1 or 0), and variants as an array of objects with size, price,
+and stock. Include every size/price/stock variant the admin specified (1 to 10).
 Do NOT extract a "category" entity - this store has no category field on products.
 For edit_price, extract entities: product_name, price.
 For delete_product, extract entities: product_name.
 For add_ingredient, extract entities: ingredient_name, category ("consumable" or "packaging"),
 unit ("grams", "ml", "pieces", or "cups"), quantity (opening stock, 0 if not given),
 min_stock_level (low-stock alert level, 0 if not given).
+For create_voucher, extract entities: name, trigger_type ("signup" or "order"),
+condition_type ("none", "spend", or "products"), threshold_value, reward_type
+("fixed", "percentage", "free_shipping", or "free_product"), reward_amount,
+minimum_spend, free_product_id, validity_days.
+For edit_loyalty_settings, extract any requested fields: points_per_wallet_peso,
+points_voucher_cost, points_voucher_percent, points_voucher_minimum_spend,
+points_voucher_validity_days. Do not invent values; omit unspecified fields.
 For all other intents, entities can be an empty object.
 
 Respond with ONLY valid JSON in this exact shape, no extra text:
@@ -583,6 +662,10 @@ SYS;
             return 'edit_price';
         } elseif (preg_match('/\b(delete|remove)\s+(?:the\s+)?product\b/i', $query_lower)) {
             return 'delete_product';
+        } elseif (preg_match('/\b(create|make|generate|add)\b.*\bvoucher\b/i', $query_lower)) {
+            return 'create_voucher';
+        } elseif (preg_match('/\b(edit|change|update|set)\b.*\b(points?|redemption|redeem)\b/i', $query_lower)) {
+            return 'edit_loyalty_settings';
         } elseif (preg_match('/(forecast|predict|projection|next week sales|future sales)/i', $query_lower)) {
             return 'forecast';
         } elseif (preg_match('/(low stock|low inventory|stock alert|out of stock|inventory|how many|units|quantity)/i', $query_lower)) {
@@ -633,6 +716,16 @@ SYS;
         $details = trim($entities['description'] ?? '');
         $admin_id = isset($_SESSION['admin_id']) ? (int)$_SESSION['admin_id'] : 1;
         $placeholder_image = ''; // image column is NOT NULL; admin uploads a real photo afterward
+        $variants = [];
+        if (isset($entities['variants']) && is_array($entities['variants'])) {
+            $variants = array_values($entities['variants']);
+        } elseif (isset($entities['size']) || isset($entities['stock'])) {
+            $variants[] = [
+                'size' => $entities['size'] ?? '',
+                'price' => $entities['price'] ?? $price,
+                'stock' => $entities['stock'] ?? 0,
+            ];
+        }
 
         // size_type: mirrors admin_products.php's $ALLOWED_SIZE_TYPES ('cup' default)
         $size_type = 'cup';
@@ -646,9 +739,37 @@ SYS;
             $allow_special_instructions = ((int)$entities['allow_special_instructions'] === 0) ? 0 : 1;
         }
 
-        if ($name === '' || $price <= 0) {
-            return ['success' => false, 'message' => 'I need at least a product name and a valid price to add a product.'];
+        if (isset($variants[0]) && is_array($variants[0]) && isset($variants[0]['price'])) {
+            $price = (float)$variants[0]['price'];
         }
+        if ($name === '' || $price <= 0 || $price !== floor($price)) {
+            return ['success' => false, 'message' => 'I need a product name and a valid whole-peso price.'];
+        }
+        if (count($variants) < 1 || count($variants) > 10) {
+            return ['success' => false, 'message' => 'Add at least one size/price/stock variant (up to 10) before creating the product.'];
+        }
+        $normalizedVariants = [];
+        $seenSizes = [];
+        foreach ($variants as $variant) {
+            if (!is_array($variant)) {
+                return ['success' => false, 'message' => 'Each product variant must include a size, price, and stock quantity.'];
+            }
+            $variantSize = trim((string)($variant['size'] ?? ''));
+            $variantPriceValue = $variant['price'] ?? null;
+            $variantStockValue = $variant['stock'] ?? null;
+            $variantPrice = is_numeric($variantPriceValue) && (float)$variantPriceValue === floor((float)$variantPriceValue)
+                ? (int)$variantPriceValue : false;
+            $variantStock = is_numeric($variantStockValue) && (float)$variantStockValue === floor((float)$variantStockValue)
+                ? (int)$variantStockValue : false;
+            $sizeKey = strtolower($variantSize);
+            if ($variantSize === '' || mb_strlen($variantSize) > 50 || $variantPrice === false || $variantPrice <= 0
+                || $variantStock === false || $variantStock <= 0 || isset($seenSizes[$sizeKey])) {
+                return ['success' => false, 'message' => 'Each variant needs a unique size (max 50 characters), whole-peso price above ₱0, and stock above 0.'];
+            }
+            $seenSizes[$sizeKey] = true;
+            $normalizedVariants[] = ['size' => $variantSize, 'price' => $variantPrice, 'stock' => $variantStock];
+        }
+        $price = $normalizedVariants[0]['price'];
         if (mb_strlen($name) > 100) {
             return ['success' => false, 'message' => 'That product name is too long (max 100 characters).'];
         }
@@ -670,32 +791,28 @@ SYS;
             return ['success' => false, 'message' => "A product named \"$name\" already exists. Try editing its price instead, or use a different name."];
         }
 
-        $stmt = mysqli_prepare($conn, "INSERT INTO products (name, price, image, details, admin_id, size_type, allow_special_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if (!$stmt) {
-            return ['success' => false, 'message' => 'Database error preparing to add the product: ' . mysqli_error($conn)];
-        }
-        mysqli_stmt_bind_param($stmt, 'sdssisi', $name, $price, $placeholder_image, $details, $admin_id, $size_type, $allow_special_instructions);
-        $ok = mysqli_stmt_execute($stmt);
-        if (!$ok) {
-            $err = mysqli_stmt_error($stmt);
-            mysqli_stmt_close($stmt);
-            return ['success' => false, 'message' => 'Failed to add product: ' . $err];
-        }
-        $product_id = mysqli_insert_id($conn);
-        mysqli_stmt_close($stmt);
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("INSERT INTO products (name, price, image, details, admin_id, size_type, allow_special_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('sissisi', $name, $price, $placeholder_image, $details, $admin_id, $size_type, $allow_special_instructions);
+            $stmt->execute();
+            $product_id = (int)$conn->insert_id;
+            $stmt->close();
 
-        $stock_note = '';
-        if (!empty($entities['stock']) && intval($entities['stock']) > 0) {
-            $size = !empty($entities['size']) ? mb_substr(trim($entities['size']), 0, 20) : 'One Size';
-            $stock = intval($entities['stock']);
-            $stmt2 = mysqli_prepare($conn, "INSERT INTO product_sizes (product_id, size, price, stock) VALUES (?, ?, ?, ?)");
-            if ($stmt2) {
-                mysqli_stmt_bind_param($stmt2, 'isdi', $product_id, $size, $price, $stock);
-                mysqli_stmt_execute($stmt2);
-                mysqli_stmt_close($stmt2);
+            $sizeStmt = $conn->prepare('INSERT INTO product_sizes (product_id, size, price, stock, is_active) VALUES (?, ?, ?, ?, 1)');
+            foreach ($normalizedVariants as $variant) {
+                $size = $variant['size'];
+                $variantPrice = $variant['price'];
+                $stock = $variant['stock'];
+                $sizeStmt->bind_param('isii', $product_id, $size, $variantPrice, $stock);
+                $sizeStmt->execute();
             }
-        } else {
-            $stock_note = ' Note: no size/stock was added yet - set that on the Products page.';
+            $sizeStmt->close();
+            $conn->commit();
+        } catch (mysqli_sql_exception $e) {
+            $conn->rollback();
+            error_log('Chatbot product creation failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'The product and its variants could not be saved. Check the database and try again.'];
         }
 
         if (function_exists('log_admin_activity')) {
@@ -705,9 +822,142 @@ SYS;
         $type_label = $size_type === 'slice' ? 'Slice/Pieces' : 'Cup';
         return [
             'success' => true,
-            'message' => "✅ Product \"$name\" added at ₱" . number_format($price, 2) . " (ID: $product_id, $type_label)." . $stock_note
+            'message' => "✅ Product \"$name\" added with " . count($normalizedVariants) . " size/price/stock variant(s) (ID: $product_id, $type_label)."
                 . " Don't forget to upload a product photo on the Products page - I can't attach images from chat.",
         ];
+    }
+
+    function execute_create_voucher_campaign($conn, $entities) {
+        if (!function_exists('is_head_admin') || !is_head_admin()) {
+            return ['success' => false, 'message' => 'Only the Head Admin can create automatic voucher campaigns.'];
+        }
+
+        $name = trim((string)($entities['name'] ?? ''));
+        $trigger = (string)($entities['trigger_type'] ?? '');
+        $condition = (string)($entities['condition_type'] ?? '');
+        $threshold = (float)($entities['threshold_value'] ?? 0);
+        $rewardType = (string)($entities['reward_type'] ?? '');
+        $amount = (float)($entities['reward_amount'] ?? 0);
+        $minimumSpend = (float)($entities['minimum_spend'] ?? 0);
+        $freeProductId = isset($entities['free_product_id']) ? (int)$entities['free_product_id'] : null;
+        $validityDays = (int)($entities['validity_days'] ?? 14);
+
+        if ($name === '' || mb_strlen($name) > 100) {
+            return ['success' => false, 'message' => 'Provide a voucher campaign name up to 100 characters.'];
+        }
+        if (!in_array($trigger, ['signup', 'order'], true)) {
+            return ['success' => false, 'message' => 'Choose a signup or order trigger for the voucher.'];
+        }
+        if (!in_array($condition, ['none', 'spend', 'products'], true)
+            || ($trigger === 'signup' && $condition !== 'none')
+            || ($condition !== 'none' && $threshold <= 0)) {
+            return ['success' => false, 'message' => 'Choose a valid eligibility condition and positive spend or product threshold.'];
+        }
+        if (!in_array($rewardType, ['fixed', 'percentage', 'free_shipping', 'free_product'], true)) {
+            return ['success' => false, 'message' => 'Choose a supported reward: fixed discount, percentage, free shipping, or free product.'];
+        }
+        if (($rewardType === 'fixed' && $amount <= 0)
+            || ($rewardType === 'percentage' && ($amount <= 0 || $amount > 100))
+            || $minimumSpend < 0 || $validityDays < 1 || $validityDays > 365) {
+            return ['success' => false, 'message' => 'The reward amount, minimum spend, or voucher validity is outside the allowed range.'];
+        }
+        if ($condition === 'products' && $threshold !== floor($threshold)) {
+            return ['success' => false, 'message' => 'The product eligibility threshold must be a whole number.'];
+        }
+        if ($rewardType === 'free_product') {
+            if ($freeProductId === null || $freeProductId <= 0) {
+                return ['success' => false, 'message' => 'A free-product reward must include a valid product ID.'];
+            }
+            $product = $conn->prepare('SELECT id FROM products WHERE id = ? LIMIT 1');
+            $product->bind_param('i', $freeProductId);
+            $product->execute();
+            $exists = $product->get_result()->num_rows === 1;
+            $product->close();
+            if (!$exists) {
+                return ['success' => false, 'message' => 'That free-product ID does not exist.'];
+            }
+        } else {
+            $freeProductId = null;
+        }
+
+        try {
+            $stmt = $conn->prepare(
+                'INSERT INTO voucher_campaigns
+                    (name, trigger_type, condition_type, threshold_value, reward_type, reward_amount, minimum_spend, free_product_id, validity_days, active, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)'
+            );
+            $adminId = (int)$_SESSION['admin_id'];
+            $stmt->bind_param('sssdsddiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $minimumSpend, $freeProductId, $validityDays, $adminId);
+            $stmt->execute();
+            $campaignId = (int)$conn->insert_id;
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            error_log('Chatbot voucher campaign creation failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'The voucher campaign could not be saved. Check the database migration and try again.'];
+        }
+
+        if (function_exists('log_admin_activity')) {
+            log_admin_activity($adminId, 'Created Voucher Campaign', 'Created campaign via chatbot: ' . $name, 'success', 'voucher_campaigns', $campaignId, null, $entities);
+        }
+        return ['success' => true, 'message' => 'Automatic voucher campaign "' . $name . '" is active (ID: ' . $campaignId . ').'];
+    }
+
+    function execute_update_loyalty_settings($conn, $entities) {
+        if (!function_exists('is_head_admin') || !is_head_admin()) {
+            return ['success' => false, 'message' => 'Only the Head Admin can change points-redemption settings.'];
+        }
+
+        $current = loyalty_get_settings($conn);
+        $fields = [
+            'points_per_wallet_peso' => [1, 10000],
+            'points_voucher_cost' => [1, 1000000],
+            'points_voucher_percent' => [1, 100],
+            'points_voucher_minimum_spend' => [0, 1000000],
+            'points_voucher_validity_days' => [1, 365],
+        ];
+        $updated = [];
+        foreach ($fields as $field => [$minimum, $maximum]) {
+            $value = $entities[$field] ?? null;
+            if ($value === null || $value === '') {
+                $updated[$field] = $current[$field];
+                continue;
+            }
+            if (!is_numeric($value) || (float)$value < $minimum || (float)$value > $maximum
+                || ($field !== 'points_voucher_minimum_spend' && (float)$value !== (float)(int)$value)) {
+                return ['success' => false, 'message' => 'One or more requested points settings are invalid or outside the supported range.'];
+            }
+            $updated[$field] = $value;
+        }
+
+        if (count(array_intersect(array_keys($entities), array_keys($fields))) === 0) {
+            return ['success' => false, 'message' => 'Tell me which points setting to change, for example: 5 points per ₱1 or a voucher for 100 points.'];
+        }
+
+        try {
+            $stmt = $conn->prepare(
+                'UPDATE loyalty_settings
+                 SET points_per_wallet_peso = ?, points_voucher_cost = ?, points_voucher_percent = ?,
+                     points_voucher_minimum_spend = ?, points_voucher_validity_days = ?, updated_by = ?
+                 WHERE id = 1'
+            );
+            $pointsPerPeso = (int)$updated['points_per_wallet_peso'];
+            $voucherCost = (int)$updated['points_voucher_cost'];
+            $voucherPercent = (int)$updated['points_voucher_percent'];
+            $minimumSpend = (float)$updated['points_voucher_minimum_spend'];
+            $validityDays = (int)$updated['points_voucher_validity_days'];
+            $adminId = (int)$_SESSION['admin_id'];
+            $stmt->bind_param('iiidii', $pointsPerPeso, $voucherCost, $voucherPercent, $minimumSpend, $validityDays, $adminId);
+            $stmt->execute();
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            error_log('Chatbot loyalty settings update failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Points settings could not be saved. Check that the loyalty migration has been applied.'];
+        }
+
+        if (function_exists('log_admin_activity')) {
+            log_admin_activity($adminId, 'Updated Points Redemption Settings', 'Changed points redemption via chatbot.', 'success', 'loyalty_settings', 1, $current, $updated);
+        }
+        return ['success' => true, 'message' => 'Points-redemption settings updated. ' . $pointsPerPeso . ' points = ₱1 wallet balance; voucher: ' . $voucherCost . ' points for ' . $voucherPercent . '% off, minimum spend ₱' . number_format($minimumSpend, 2) . ', valid ' . $validityDays . ' days.'];
     }
 
     function execute_edit_price($conn, $entities) {
@@ -955,12 +1205,23 @@ SYS;
     }
 
     // Builds a human-readable confirmation question for a pending destructive/mutating action.
-    function build_confirmation_text($intent, $entities) {
+    function build_confirmation_text($intent, $entities, $conn = null) {
         switch ($intent) {
             case 'add_product':
                 $name = $entities['product_name'] ?? '(unnamed)';
-                $price = isset($entities['price']) ? '₱' . number_format(floatval($entities['price']), 2) : 'unknown price';
-                return "Add product \"$name\" at $price? Reply \"yes\" to confirm or \"no\" to cancel.";
+                $variants = $entities['variants'] ?? [[
+                    'size' => $entities['size'] ?? '',
+                    'price' => $entities['price'] ?? 0,
+                    'stock' => $entities['stock'] ?? 0,
+                ]];
+                $summary = [];
+                foreach ($variants as $variant) {
+                    if (is_array($variant)) {
+                        $summary[] = ($variant['size'] ?? 'size?') . ' — ₱' . number_format((float)($variant['price'] ?? 0), 2)
+                            . ', stock ' . (int)($variant['stock'] ?? 0);
+                    }
+                }
+                return "Add product \"$name\" with " . implode('; ', $summary) . "? Reply \"yes\" to confirm or \"no\" to cancel.";
             case 'edit_price':
                 $name = $entities['product_name'] ?? '(unknown product)';
                 $price = isset($entities['price']) ? '₱' . number_format(floatval($entities['price']), 2) : 'unknown price';
@@ -974,6 +1235,31 @@ SYS;
                 $unit = $entities['unit'] ?? 'unit';
                 $qty = isset($entities['quantity']) ? $entities['quantity'] : 0;
                 return "Add ingredient \"$name\" ($category), opening stock $qty $unit? Reply \"yes\" to confirm or \"no\" to cancel.";
+            case 'create_voucher':
+                $name = $entities['name'] ?? '(unnamed)';
+                $trigger = $entities['trigger_type'] ?? 'unspecified trigger';
+                $condition = $entities['condition_type'] ?? 'none';
+                $threshold = $entities['threshold_value'] ?? 0;
+                $rewardType = $entities['reward_type'] ?? 'unspecified reward';
+                $amount = $entities['reward_amount'] ?? 0;
+                $reward = $rewardType === 'fixed' ? '₱' . number_format((float)$amount, 2) . ' off'
+                    : ($rewardType === 'percentage' ? number_format((float)$amount, 2) . '% off' : str_replace('_', ' ', $rewardType));
+                $eligibility = $condition === 'spend' ? 'after spending ₱' . number_format((float)$threshold, 2)
+                    : ($condition === 'products' ? 'after buying ' . (int)$threshold . ' products' : 'without an order threshold');
+                return "Create automatic campaign \"$name\": $trigger trigger, $eligibility, reward $reward, minimum redemption spend ₱"
+                    . number_format((float)($entities['minimum_spend'] ?? 0), 2) . ', valid ' . (int)($entities['validity_days'] ?? 14)
+                    . " days? Reply \"yes\" to confirm or \"no\" to cancel.";
+            case 'edit_loyalty_settings':
+                $settings = loyalty_get_settings($conn);
+                foreach (['points_per_wallet_peso', 'points_voucher_cost', 'points_voucher_percent', 'points_voucher_minimum_spend', 'points_voucher_validity_days'] as $key) {
+                    if (isset($entities[$key])) {
+                        $settings[$key] = $entities[$key];
+                    }
+                }
+                return 'Update points redemption to ' . $settings['points_per_wallet_peso'] . ' points per ₱1; '
+                    . $settings['points_voucher_cost'] . ' points for ' . $settings['points_voucher_percent']
+                    . '% off (minimum spend ₱' . number_format((float)$settings['points_voucher_minimum_spend'], 2)
+                    . ', valid ' . $settings['points_voucher_validity_days'] . ' days)? Reply "yes" to confirm or "no" to cancel.';
         }
         return 'Confirm this action? Reply "yes" or "no".';
     }
@@ -1140,8 +1426,9 @@ SYS;
                     . "👑 Best Sellers & Analytics\n"
                     . "👥 Customer Information\n"
                     . "📈 Sales Forecasts\n"
-                    . "🛠️ Add / Edit / Delete Products\n\n"
-                    . 'Try asking: "Show low stock" or "Forecast sales for next week".'
+                    . "🛠️ Add / Edit / Delete Products\n"
+                    . "🎁 Create auto vouchers and update points redemption\n\n"
+                    . 'Try asking: "Show low stock", "Create a welcome voucher", or "Change points redemption".'
                     . "\n\n(The AI reasoning service didn't respond in time - check your PHP error log, "
                     . "or test admin_chatbot.php?action=ollama_ping to diagnose.)";
         }
@@ -1174,6 +1461,12 @@ SYS;
                 break;
             case 'add_ingredient':
                 $result = execute_add_ingredient($conn, $pending['entities']);
+                break;
+            case 'create_voucher':
+                $result = execute_create_voucher_campaign($conn, $pending['entities']);
+                break;
+            case 'edit_loyalty_settings':
+                $result = execute_update_loyalty_settings($conn, $pending['entities']);
                 break;
             default:
                 $result = ['success' => false, 'message' => 'Nothing pending to confirm.'];
@@ -1218,6 +1511,11 @@ SYS;
             }
             $intent = normalize_ingredient_intent($query, $intent);
         }
+        if (preg_match('/\b(create|make|generate|add)\b.*\bvoucher\b/i', $query)) {
+            $intent = 'create_voucher';
+        } elseif (preg_match('/\b(edit|change|update|set)\b.*\b(points?|redemption|redeem)\b/i', $query)) {
+            $intent = 'edit_loyalty_settings';
+        }
 
         // Backstop product commands with regex extraction so a shaky LLM
         // extraction still lets the command go through.
@@ -1244,6 +1542,8 @@ SYS;
             if (isset($entities['min_stock_level'])) {
                 $entities['min_stock_level'] = clean_number($entities['min_stock_level']);
             }
+        } elseif (in_array($intent, ['create_voucher', 'edit_loyalty_settings'], true)) {
+            $entities = merge_entities($entities, regex_extract_reward_entities($intent, $query));
         }
 
         // ==================== INVENTORY QUERIES (finished products) ====================
@@ -1532,7 +1832,7 @@ SYS;
                     '4. Add sizes and stock quantities',
                     '5. Click "Add Product" button',
                     '✅ Your product is now live!',
-                    '💡 Tip: you can also just tell me "add product <name> price <amount>" and I\'ll do it for you - you\'ll still need to upload the photo yourself afterward.',
+                    '💡 Tip: tell me "add product <name> with size <size> price <amount> stock <quantity>". I can add up to 10 variants; you will still need to upload the photo afterward.',
                 ]],
                 'how to edit products' => ['steps' => [
                     '1. Go to "Manage Products" page',
@@ -1611,6 +1911,8 @@ SYS;
                         '• How to view orders?',
                         '• How to manage users?',
                         '• How to manage ingredients?',
+                        '• Create an automatic voucher (Head Admin)',
+                        '• Change points redemption (Head Admin)',
                     ],
                 ];
             }
@@ -1622,11 +1924,34 @@ SYS;
         }
 
         // ==================== PRODUCT & INGREDIENT COMMANDS ====================
-        elseif (in_array($intent, ['add_product', 'edit_price', 'delete_product', 'add_ingredient'], true)) {
+        elseif (in_array($intent, ['add_product', 'edit_price', 'delete_product', 'add_ingredient', 'create_voucher', 'edit_loyalty_settings'], true)) {
             $missing = [];
             if ($intent === 'add_product') {
                 if (empty($entities['product_name'])) $missing[] = 'product name';
-                if (empty($entities['price'])) $missing[] = 'price';
+                $variants = $entities['variants'] ?? [];
+                if (!is_array($variants) || count($variants) === 0) {
+                    if (empty($entities['size'])) $missing[] = 'size or size name';
+                    if (!isset($entities['price']) || (float)$entities['price'] <= 0) $missing[] = 'variant price';
+                    if (!isset($entities['stock']) || (int)$entities['stock'] <= 0) $missing[] = 'variant stock';
+                    if (empty($missing)) {
+                        $entities['variants'] = [[
+                            'size' => $entities['size'],
+                            'price' => $entities['price'],
+                            'stock' => $entities['stock'],
+                        ]];
+                    }
+                } elseif (count($variants) > 10) {
+                    $missing[] = 'no more than 10 variants';
+                } else {
+                    foreach ($variants as $variant) {
+                        if (!is_array($variant) || trim((string)($variant['size'] ?? '')) === ''
+                            || !isset($variant['price']) || (float)$variant['price'] <= 0
+                            || !isset($variant['stock']) || (int)$variant['stock'] <= 0) {
+                            $missing[] = 'complete size, price, and stock details for every variant';
+                            break;
+                        }
+                    }
+                }
             } elseif ($intent === 'edit_price') {
                 if (empty($entities['product_name'])) $missing[] = 'product name';
                 if (empty($entities['price'])) $missing[] = 'new price';
@@ -1636,12 +1961,28 @@ SYS;
                 if (empty($entities['ingredient_name'])) $missing[] = 'ingredient name';
                 if (empty($entities['category'])) $missing[] = 'category (consumable or packaging)';
                 if (empty($entities['unit'])) $missing[] = 'unit (grams, ml, pieces, or cups)';
+            } elseif ($intent === 'create_voucher') {
+                if (empty($entities['name'])) $missing[] = 'voucher campaign name';
+                if (empty($entities['trigger_type'])) $missing[] = 'trigger (signup or order)';
+                if (empty($entities['reward_type'])) $missing[] = 'reward type (fixed, percentage, free shipping, or free product)';
+                if (in_array($entities['reward_type'] ?? '', ['fixed', 'percentage'], true) && empty($entities['reward_amount'])) $missing[] = 'reward amount';
+                if (($entities['trigger_type'] ?? '') === 'order' && empty($entities['condition_type'])) $missing[] = 'eligibility condition (none, spend, or number of products)';
+                if (($entities['condition_type'] ?? '') === 'spend' && (float)($entities['threshold_value'] ?? 0) <= 0) $missing[] = 'spend threshold';
+                if (($entities['condition_type'] ?? '') === 'products' && (int)($entities['threshold_value'] ?? 0) <= 0) $missing[] = 'product count threshold';
+                if (($entities['reward_type'] ?? '') === 'free_product' && (int)($entities['free_product_id'] ?? 0) <= 0) $missing[] = 'free product ID';
+            } elseif ($intent === 'edit_loyalty_settings') {
+                $settingKeys = ['points_per_wallet_peso', 'points_voucher_cost', 'points_voucher_percent', 'points_voucher_minimum_spend', 'points_voucher_validity_days'];
+                if (count(array_intersect(array_keys($entities), $settingKeys)) === 0) $missing[] = 'the setting and its new value';
             }
 
             if (!empty($missing)) {
                 $example = $intent === 'add_ingredient'
                     ? 'add ingredient Milk category consumable unit ml quantity 5000 min stock 1000'
-                    : 'add product Red Shirt price 599';
+                    : ($intent === 'add_product'
+                        ? 'add product Strawberry Cake with size Slice price 120 stock 20'
+                        : ($intent === 'create_voucher'
+                            ? 'create voucher "Welcome Treat" for new signups: ₱100 off, minimum spend ₱500, valid 14 days'
+                            : 'change points redemption to 5 points per ₱1 and a 100-point 20% voucher'));
                 $response = [
                     'type' => 'command',
                     'title' => '✋ A Bit More Info Needed',
@@ -1649,13 +1990,23 @@ SYS;
                     'data' => [],
                 ];
             } else {
-                $_SESSION['pending_action'] = ['intent' => $intent, 'entities' => $entities];
-                $response = [
-                    'type' => 'command',
-                    'title' => '⚠️ Confirm Action',
-                    'message' => build_confirmation_text($intent, $entities),
-                    'data' => [],
-                ];
+                if (in_array($intent, ['create_voucher', 'edit_loyalty_settings'], true)
+                    && (!function_exists('is_head_admin') || !is_head_admin())) {
+                    $response = [
+                        'type' => 'command',
+                        'title' => '🔒 Head Admin Only',
+                        'message' => 'Only the Head Admin can create voucher campaigns or change points-redemption settings.',
+                        'data' => [],
+                    ];
+                } else {
+                    $_SESSION['pending_action'] = ['intent' => $intent, 'entities' => $entities];
+                    $response = [
+                        'type' => 'command',
+                        'title' => '⚠️ Confirm Action',
+                        'message' => build_confirmation_text($intent, $entities, $conn),
+                        'data' => [],
+                    ];
+                }
             }
         }
 

@@ -482,6 +482,9 @@ html { -webkit-text-size-adjust: 100%; }
                             <a href="admin_rewards.php" class="icon-btn <?php echo $current_page === 'admin_rewards.php' ? 'active' : ''; ?>">
                                 <i class="fa-solid fa-gift"></i> Rewards &amp; Vouchers
                             </a>
+                            <a href="admin_payment_settings.php" class="icon-btn <?php echo $current_page === 'admin_payment_settings.php' ? 'active' : ''; ?>">
+                                <i class="fa-solid fa-credit-card"></i> Checkout Payment Methods
+                            </a>
                             <a href="admin_customization.php" class="icon-btn <?php echo $current_page === 'admin_customization.php' ? 'active' : ''; ?>">
                                 <i class="fa-solid fa-palette"></i> Site Customization
                             </a>

@@ -1,6 +1,8 @@
 <?php
 include 'config.php';
 require_once __DIR__ . '/app/helpers/loyalty.php';
+require_once __DIR__ . '/app/helpers/payment_methods.php';
+$enabled_payment_methods = get_checkout_payment_methods($conn);
 
 if (!function_exists('sanitizeInput')) {
     function sanitizeInput($data) {
@@ -421,7 +423,6 @@ if (isset($_POST['order_btn'])) {
     $pin_code = sanitizeInput($_POST['pin_code'] ?? '');
     $placed_on = date('d-M-Y');
 
-    $allowed_methods = ['cash on delivery', 'wallet balance', 'pickup'];
     $is_pickup        = ($method === 'pickup');
     $requires_wallet  = in_array($method, ['wallet balance', 'pickup'], true);
 
@@ -441,8 +442,8 @@ if (isset($_POST['order_btn'])) {
         $validation_errors[] = 'Invalid email address.';
     }
 
-    if (!in_array($method, $allowed_methods, true)) {
-        $validation_errors[] = 'Invalid payment method.';
+    if (!isset($enabled_payment_methods[$method]) || !$enabled_payment_methods[$method]) {
+        $validation_errors[] = 'That payment method is currently unavailable. Please choose another option.';
         logSecurityEvent('INVALID_PAYMENT_METHOD', ['method' => $method]);
     } elseif ($requires_wallet && $is_guest) {
         $validation_errors[] = 'Please log in to use Wallet Balance or Store Pickup.';
@@ -1327,12 +1328,19 @@ $open_checkout_on_load = isset($_GET['checkout']);
           <div class="checkout-section-title"><i class="fa-solid fa-credit-card"></i> Payment Method</div>
           <select name="method" id="payment-method" class="box" required>
             <option value="" disabled selected>-- Select Payment Method --</option>
-            <option value="cash on delivery">Cash on Delivery</option>
-            <?php if (!$is_guest): ?>
-            <option value="wallet balance">Wallet Balance (Delivery)</option>
-            <option value="pickup">Store Pickup (Pay via Wallet)</option>
+            <?php if ($enabled_payment_methods['cash on delivery']): ?>
+              <option value="cash on delivery">Cash on Delivery</option>
+            <?php endif; ?>
+            <?php if (!$is_guest && $enabled_payment_methods['wallet balance']): ?>
+              <option value="wallet balance">Wallet Balance (Delivery)</option>
+            <?php endif; ?>
+            <?php if (!$is_guest && $enabled_payment_methods['pickup']): ?>
+              <option value="pickup">Store Pickup (Pay via Wallet)</option>
             <?php endif; ?>
           </select>
+          <?php if (empty(array_filter($enabled_payment_methods))): ?>
+            <div class="payment-option-note">Checkout is temporarily unavailable. Please contact the store.</div>
+          <?php endif; ?>
           <?php if ($is_guest): ?>
             <div class="payment-option-note"><i class="fa-solid fa-circle-info"></i> Log in to also unlock Wallet Balance and Store Pickup.</div>
           <?php else: ?>
