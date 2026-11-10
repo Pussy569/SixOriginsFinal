@@ -1,5 +1,198 @@
 <?php
 
+function site_customization_content_fields(): array
+{
+    return [
+        'Homepage' => [
+            'home_hero_heading' => ['Hero heading', 'Six Origins Making Every Day Better'],
+            'home_hero_subtitle' => ['Hero description', 'Experience quality coffee and apparel crafted with passion.'],
+            'home_coffee_tag' => ['Coffee section label', 'For the Coffee Lovers'],
+            'home_coffee_heading' => ['Coffee section heading', 'Every Cup Starts with a Smile.'],
+            'home_coffee_description' => ['Coffee section description', 'From the first pour to the final sip, every cup is made to feel warm, easy, and worth slowing down for.'],
+            'home_coffee_button_1' => ['Coffee section button 1', 'Grab Your Cup'],
+            'home_coffee_button_2' => ['Coffee section button 2', 'Explore Menu'],
+            'home_about_heading' => ['About section heading', '☕ About Six Origins'],
+            'home_about_description' => ['About section introduction', 'Discover the story behind our passion for quality coffee and premium apparel'],
+            'home_story_heading' => ['Our story heading', 'Our Story'],
+            'home_story_paragraph_1' => ['Our story paragraph 1', "Six Origins Cafe isn't just a coffee shop—it's a dream built from the ground up. It started with a vision to create a cozy Japanese-inspired café where quality meets simplicity."],
+            'home_story_paragraph_2' => ['Our story paragraph 2', 'At the heart of Six Origins is our commitment to excellence. We source the finest beans from six distinct origins around the world, expertly roast them, and brew each cup to perfection. From freshly brewed specialty drinks to rich cream-based blends, refreshing teas, and handcrafted pastries, everything is made to delight and connect.'],
+            'home_story_button' => ['Our story button', 'Read More'],
+            'home_slide_1_heading' => ['Carousel slide 1 heading', 'Our Coffee Origins'],
+            'home_slide_1_description' => ['Carousel slide 1 description', 'Sourced from six distinct origins around the world'],
+            'home_slide_2_heading' => ['Carousel slide 2 heading', 'Expert Roasting'],
+            'home_slide_2_description' => ['Carousel slide 2 description', 'Each batch carefully roasted to perfection'],
+            'home_slide_3_heading' => ['Carousel slide 3 heading', 'Artisan Brewing'],
+            'home_slide_3_description' => ['Carousel slide 3 description', 'Brewed with precision and passion'],
+            'home_slide_4_heading' => ['Carousel slide 4 heading', 'Premium Apparel'],
+            'home_slide_4_description' => ['Carousel slide 4 description', 'Quality clothing crafted for our community'],
+        ],
+        'About page' => [
+            'about_hero_heading' => ['Hero heading', 'Six Origins Making Every Day Better'],
+            'about_hero_subtitle' => ['Hero description', 'Experience quality coffee and apparel crafted with passion.'],
+            'about_hero_button_1' => ['Hero button 1', 'Shop Now'],
+            'about_hero_button_2' => ['Hero button 2', 'Contact Us'],
+            'about_impact_heading' => ['Three-card section heading', 'What Makes Us'],
+            'about_impact_description' => ['Three-card section introduction', 'Three things guide everything we do — where our coffee comes from, who we serve, and the promise we keep with every cup.'],
+            'about_card_1_tag' => ['Card 1 image label', 'Six Finest Regions'],
+            'about_card_1_heading' => ['Card 1 heading', 'Global Coffee Origins'],
+            'about_card_1_description' => ['Card 1 description', 'We source premium beans from six distinct coffee-growing regions worldwide, each bringing unique flavor profiles and sustainable farming practices.'],
+            'about_card_1_point_1' => ['Card 1 point 1', 'Direct relationships with ethical farmers'],
+            'about_card_1_point_2' => ['Card 1 point 2', 'Fair trade and sustainable sourcing'],
+            'about_card_1_point_3' => ['Card 1 point 3', 'Small-batch specialty roasting'],
+            'about_card_1_button' => ['Card 1 button', 'Explore Collection'],
+            'about_card_2_tag' => ['Card 2 image label', 'Building Connections'],
+            'about_card_2_heading' => ['Card 2 heading', 'Community Impact'],
+            'about_card_2_description' => ['Card 2 description', 'More than just a cafe, Six Origins is a gathering place where friendships are brewed and local creators are supported across Rizal.'],
+            'about_card_2_point_1' => ['Card 2 point 1', 'Support for local artisans and creators'],
+            'about_card_2_point_2' => ['Card 2 point 2', 'Community events and coffee sessions'],
+            'about_card_2_point_3' => ['Card 2 point 3', 'Fair wages and employee development'],
+            'about_card_2_button' => ['Card 2 button', 'Get Involved'],
+            'about_card_3_tag' => ['Card 3 image label', 'Quality & Simplicity'],
+            'about_card_3_heading' => ['Card 3 heading', 'Six Origins Promise'],
+            'about_card_3_description' => ['Card 3 description', 'Every cup tells a story of passion and precision. From bean to cup, we ensure consistency and the warm hospitality that makes every visit memorable.'],
+            'about_card_3_point_1' => ['Card 3 point 1', 'Expert baristas trained to perfection'],
+            'about_card_3_point_2' => ['Card 3 point 2', 'Premium merchandise and apparel'],
+            'about_card_3_point_3' => ['Card 3 point 3', 'Customer experience as our priority'],
+            'about_card_3_button' => ['Card 3 button', 'Learn More'],
+            'about_featured_tag' => ['Featured blend label', 'Featured Blend'],
+            'about_featured_heading' => ['Featured blend heading', 'A Darker, Deeper Coffee Experience.'],
+            'about_featured_description' => ['Featured blend description', 'Step into the Six Origins cafe and settle in with a cup roasted for depth and warmth — every visit is a moment worth slowing down for.'],
+            'about_featured_point_1' => ['Featured blend highlight 1', 'Six finest origins'],
+            'about_featured_point_2' => ['Featured blend highlight 2', 'Small-batch roasting'],
+            'about_featured_point_3' => ['Featured blend highlight 3', 'Cozy cafe vibes'],
+            'about_why_heading' => ['Why choose heading', 'Why Choose Six Origins?'],
+            'about_why_paragraph_1' => ['Why choose paragraph 1', "We believe that great coffee is more than just a beverage—it's an experience. Every cup served at Six Origins is crafted with precision, passion, and purpose. We don't just brew coffee; we create moments of joy and connection."],
+            'about_why_paragraph_2' => ['Why choose paragraph 2', 'Our commitment to quality extends beyond the cup. From our carefully curated product selection to our commitment to fair wages for our team, we believe in doing business with integrity. We support local artisans, use sustainable practices, and invest in our community because we believe that success should benefit everyone.'],
+            'about_why_paragraph_3' => ['Why choose paragraph 3', "Whether you're a longtime coffee enthusiast or just discovering your favorite brew, Six Origins welcomes you into our family. We're here to share our passion, celebrate your moments, and make every visit memorable."],
+            'about_contact_heading' => ['Questions callout heading', 'Questions about our coffee?'],
+            'about_contact_description' => ['Questions callout description', 'Our friendly team is here to help and share our coffee passion.'],
+            'about_facts_heading' => ['About quick facts heading', '🎯 Quick Facts'],
+            'about_fact_1_label' => ['About fact 1 label', 'Founded'],
+            'about_fact_1_value' => ['About fact 1 value', 'Oct 30, 2020'],
+            'about_fact_2_label' => ['About fact 2 label', 'Location'],
+            'about_fact_2_value' => ['About fact 2 value', 'Cainta, Rizal, PH'],
+            'about_fact_3_label' => ['About fact 3 label', 'Origins'],
+            'about_fact_3_value' => ['About fact 3 value', 'Six finest coffee regions'],
+            'about_fact_4_label' => ['About fact 4 label', 'Team'],
+            'about_fact_4_value' => ['About fact 4 value', '6+ dedicated members'],
+            'about_fact_5_label' => ['About fact 5 label', 'Mission'],
+            'about_fact_5_value' => ['About fact 5 value', 'Quality, community, simplicity'],
+            'about_merch_tag' => ['Merch section label', 'New Merch Drop'],
+            'about_merch_heading' => ['Merch section heading', 'Gear Built Around the Ritual.'],
+            'about_merch_description' => ['Merch section description', 'From single-origin beans to our signature carryall, everything we make is built around the ritual of a really good cup of coffee.'],
+            'about_merch_point_1' => ['Merch highlight 1', 'Just dropped'],
+            'about_merch_point_2' => ['Merch highlight 2', 'Premium apparel'],
+            'about_merch_point_3' => ['Merch highlight 3', 'Signature carryall'],
+            'about_merch_button_1' => ['Merch section button 1', 'Shop The Collection'],
+            'about_merch_button_2' => ['Merch section button 2', 'Ask Us'],
+        ],
+        'Page banners' => [
+            'shop_hero_heading' => ['Shop hero heading', 'Our Premium Shop'],
+            'shop_hero_description' => ['Shop hero description', 'Explore our carefully curated collection of premium coffee products and merchandise. Each item is selected with care to reflect our commitment to quality and your satisfaction.'],
+            'shop_hero_button_1' => ['Shop hero button 1', 'Customer Support'],
+            'shop_hero_button_2' => ['Shop hero button 2', 'Continue Shopping'],
+            'orders_hero_heading' => ['Orders hero heading', 'Your Orders'],
+            'orders_hero_description' => ['Orders hero description', 'Track and review all your orders. Check payment status, product details, and wallet transactions in one place.'],
+            'search_hero_heading' => ['Search hero heading', 'Search Products'],
+            'search_hero_description' => ['Search hero description', 'Find products by name. Choose a size and quantity, then add items to your cart.'],
+            'cart_hero_heading' => ['Cart hero heading', 'Your Shopping Cart'],
+            'cart_hero_description' => ['Cart hero description', 'Review your items and check out right here — no page hopping needed.'],
+            'profile_hero_heading' => ['Profile hero heading', 'Your Profile'],
+            'profile_hero_description' => ['Profile hero description', 'Update your personal information, manage security settings, and customize your account preferences. Your data is always secure with us.'],
+            'contact_hero_heading' => ['Contact hero heading', 'Get In Touch'],
+            'contact_hero_description' => ['Contact hero description', "Have questions about your order, our products, or want to discuss something with us? We'd love to hear from you! Our friendly team is here to help and respond as quickly as possible."],
+            'contact_hero_button_1' => ['Contact hero button 1', 'Visit Shop'],
+            'contact_hero_button_2' => ['Contact hero button 2', 'Back Home'],
+            'contact_hero_button_replies' => ['Contact replies button', 'Replies'],
+            'topup_hero_heading' => ['Wallet top-up hero heading', 'Request a Wallet Top-Up'],
+            'topup_hero_description' => ['Wallet top-up hero description', 'Send payment via GCash, upload your transaction screenshot, and submit your top-up request. Our admin team will review and approve it promptly.'],
+            'profile_hero_button_1' => ['Profile hero button 1', 'View Orders'],
+            'profile_hero_button_2' => ['Profile hero button 2', 'Back Home'],
+            'topup_hero_button_1' => ['Top-up hero button 1', 'View Wallet'],
+            'topup_hero_button_2' => ['Top-up hero button 2', 'Back Home'],
+        ],
+        'Shop quick facts' => [
+            'shop_facts_heading' => ['Shop facts heading', 'Quick Facts'],
+            'shop_fact_1_label' => ['Shop fact 1 label', 'Founded'],
+            'shop_fact_1_value' => ['Shop fact 1 value', 'Oct 30, 2020'],
+            'shop_fact_2_label' => ['Shop fact 2 label', 'Location'],
+            'shop_fact_2_value' => ['Shop fact 2 value', 'Cainta, Rizal'],
+            'shop_fact_3_label' => ['Shop fact 3 label', 'Focus'],
+            'shop_fact_3_value' => ['Shop fact 3 value', 'Quality coffee & products'],
+            'shop_fact_4_label' => ['Shop fact 4 label', 'Commitment'],
+            'shop_fact_4_value' => ['Shop fact 4 value', 'Excellence & community'],
+        ],
+        'Contact information cards' => [
+            'contact_phone_heading' => ['Phone card heading', 'Call Us'],
+            'contact_phone_value' => ['Phone number', '+63 912 345 6789'],
+            'contact_phone_hours' => ['Phone availability', 'Available 9AM - 6PM daily'],
+            'contact_visit_heading' => ['Visit card heading', 'Visit Us'],
+            'contact_location' => ['Visit address', 'Cainta, Rizal, Philippines'],
+            'contact_visit_description' => ['Visit description', 'Drop by our cafe for direct assistance and product demos!'],
+            'contact_follow_heading' => ['Social card heading', 'Follow Us'],
+            'contact_response_heading' => ['Response card heading', 'Response Time'],
+            'contact_response_description' => ['Response time description', 'We typically reply within 24 hours'],
+            'contact_response_hours' => ['Business-hours response', 'During business hours: 1-2 hours'],
+        ],
+        'Top-up payment instructions' => [
+            'topup_payment_heading' => ['Payment details heading', 'GCash Payment Details'],
+            'topup_number_label' => ['GCash number label', 'GCash Number:'],
+            'topup_number_value' => ['GCash number', '09086657580'],
+            'topup_account_label' => ['Account name label', 'Account Name:'],
+            'topup_account_value' => ['Account name', 'Vic******* D'],
+            'topup_secure_note' => ['Payment security note', 'Your payment is secure and protected.'],
+            'topup_steps_heading' => ['Payment steps heading', 'How it works'],
+            'topup_step_1' => ['Payment step 1', 'Open your GCash app and send money'],
+            'topup_step_2' => ['Payment step 2', 'Enter the GCash number and exact amount'],
+            'topup_step_3' => ['Payment step 3', 'Take a screenshot of the receipt/confirmation'],
+            'topup_step_4' => ['Payment step 4', 'Upload the screenshot below and submit'],
+            'topup_step_5' => ['Payment step 5', 'Admin reviews and approves your request'],
+            'topup_step_6' => ['Payment step 6', 'Wallet balance updates immediately'],
+            'topup_processing_label' => ['Processing time label', 'Processing Time:'],
+            'topup_processing_description' => ['Processing time description', "Usually within 1-2 hours during business hours. We'll notify you once approved!"],
+        ],
+        'Footer' => [
+            'footer_description' => ['Brand description', 'Discover the six finest coffee origins. Quality beans sourced with care, expertly roasted, and brewed to perfection. Your cozy corner for authentic coffee experiences.'],
+            'footer_contact_heading' => ['Contact section heading', 'Contact'],
+            'footer_phone' => ['Footer phone number', '+63 (123) 456-7890'],
+            'footer_email' => ['Footer email address', 'hello@sixorigins.cafe'],
+            'footer_location' => ['Footer location', 'Cainta, Rizal, Philippines'],
+            'footer_follow_heading' => ['Follow section heading', 'Follow Us'],
+            'footer_follow_description' => ['Follow section description', 'Stay connected for the latest updates.'],
+            'footer_rights_text' => ['Copyright notice', 'All Rights Reserved'],
+            'footer_terms_label' => ['Terms link label', 'Terms of Service'],
+            'footer_privacy_label' => ['Privacy link label', 'Privacy Policy'],
+            'footer_cookies_label' => ['Cookies link label', 'Cookie Policy'],
+            'footer_signoff' => ['Footer sign-off', 'for coffee lovers everywhere'],
+        ],
+    ];
+}
+
+function site_customization_content_defaults(): array
+{
+    static $defaults = null;
+    if ($defaults !== null) {
+        return $defaults;
+    }
+
+    $defaults = [];
+    foreach (site_customization_content_fields() as $fields) {
+        foreach ($fields as $key => $field) {
+            $defaults[$key] = $field[1];
+        }
+    }
+
+    return $defaults;
+}
+
+function site_customization_text(array $settings, string $key): string
+{
+    $default = site_customization_content_defaults()[$key] ?? '';
+    $value = $settings['content_texts'][$key] ?? $default;
+
+    return is_string($value) ? $value : $default;
+}
+
 function site_customization_defaults(): array
 {
     return [
@@ -9,6 +202,10 @@ function site_customization_defaults(): array
         'about_hero_image_path' => 'images/aboback.png',
         'about_cafe_image_path' => 'images/promo-cafe.png',
         'about_product_image_path' => 'images/promo-product.png',
+        'about_impact_1_image_path' => 'images/ge.jpg',
+        'about_impact_2_image_path' => 'images/gee.jpg',
+        'about_impact_3_image_path' => 'images/geee.jpg',
+        'about_why_image_path' => 'images/ey.jpg',
         'home_about_slide_1_image_path' => 'images/typica bg.png',
         'home_about_slide_2_image_path' => 'images/typica bg.png',
         'home_about_slide_3_image_path' => 'images/typica bg.png',
@@ -21,6 +218,7 @@ function site_customization_defaults(): array
         'profile_background_image_path' => null,
         'topup_background_image_path' => null,
         'team_members' => site_customization_default_team_members(),
+        'content_texts' => site_customization_content_defaults(),
         'login_image_path' => 'images/logback.jpeg',
         'register_image_path' => 'images/logback.jpeg',
         'admin_register_image_path' => 'images/logback.jpeg',
@@ -71,12 +269,24 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
         $settings = array_merge($settings, $saved);
     }
+
+    $contentTexts = is_string($settings['content_texts']) ? json_decode($settings['content_texts'], true) : $settings['content_texts'];
+    $contentDefaults = site_customization_content_defaults();
+    if (!is_array($contentTexts)) {
+        $contentTexts = $contentDefaults;
+    } else {
+        foreach ($contentDefaults as $key => $defaultText) {
+            $value = $contentTexts[$key] ?? $defaultText;
+            $contentTexts[$key] = is_string($value) && strlen($value) <= 1000 ? $value : $defaultText;
+        }
+    }
+    $settings['content_texts'] = $contentTexts;
 
     if ($settings['logo_path'] !== 'images/logos.png'
         && (!is_string($settings['logo_path']) || !preg_match('#^images/site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings['logo_path']))) {
@@ -87,6 +297,17 @@ function get_site_customization(mysqli $conn): array
         $settings['about_hero_image_path'] = 'images/aboback.png';
     }
     foreach (['about_cafe_image_path' => 'images/promo-cafe.png', 'about_product_image_path' => 'images/promo-product.png'] as $imageKey => $defaultImage) {
+        if ($settings[$imageKey] !== $defaultImage
+            && (!is_string($settings[$imageKey]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$imageKey]))) {
+            $settings[$imageKey] = $defaultImage;
+        }
+    }
+    foreach ([
+        'about_impact_1_image_path' => 'images/ge.jpg',
+        'about_impact_2_image_path' => 'images/gee.jpg',
+        'about_impact_3_image_path' => 'images/geee.jpg',
+        'about_why_image_path' => 'images/ey.jpg',
+    ] as $imageKey => $defaultImage) {
         if ($settings[$imageKey] !== $defaultImage
             && (!is_string($settings[$imageKey]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$imageKey]))) {
             $settings[$imageKey] = $defaultImage;
@@ -539,14 +760,22 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
     if ($teamMembers === false) {
         throw new RuntimeException('Team information could not be encoded for saving.');
     }
+    $contentTexts = json_encode($settings['content_texts'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($contentTexts === false) {
+        throw new RuntimeException('Site text could not be encoded for saving.');
+    }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ' . implode(', ', array_fill(0, 46, '?')) . ')
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ' . implode(', ', array_fill(0, 51, '?')) . ')
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
             about_product_image_path = VALUES(about_product_image_path),
+            about_impact_1_image_path = VALUES(about_impact_1_image_path),
+            about_impact_2_image_path = VALUES(about_impact_2_image_path),
+            about_impact_3_image_path = VALUES(about_impact_3_image_path),
+            about_why_image_path = VALUES(about_why_image_path),
             home_about_slide_1_image_path = VALUES(home_about_slide_1_image_path),
             home_about_slide_2_image_path = VALUES(home_about_slide_2_image_path),
             home_about_slide_3_image_path = VALUES(home_about_slide_3_image_path),
@@ -555,6 +784,7 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             orders_background_image_path = VALUES(orders_background_image_path), search_background_image_path = VALUES(search_background_image_path),
             cart_background_image_path = VALUES(cart_background_image_path), profile_background_image_path = VALUES(profile_background_image_path),
             topup_background_image_path = VALUES(topup_background_image_path), team_members = VALUES(team_members),
+            content_texts = VALUES(content_texts),
             login_image_path = VALUES(login_image_path), register_image_path = VALUES(register_image_path),
             admin_register_image_path = VALUES(admin_register_image_path), loading_style = VALUES(loading_style),
             showcase_image_path = VALUES(showcase_image_path), showcase_background = VALUES(showcase_background),
@@ -572,13 +802,17 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 45) . 'i',
+        str_repeat('s', 50) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
         $settings['about_hero_image_path'],
         $settings['about_cafe_image_path'],
         $settings['about_product_image_path'],
+        $settings['about_impact_1_image_path'],
+        $settings['about_impact_2_image_path'],
+        $settings['about_impact_3_image_path'],
+        $settings['about_why_image_path'],
         $settings['home_about_slide_1_image_path'],
         $settings['home_about_slide_2_image_path'],
         $settings['home_about_slide_3_image_path'],
@@ -591,6 +825,7 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
         $settings['profile_background_image_path'],
         $settings['topup_background_image_path'],
         $teamMembers,
+        $contentTexts,
         $settings['login_image_path'],
         $settings['register_image_path'],
         $settings['admin_register_image_path'],

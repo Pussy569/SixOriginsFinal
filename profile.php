@@ -1398,14 +1398,14 @@ if (!empty($user['profile_image'])) {
 <!-- HERO SECTION WITH BACKGROUND IMAGE -->
 <section class="hero" aria-labelledby="profileTitle" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.35) 100%), url('images/aboback.png') center/cover no-repeat;">
   <div class="hero-content">
-    <h1 id="profileTitle">Your Profile</h1>
-    <p>Update your personal information, manage security settings, and customize your account preferences. Your data is always secure with us.</p>
+    <h1 id="profileTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'profile_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'profile_hero_description')); ?></p>
     <div class="hero-buttons">
       <a href="orders.php" class="btn">
-        <i class="fa-solid fa-receipt"></i> View Orders
+        <i class="fa-solid fa-receipt"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'profile_hero_button_1')); ?>
       </a>
       <a href="index.php" class="btn-ghost">
-        <i class="fa-solid fa-arrow-left"></i> Back Home
+        <i class="fa-solid fa-arrow-left"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'profile_hero_button_2')); ?>
       </a>
     </div>
   </div>

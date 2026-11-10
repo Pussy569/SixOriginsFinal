@@ -492,8 +492,8 @@ $result_count = count($results);
 
 <section class="hero" aria-labelledby="searchTitle">
   <div class="hero-content">
-    <h1 id="searchTitle">Search Products</h1>
-    <p>Find products by name. Choose a size and quantity, then add items to your cart.</p>
+    <h1 id="searchTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'search_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'search_hero_description')); ?></p>
   </div>
 </section>
 

@@ -1316,8 +1316,8 @@ img, video { max-width: 100%; }
             Your browser does not support the video tag.
          </video>
       <div class="hero-content">
-         <h1>Six Origins Making Every Day Better</h1>
-         <p>Experience quality coffee and apparel crafted with passion.</p>
+         <h1><?php echo escapeOutput(site_customization_text($site_customization, 'home_hero_heading')); ?></h1>
+         <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_hero_subtitle')); ?></p>
          <a href="Item.php" class="cta-btn"><i class="fa-solid fa-bag-shopping"></i> Shop Now</a>
       </div>
    </section>
@@ -1521,12 +1521,12 @@ img, video { max-width: 100%; }
    <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring">
       <div class="coffee-moment-inner">
          <div class="coffee-moment-text">
-            <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> For the Coffee Lovers</span>
-            <h2>Every Cup Starts with a Smile.</h2>
-            <p>From the first pour to the final sip, every cup is made to feel warm, easy, and worth slowing down for.</p>
+            <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_tag')); ?></span>
+            <h2><?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_heading')); ?></h2>
+            <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_description')); ?></p>
             <div class="CTA-wrap">
-               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-mug-saucer"></i> Grab Your Cup</a>
-               <a href="Menu1P.php" class="cta-btn secondary-btn"><i class="fa-solid fa-book-open"></i> Explore Menu</a>
+               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-mug-saucer"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_button_1')); ?></a>
+               <a href="Menu1P.php" class="cta-btn secondary-btn"><i class="fa-solid fa-book-open"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_button_2')); ?></a>
             </div>
          </div>
          <div class="coffee-moment-visual">
@@ -1547,16 +1547,16 @@ img, video { max-width: 100%; }
    <!-- About Section -->
    <section class="about-section">
       <div class="about-header">
-         <h2>☕ About Six Origins</h2>
-         <p>Discover the story behind our passion for quality coffee and premium apparel</p>
+         <h2><?php echo escapeOutput(site_customization_text($site_customization, 'home_about_heading')); ?></h2>
+         <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_about_description')); ?></p>
       </div>
 
       <div class="about-container">
          <div class="about-content-card">
-            <h3><i class="fa-solid fa-heart"></i> Our Story</h3>
-            <p>Six Origins Cafe isn't just a coffee shop—it's a dream built from the ground up. It started with a vision to create a cozy Japanese-inspired café where quality meets simplicity.</p>
-            <p>At the heart of Six Origins is our commitment to excellence. We source the finest beans from six distinct origins around the world, expertly roast them, and brew each cup to perfection. From freshly brewed specialty drinks to rich cream-based blends, refreshing teas, and handcrafted pastries, everything is made to delight and connect.</p>
-            <a href="about.php"><i class="fa-solid fa-arrow-right"></i> Read More</a>
+            <h3><i class="fa-solid fa-heart"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_story_heading')); ?></h3>
+            <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_story_paragraph_1')); ?></p>
+            <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_story_paragraph_2')); ?></p>
+            <a href="about.php"><i class="fa-solid fa-arrow-right"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_story_button')); ?></a>
          </div>
 
          <div class="carousel-wrapper">
@@ -1564,29 +1564,29 @@ img, video { max-width: 100%; }
                <div class="carousel-slide active">
                   <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_1_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Coffee Origins" loading="lazy">
                   <div class="carousel-text">
-                     <h3>Our Coffee Origins</h3>
-                     <p>Sourced from six distinct origins around the world</p>
+                     <h3><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_1_heading')); ?></h3>
+                     <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_1_description')); ?></p>
                   </div>
                </div>
                <div class="carousel-slide">
                   <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_2_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Roasting" loading="lazy">
                   <div class="carousel-text">
-                     <h3>Expert Roasting</h3>
-                     <p>Each batch carefully roasted to perfection</p>
+                     <h3><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_2_heading')); ?></h3>
+                     <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_2_description')); ?></p>
                   </div>
                </div>
                <div class="carousel-slide">
                   <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_3_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Brewing" loading="lazy">
                   <div class="carousel-text">
-                     <h3>Artisan Brewing</h3>
-                     <p>Brewed with precision and passion</p>
+                     <h3><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_3_heading')); ?></h3>
+                     <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_3_description')); ?></p>
                   </div>
                </div>
                <div class="carousel-slide">
                   <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_4_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Premium Apparel" loading="lazy">
                   <div class="carousel-text">
-                     <h3>Premium Apparel</h3>
-                     <p>Quality clothing crafted for our community</p>
+                     <h3><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_4_heading')); ?></h3>
+                     <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_slide_4_description')); ?></p>
                   </div>
                </div>
             </div>

@@ -946,14 +946,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- HERO SECTION WITH BACKGROUND IMAGE -->
 <section class="hero" aria-labelledby="topupTitle" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.35) 100%), url('images/aboback.png') center/cover no-repeat;">
   <div class="hero-content">
-    <h1 id="topupTitle">Request a Wallet Top-Up</h1>
-    <p>Send payment via GCash, upload your transaction screenshot, and submit your top-up request. Our admin team will review and approve it promptly.</p>
+    <h1 id="topupTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'topup_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'topup_hero_description')); ?></p>
     <div class="hero-buttons">
       <a href="profile.php" class="btn">
-        <i class="fa-solid fa-wallet"></i> View Wallet
+        <i class="fa-solid fa-wallet"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_hero_button_1')); ?>
       </a>
       <a href="index.php" class="btn-ghost">
-        <i class="fa-solid fa-arrow-left"></i> Back Home
+        <i class="fa-solid fa-arrow-left"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_hero_button_2')); ?>
       </a>
     </div>
   </div>
@@ -1049,38 +1049,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Right: Payment Info -->
     <aside class="card" aria-labelledby="paymentTitle">
       <h3 id="paymentTitle">
-        <i class="fa-brands fa-mobile"></i> GCash Payment Details
+        <i class="fa-brands fa-mobile"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_payment_heading')); ?>
       </h3>
       <div class="gcash-card">
         <p>
-          <strong>GCash Number:</strong><br>
-          <span class="gcash-number">09086657580</span>
+          <strong><?php echo escapeOutput(site_customization_text($site_customization, 'topup_number_label')); ?></strong><br>
+          <span class="gcash-number"><?php echo escapeOutput(site_customization_text($site_customization, 'topup_number_value')); ?></span>
         </p>
         <p>
-          <strong>Account Name:</strong><br>
-          <span class="gcash-name">Vic******* D</span>
+          <strong><?php echo escapeOutput(site_customization_text($site_customization, 'topup_account_label')); ?></strong><br>
+          <span class="gcash-name"><?php echo escapeOutput(site_customization_text($site_customization, 'topup_account_value')); ?></span>
         </p>
         <p style="margin-bottom: 0; font-size: 0.88rem; color: var(--gray-brown);">
-          <i class="fa-solid fa-shield-halved"></i> Your payment is secure and protected.
+          <i class="fa-solid fa-shield-halved"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_secure_note')); ?>
         </p>
 
         <div class="payment-steps">
           <h4>
-            <i class="fa-solid fa-list-ol"></i> How it works
+            <i class="fa-solid fa-list-ol"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_steps_heading')); ?>
           </h4>
           <ul>
-            <li>Open your GCash app and send money</li>
-            <li>Enter the GCash number and exact amount</li>
-            <li>Take a screenshot of the receipt/confirmation</li>
-            <li>Upload the screenshot below and submit</li>
-            <li>Admin reviews and approves your request</li>
-            <li>Wallet balance updates immediately</li>
+            <?php for ($stepIndex = 1; $stepIndex <= 6; $stepIndex++): ?>
+              <li><?php echo escapeOutput(site_customization_text($site_customization, 'topup_step_' . $stepIndex)); ?></li>
+            <?php endfor; ?>
           </ul>
         </div>
 
         <div class="info-box" style="margin-top: 16px;">
           <i class="fa-solid fa-clock"></i>
-          <span><strong>Processing Time:</strong> Usually within 1-2 hours during business hours. We'll notify you once approved!</span>
+          <span><strong><?php echo escapeOutput(site_customization_text($site_customization, 'topup_processing_label')); ?></strong> <?php echo escapeOutput(site_customization_text($site_customization, 'topup_processing_description')); ?></span>
         </div>
       </div>
     </aside>

@@ -824,8 +824,8 @@ if (isset($_POST['cancel_customer_order'])) {
 <!-- HERO SECTION -->
 <section class="hero">
   <div class="hero-content">
-    <h1>Your Orders</h1>
-    <p>Track and review all your orders. Check payment status, product details, and wallet transactions in one place.</p>
+    <h1><?php echo escapeOutput(site_customization_text($site_customization, 'orders_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'orders_hero_description')); ?></p>
   </div>
 </section>
 

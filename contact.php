@@ -914,19 +914,19 @@ if ($unseen_total_q && mysqli_num_rows($unseen_total_q) > 0) {
 <!-- HERO SECTION WITH BACKGROUND IMAGE - FULL WIDTH AT TOP -->
 <section class="hero" aria-labelledby="contactTitle" style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.65) 100%), url('images/aboback.png') center/cover no-repeat;">
   <div class="hero-content">
-    <h1 id="contactTitle">Get In Touch</h1>
-    <p>Have questions about your order, our products, or want to discuss something with us? We'd love to hear from you! Our friendly team is here to help and respond as quickly as possible.</p>
+    <h1 id="contactTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'contact_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'contact_hero_description')); ?></p>
     <div class="hero-buttons">
       <a href="Item.php" class="btn-ghost">
-        <i class="fa-solid fa-bag-shopping"></i> Visit Shop
+        <i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_hero_button_1')); ?>
       </a>
       <a href="index.php" class="btn-ghost">
-        <i class="fa-solid fa-arrow-left"></i> Back Home
+        <i class="fa-solid fa-arrow-left"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_hero_button_2')); ?>
       </a>
       <?php if ($unseen_total > 0): ?>
         <a href="#inbox" class="btn">
           <i class="fa-solid fa-bell"></i> 
-          <span>Replies</span>
+          <span><?php echo escapeOutput(site_customization_text($site_customization, 'contact_hero_button_replies')); ?></span>
           <span class="badge"><?php echo $unseen_total; ?></span>
         </a>
       <?php endif; ?>
@@ -1056,19 +1056,19 @@ if ($unseen_total_q && mysqli_num_rows($unseen_total_q) > 0) {
     <aside>
       <div class="info-list">
         <div class="info-card">
-          <h4><i class="fa-solid fa-phone"></i> Call Us</h4>
-          <p style="color: var(--primary-red); font-size: 1.1em;">+63 912 345 6789</p>
-          <p class="small">Available 9AM - 6PM daily</p>
+          <h4><i class="fa-solid fa-phone"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_phone_heading')); ?></h4>
+          <p style="color: var(--primary-red); font-size: 1.1em;"><?php echo escapeOutput(site_customization_text($site_customization, 'contact_phone_value')); ?></p>
+          <p class="small"><?php echo escapeOutput(site_customization_text($site_customization, 'contact_phone_hours')); ?></p>
         </div>
 
         <div class="info-card">
-          <h4><i class="fa-solid fa-location-dot"></i> Visit Us</h4>
-          <p>Cainta, Rizal, Philippines</p>
-          <p class="small">Drop by our cafe for direct assistance and product demos!</p>
+          <h4><i class="fa-solid fa-location-dot"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_visit_heading')); ?></h4>
+          <p><?php echo escapeOutput(site_customization_text($site_customization, 'contact_location')); ?></p>
+          <p class="small"><?php echo escapeOutput(site_customization_text($site_customization, 'contact_visit_description')); ?></p>
         </div>
 
         <div class="info-card">
-          <h4><i class="fa-solid fa-share-nodes"></i> Follow Us</h4>
+          <h4><i class="fa-solid fa-share-nodes"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_follow_heading')); ?></h4>
           <div style="display: flex; gap: 10px; margin-top: 10px;">
             <a href="#" title="Facebook" aria-label="Facebook">
               <i class="fab fa-facebook-f"></i>
@@ -1086,9 +1086,9 @@ if ($unseen_total_q && mysqli_num_rows($unseen_total_q) > 0) {
         </div>
 
         <div class="info-card">
-          <h4><i class="fa-solid fa-clock"></i> Response Time</h4>
-          <p>We typically reply within 24 hours</p>
-          <p class="small">During business hours: 1-2 hours</p>
+          <h4><i class="fa-solid fa-clock"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'contact_response_heading')); ?></h4>
+          <p><?php echo escapeOutput(site_customization_text($site_customization, 'contact_response_description')); ?></p>
+          <p class="small"><?php echo escapeOutput(site_customization_text($site_customization, 'contact_response_hours')); ?></p>
         </div>
       </div>
     </aside>

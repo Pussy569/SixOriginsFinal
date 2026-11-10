@@ -80,6 +80,14 @@ Existing databases must also add the separate navbar hover text and border color
 mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261109_site_customization_navbar_hover_colors.sql
 ```
 
+The Head Admin can edit the homepage and About-page copy, the customer page hero headings and descriptions, shop quick facts, contact information cards, top-up payment instructions, and footer copy. The About-page impact and Quick Facts images are also replaceable. Available button labels can be edited while their links and actions stay fixed; the homepage hero and specified About call-to-action buttons stay unchanged. The shop Quick Facts “Join Community” button and footer newsletter have been removed. Back up existing databases and apply this migration after the other site customization migrations:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261111_site_customization_text_content.sql
+```
+
+Fresh databases initialized from the current `database/schema.sql` already include these fields.
+
 ### Automatic vouchers and customer rewards
 
 The Head Admin can manage welcome vouchers, completed-order spend/item-count offers, the points exchange rates, and the 7-day daily reward cycle from **Rewards & Vouchers** in the admin profile menu. Customers use **Rewards & Points** in their profile menu to claim daily rewards, see available vouchers, and exchange points for wallet balance or a discount voucher. The reward pages use the configured system color palette.

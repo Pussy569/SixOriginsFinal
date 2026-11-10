@@ -6,6 +6,11 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 $aboutHeroImageUrl = site_customization_auth_image_url($siteCustomization['about_hero_image_path'], 'images/aboback.png');
 $aboutCafeImageUrl = site_customization_auth_image_url($siteCustomization['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['about_product_image_path'], 'images/promo-product.png');
+$aboutImpactImageUrls = [
+    site_customization_auth_image_url($siteCustomization['about_impact_1_image_path'], 'images/ge.jpg'),
+    site_customization_auth_image_url($siteCustomization['about_impact_2_image_path'], 'images/gee.jpg'),
+    site_customization_auth_image_url($siteCustomization['about_impact_3_image_path'], 'images/geee.jpg'),
+];
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -936,11 +941,11 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
 <!-- HERO SECTION WITH BACKGROUND IMAGE - FULL WIDTH AT TOP -->
 <section class="hero" aria-labelledby="aboutTitle" style="background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.52) 0%, rgba(0, 0, 0, 0.65) 100%), url('<?php echo escapeOutput($aboutHeroImageUrl); ?>');">
   <div class="hero-content">
-    <h1 id="aboutTitle">Six Origins Making Every Day Better</h1>
-    <p>Experience quality coffee and apparel crafted with passion.</p>
+    <h1 id="aboutTitle"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_hero_subtitle')); ?></p>
     <div class="hero-buttons">
-      <a href="Item.php" class="btn"><i class="fa-solid fa-bag-shopping"></i> Shop Now</a>
-      <a href="contact.php" class="btn-ghost"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+      <a href="Item.php" class="btn"><i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_hero_button_1')); ?></a>
+      <a href="contact.php" class="btn-ghost"><i class="fa-solid fa-envelope"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_hero_button_2')); ?></a>
     </div>
   </div>
 </section>
@@ -951,58 +956,58 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
     <!-- Impact Section -->
     <section aria-label="Six Origins Impact">
       <div class="section-intro">
-        <h2>What Makes Us</h2>
-        <p>Three things guide everything we do — where our coffee comes from, who we serve, and the promise we keep with every cup.</p>
+        <h2><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_impact_heading')); ?></h2>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_impact_description')); ?></p>
       </div>
       <div class="impact-section">
         <div class="impact-card">
           <div class="image-wrap">
-            <img src="images/ge.jpg" alt="Global Coffee Origins" class="image" loading="lazy">
-            <span class="subtitle-tag">Six Finest Regions</span>
+            <img src="<?php echo escapeOutput($aboutImpactImageUrls[0]); ?>" alt="<?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_heading')); ?>" class="image" loading="lazy">
+            <span class="subtitle-tag"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_tag')); ?></span>
           </div>
           <div class="content">
-            <h3>Global Coffee Origins</h3>
-            <p>We source premium beans from six distinct coffee-growing regions worldwide, each bringing unique flavor profiles and sustainable farming practices.</p>
+            <h3><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_heading')); ?></h3>
+            <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_description')); ?></p>
             <ul>
-              <li>Direct relationships with ethical farmers</li>
-              <li>Fair trade and sustainable sourcing</li>
-              <li>Small-batch specialty roasting</li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_point_1')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_point_2')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_point_3')); ?></li>
             </ul>
-            <a href="Item.php" class="cta"><i class="fa-solid fa-bag-shopping"></i> Explore Collection</a>
+            <a href="Item.php" class="cta"><i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_1_button')); ?></a>
           </div>
         </div>
 
         <div class="impact-card">
           <div class="image-wrap">
-            <img src="images/gee.jpg" alt="Community Impact" class="image" loading="lazy">
-            <span class="subtitle-tag">Building Connections</span>
+            <img src="<?php echo escapeOutput($aboutImpactImageUrls[1]); ?>" alt="<?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_heading')); ?>" class="image" loading="lazy">
+            <span class="subtitle-tag"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_tag')); ?></span>
           </div>
           <div class="content">
-            <h3>Community Impact</h3>
-            <p>More than just a cafe, Six Origins is a gathering place where friendships are brewed and local creators are supported across Rizal.</p>
+            <h3><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_heading')); ?></h3>
+            <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_description')); ?></p>
             <ul>
-              <li>Support for local artisans and creators</li>
-              <li>Community events and coffee sessions</li>
-              <li>Fair wages and employee development</li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_point_1')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_point_2')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_point_3')); ?></li>
             </ul>
-            <a href="contact.php" class="cta"><i class="fa-solid fa-heart"></i> Get Involved</a>
+            <a href="contact.php" class="cta"><i class="fa-solid fa-heart"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_2_button')); ?></a>
           </div>
         </div>
 
         <div class="impact-card">
           <div class="image-wrap">
-            <img src="images/geee.jpg" alt="Six Origins Promise" class="image" loading="lazy">
-            <span class="subtitle-tag">Quality &amp; Simplicity</span>
+            <img src="<?php echo escapeOutput($aboutImpactImageUrls[2]); ?>" alt="<?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_heading')); ?>" class="image" loading="lazy">
+            <span class="subtitle-tag"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_tag')); ?></span>
           </div>
           <div class="content">
-            <h3>Six Origins Promise</h3>
-            <p>Every cup tells a story of passion and precision. From bean to cup, we ensure consistency and the warm hospitality that makes every visit memorable.</p>
+            <h3><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_heading')); ?></h3>
+            <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_description')); ?></p>
             <ul>
-              <li>Expert baristas trained to perfection</li>
-              <li>Premium merchandise and apparel</li>
-              <li>Customer experience as our priority</li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_point_1')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_point_2')); ?></li>
+              <li><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_point_3')); ?></li>
             </ul>
-            <a href="#" class="cta"><i class="fa-solid fa-arrow-right"></i> Learn More</a>
+            <a href="#" class="cta"><i class="fa-solid fa-arrow-right"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_card_3_button')); ?></a>
           </div>
         </div>
       </div>
@@ -1014,13 +1019,13 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
         <img src="<?php echo escapeOutput($aboutCafeImageUrl); ?>" alt="Six Origins featured coffee blend" loading="lazy">
       </div>
       <div class="promo-body">
-        <span class="promo-tag"><i class="fa-solid fa-mug-hot"></i> Featured Blend</span>
-        <h2 id="promo1Title">A Darker, Deeper Coffee Experience.</h2>
-        <p>Step into the Six Origins cafe and settle in with a cup roasted for depth and warmth — every visit is a moment worth slowing down for.</p>
+        <span class="promo-tag"><i class="fa-solid fa-mug-hot"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_tag')); ?></span>
+        <h2 id="promo1Title"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_heading')); ?></h2>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_description')); ?></p>
         <ul class="promo-points" aria-label="Highlights">
-          <li><i class="fa-solid fa-earth-asia"></i> Six finest origins</li>
-          <li><i class="fa-solid fa-fire"></i> Small-batch roasting</li>
-          <li><i class="fa-solid fa-mug-saucer"></i> Cozy cafe vibes</li>
+          <li><i class="fa-solid fa-earth-asia"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_1')); ?></li>
+          <li><i class="fa-solid fa-fire"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_2')); ?></li>
+          <li><i class="fa-solid fa-mug-saucer"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_3')); ?></li>
         </ul>
         <div class="promo-actions">
           <a href="Item.php" class="promo-btn"><i class="fa-solid fa-bag-shopping"></i> Explore Our Blends</a>
@@ -1032,14 +1037,14 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
     <!-- About Content Grid -->
     <div class="about-grid" role="region" aria-label="About content">
       <article class="card" aria-labelledby="whyTitle">
-        <h2 id="whyTitle">Why Choose Six Origins?</h2>
-        <p>We believe that great coffee is more than just a beverage—it's an experience. Every cup served at Six Origins is crafted with precision, passion, and purpose. We don't just brew coffee; we create moments of joy and connection.</p>
-        <p>Our commitment to quality extends beyond the cup. From our carefully curated product selection to our commitment to fair wages for our team, we believe in doing business with integrity. We support local artisans, use sustainable practices, and invest in our community because we believe that success should benefit everyone.</p>
-        <p>Whether you're a longtime coffee enthusiast or just discovering your favorite brew, Six Origins welcomes you into our family. We're here to share our passion, celebrate your moments, and make every visit memorable.</p>
+        <h2 id="whyTitle"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_why_heading')); ?></h2>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_why_paragraph_1')); ?></p>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_why_paragraph_2')); ?></p>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_why_paragraph_3')); ?></p>
         <div class="contact-cta" role="group" aria-label="Contact call to action">
           <div>
-            <div class="text"><i class="fa-solid fa-question-circle"></i> Questions about our coffee?</div>
-            <div class="sub" style="margin-top: 6px;">Our friendly team is here to help and share our coffee passion.</div>
+            <div class="text"><i class="fa-solid fa-question-circle"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_contact_heading')); ?></div>
+            <div class="sub" style="margin-top: 6px;"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_contact_description')); ?></div>
           </div>
           <div>
             <a href="contact.php"><i class="fa-solid fa-arrow-right"></i> Get in Touch</a>
@@ -1048,14 +1053,12 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
       </article>
 
       <aside class="card" aria-labelledby="whyImage">
-        <img src="images/ey.jpg" alt="Why Choose Six Origins" id="whyImage" class="facts-img">
-        <h2 class="facts-title">🎯 Quick Facts</h2>
+        <img src="<?php echo escapeOutput(site_customization_auth_image_url($siteCustomization['about_why_image_path'] ?? 'images/ey.jpg', 'images/ey.jpg')); ?>" alt="<?php echo escapeOutput(site_customization_text($siteCustomization, 'about_why_heading')); ?>" id="whyImage" class="facts-img">
+        <h2 class="facts-title"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_facts_heading')); ?></h2>
         <ul class="clear-list">
-          <li><strong>Founded:</strong> Oct 30, 2020</li>
-          <li><strong>Location:</strong> Cainta, Rizal, PH</li>
-          <li><strong>Origins:</strong> Six finest coffee regions</li>
-          <li><strong>Team:</strong> 6+ dedicated members</li>
-          <li><strong>Mission:</strong> Quality, community, simplicity</li>
+          <?php for ($factIndex = 1; $factIndex <= 5; $factIndex++): ?>
+            <li><strong><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_fact_' . $factIndex . '_label')); ?>:</strong> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_fact_' . $factIndex . '_value')); ?></li>
+          <?php endfor; ?>
         </ul>
         <div style="margin-top: 16px;">
           <a href="Item.php" class="facts-cta"><i class="fa-solid fa-bag-shopping"></i> Shop Now</a>
@@ -1069,17 +1072,17 @@ $aboutProductImageUrl = site_customization_auth_image_url($siteCustomization['ab
         <img src="<?php echo escapeOutput($aboutProductImageUrl); ?>" alt="Six Origins merchandise collection" loading="lazy">
       </div>
       <div class="promo-body">
-        <span class="promo-tag"><i class="fa-solid fa-bag-shopping"></i> New Merch Drop</span>
-        <h2 id="promo2Title">Gear Built Around the Ritual.</h2>
-        <p>From single-origin beans to our signature carryall, everything we make is built around the ritual of a really good cup of coffee.</p>
+        <span class="promo-tag"><i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_tag')); ?></span>
+        <h2 id="promo2Title"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_heading')); ?></h2>
+        <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_description')); ?></p>
         <ul class="promo-points" aria-label="Highlights">
-          <li><i class="fa-solid fa-star"></i> Just dropped</li>
-          <li><i class="fa-solid fa-shirt"></i> Premium apparel</li>
-          <li><i class="fa-solid fa-bag-shopping"></i> Signature carryall</li>
+          <li><i class="fa-solid fa-star"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_point_1')); ?></li>
+          <li><i class="fa-solid fa-shirt"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_point_2')); ?></li>
+          <li><i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_point_3')); ?></li>
         </ul>
         <div class="promo-actions">
-          <a href="Item.php" class="promo-btn"><i class="fa-solid fa-bag-shopping"></i> Shop The Collection</a>
-          <a href="contact.php" class="promo-btn promo-btn-ghost"><i class="fa-solid fa-headset"></i> Ask Us</a>
+          <a href="Item.php" class="promo-btn"><i class="fa-solid fa-bag-shopping"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_button_1')); ?></a>
+          <a href="contact.php" class="promo-btn promo-btn-ghost"><i class="fa-solid fa-headset"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_merch_button_2')); ?></a>
         </div>
       </div>
     </section>

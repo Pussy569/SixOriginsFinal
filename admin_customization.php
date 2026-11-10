@@ -34,6 +34,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newSettings = $settings;
         $newSettings['brand_name'] = $brandName;
         $newSettings['brand_tagline'] = $brandTagline;
+        $postedContentTexts = $_POST['content_texts'] ?? [];
+        if (!is_array($postedContentTexts)) {
+            throw new RuntimeException('Enter valid text for the site content fields.');
+        }
+        foreach (site_customization_content_fields() as $contentFields) {
+            foreach ($contentFields as $key => $field) {
+                $value = $postedContentTexts[$key] ?? $settings['content_texts'][$key] ?? $field[1];
+                if (!is_string($value) || strlen($value) > 1000) {
+                    throw new RuntimeException('Each site text field must be no longer than 1,000 characters.');
+                }
+                $newSettings['content_texts'][$key] = trim($value);
+            }
+        }
         $loadingStyle = (string)($_POST['loading_style'] ?? '');
         if (!in_array($loadingStyle, ['rings', 'spinner', 'dots', 'progress', 'coffee', 'none'], true)) {
             throw new RuntimeException('Choose a valid loading animation.');
@@ -94,6 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'about_hero_image_path' => 'about_hero_image',
             'about_cafe_image_path' => 'about_cafe_image',
             'about_product_image_path' => 'about_product_image',
+            'about_impact_1_image_path' => 'about_impact_image_1',
+            'about_impact_2_image_path' => 'about_impact_image_2',
+            'about_impact_3_image_path' => 'about_impact_image_3',
+            'about_why_image_path' => 'about_why_image',
             'home_about_slide_1_image_path' => 'home_about_slide_1_image',
             'home_about_slide_2_image_path' => 'home_about_slide_2_image',
             'home_about_slide_3_image_path' => 'home_about_slide_3_image',
@@ -250,6 +267,21 @@ $mediaUrl = site_customization_video_url($settings['hero_media_path']);
 $hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['hero_media_path'] !== null;
 $aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
+$aboutImpactImages = [];
+foreach ([
+    'about_impact_1_image_path' => ['title' => 'About card 1 image', 'input' => 'about_impact_image_1', 'default' => 'images/ge.jpg'],
+    'about_impact_2_image_path' => ['title' => 'About card 2 image', 'input' => 'about_impact_image_2', 'default' => 'images/gee.jpg'],
+    'about_impact_3_image_path' => ['title' => 'About card 3 image', 'input' => 'about_impact_image_3', 'default' => 'images/geee.jpg'],
+    'about_why_image_path' => ['title' => 'About quick facts image', 'input' => 'about_why_image', 'default' => 'images/ey.jpg'],
+] as $settingKey => $imageConfig) {
+    $aboutImpactImages[$settingKey] = [
+        'title' => $imageConfig['title'],
+        'input' => $imageConfig['input'],
+        'default' => $imageConfig['default'],
+        'url' => site_customization_auth_image_url($settings[$settingKey], $imageConfig['default']),
+    ];
+}
+$contentFieldGroups = site_customization_content_fields();
 $homeCarouselImages = [];
 foreach ([
     'home_about_slide_1_image_path' => ['title' => 'Coffee origins slide', 'input' => 'home_about_slide_1_image'],
@@ -303,6 +335,7 @@ $authImages = [
         <a href="#brand-identity"><i class="fa-solid fa-signature"></i> Brand</a>
         <a href="#system-colors"><i class="fa-solid fa-droplet"></i> Colors</a>
         <a href="#about-team"><i class="fa-solid fa-people-group"></i> About &amp; team</a>
+        <a href="#site-copy"><i class="fa-solid fa-pen-to-square"></i> Site text</a>
         <a href="#page-backgrounds"><i class="fa-regular fa-images"></i> Page banners</a>
         <a href="#homepage-video"><i class="fa-solid fa-film"></i> Homepage</a>
         <a href="#sign-in-pictures"><i class="fa-regular fa-images"></i> Sign-in pages</a>
@@ -330,6 +363,22 @@ $authImages = [
                     'about_cafe_image_path' => ['title' => 'Featured cafe image', 'input' => 'about_cafe_image', 'url' => $aboutCafeImageUrl, 'default' => 'images/promo-cafe.png'],
                     'about_product_image_path' => ['title' => 'Featured product image', 'input' => 'about_product_image', 'url' => $aboutProductImageUrl, 'default' => 'images/promo-product.png'],
                 ] as $settingKey => $imageConfig): ?>
+                    <div class="customization-image-setting">
+                        <label><?php echo escapeOutput($imageConfig['title']); ?>
+                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <div class="customization-preview-row">
+                            <img class="customization-auth-preview" src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                            <span>Current image</span>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <h3>About page images</h3>
+            <p class="customization-help">Upload images for the three About page cards and the Quick Facts panel. Leave an upload empty to keep its current image.</p>
+            <div class="customization-auth-image-grid">
+                <?php foreach ($aboutImpactImages as $settingKey => $imageConfig): ?>
                     <div class="customization-image-setting">
                         <label><?php echo escapeOutput($imageConfig['title']); ?>
                             <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
@@ -377,6 +426,26 @@ $authImages = [
                 <?php endforeach; ?>
             </div>
             <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
+        </section>
+        <section class="customization-card" id="site-copy">
+            <h2><i class="fa-solid fa-pen-to-square"></i> Storefront text</h2>
+            <p class="customization-help">Edit customer-facing headings, descriptions, footer copy, and informational text. Available button labels can be changed without changing their existing links or actions; buttons marked as fixed stay unchanged.</p>
+            <?php foreach ($contentFieldGroups as $groupTitle => $contentFields): ?>
+                <fieldset class="customization-team-member">
+                    <legend><?php echo escapeOutput($groupTitle); ?></legend>
+                    <?php foreach ($contentFields as $key => $field):
+                        $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                    ?>
+                        <label><?php echo escapeOutput($field[0]); ?>
+                            <?php if (strlen($field[1]) > 90): ?>
+                                <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
+                            <?php else: ?>
+                                <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                            <?php endif; ?>
+                        </label>
+                    <?php endforeach; ?>
+                </fieldset>
+            <?php endforeach; ?>
         </section>
         <section class="customization-card customization-page-backgrounds" id="page-backgrounds">
             <h2><i class="fa-regular fa-images"></i> Customer page hero/banner images</h2>

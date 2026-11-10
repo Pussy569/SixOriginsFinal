@@ -526,14 +526,14 @@ unset($_SESSION['message']);
 
 <section class="hero">
   <div class="hero-content">
-    <h1 id="shopTitle">Our Premium Shop</h1>
-    <p>Explore our carefully curated collection of premium coffee products and merchandise. Each item is selected with care to reflect our commitment to quality and your satisfaction.</p>
+    <h1 id="shopTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'shop_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'shop_hero_description')); ?></p>
     <div class="hero-buttons">
       <a href="contact.php" class="btn">
-        <i class="fa-solid fa-headset"></i> Customer Support
+        <i class="fa-solid fa-headset"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'shop_hero_button_1')); ?>
       </a>
       <a href="Item.php" class="btn-ghost">
-        <i class="fa-solid fa-shopping-bag"></i> Continue Shopping
+        <i class="fa-solid fa-shopping-bag"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'shop_hero_button_2')); ?>
       </a>
     </div>
   </div>
@@ -551,16 +551,12 @@ unset($_SESSION['message']);
 
    <div class="main-layout">
       <aside class="card sticky-sidebar" aria-labelledby="factsTitle">
-         <h2 id="factsTitle"><i class="fa-solid fa-circle-info"></i> Quick Facts</h2>
+         <h2 id="factsTitle"><i class="fa-solid fa-circle-info"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'shop_facts_heading')); ?></h2>
          <ul class="facts-list">
-            <li><strong>Founded:</strong> Oct 30, 2020</li>
-            <li><strong>Location:</strong> Cainta, Rizal</li>
-            <li><strong>Focus:</strong> Quality coffee & products</li>
-            <li><strong>Commitment:</strong> Excellence & community</li>
+            <?php for ($factIndex = 1; $factIndex <= 4; $factIndex++): ?>
+               <li><strong><?php echo escapeOutput(site_customization_text($site_customization, 'shop_fact_' . $factIndex . '_label')); ?>:</strong> <?php echo escapeOutput(site_customization_text($site_customization, 'shop_fact_' . $factIndex . '_value')); ?></li>
+            <?php endfor; ?>
          </ul>
-         <a href="register.php" class="btn btn-primary btn-full-width" style="margin-bottom: 12px;">
-           <i class="fa-solid fa-user-plus"></i> Join Community
-         </a>
          <div class="contact-cta">
            <div class="text">
              <i class="fa-solid fa-question-circle"></i> Need help?

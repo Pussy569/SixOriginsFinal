@@ -1,7 +1,8 @@
 <?php
-// Enhanced footer — purely visual, no server-side logic.
-// NOTE: this file is an include fragment. The page that includes it (via header.php)
-// already provides <!DOCTYPE>, <html>, <head> and <body>, so they are not repeated here.
+require_once dirname(__DIR__) . '/helpers/site_customization.php';
+$footerSettings = isset($site_customization) && is_array($site_customization)
+    ? $site_customization
+    : site_customization_defaults();
 ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -251,58 +252,6 @@
   transform: translateX(4px);
 }
 
-/* Newsletter */
-.newsletter-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.newsletter-form input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid rgba(255, 242, 224, 0.2);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFBF7;
-  font-size: 0.95rem;
-  transition: var(--transition);
-  font-weight: 500;
-}
-
-.newsletter-form input::placeholder {
-  color: #D7D0C4;
-  font-weight: 500;
-}
-
-.newsletter-form input:focus {
-  outline: none;
-  border-color: #FFF2E0;
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(255, 242, 224, 0.12);
-}
-
-.newsletter-form button {
-  padding: 12px 18px;
-  background: linear-gradient(135deg, #FFF2E0 0%, #FFE8C4 100%);
-  color: var(--dark-brown);
-  border: none;
-  border-radius: 10px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: var(--transition);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.95rem;
-}
-
-.newsletter-form button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 242, 224, 0.35);
-}
-
 /* Footer Bottom */
 .footer-bottom {
   margin-top: 44px;
@@ -448,34 +397,34 @@
         <div class="footer-brand">
            <div class="footer-brand-icon">☕</div>
            <div class="footer-brand-text">
-              <h1>Six Origins</h1>
-              <span class="accent">Cafe</span>
+              <h1><?php echo escapeOutput($footerSettings['brand_name']); ?></h1>
+              <span class="accent"><?php echo escapeOutput($footerSettings['brand_tagline']); ?></span>
            </div>
         </div>
-        <p>Discover the six finest coffee origins. Quality beans sourced with care, expertly roasted, and brewed to perfection. Your cozy corner for authentic coffee experiences.</p>
+        <p><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_description')); ?></p>
      </div>
 
      <!-- Contact Section -->
      <div class="footer-section">
-        <h3><i class="fa-solid fa-phone"></i> Contact</h3>
+        <h3><i class="fa-solid fa-phone"></i> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_contact_heading')); ?></h3>
         <div class="contact-item">
            <i class="fa-solid fa-phone"></i>
-           <span>+63 (123) 456-7890</span>
+           <span><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_phone')); ?></span>
         </div>
         <div class="contact-item">
            <i class="fa-solid fa-envelope"></i>
-           <span>hello@sixorigins.cafe</span>
+           <span><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_email')); ?></span>
         </div>
         <div class="contact-item">
            <i class="fa-solid fa-location-dot"></i>
-           <span>Cainta, Rizal, Philippines</span>
+           <span><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_location')); ?></span>
         </div>
      </div>
 
      <!-- Follow Section -->
      <div class="footer-section">
-        <h3><i class="fa-solid fa-share-nodes"></i> Follow Us</h3>
-        <p style="color: #D7D0C4; margin: 0; font-size: 0.9rem;">Stay connected for the latest updates.</p>
+        <h3><i class="fa-solid fa-share-nodes"></i> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_follow_heading')); ?></h3>
+        <p style="color: #D7D0C4; margin: 0; font-size: 0.9rem;"><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_follow_description')); ?></p>
         <div class="socials">
            <a href="https://www.facebook.com/profile.php?id=61575572083638" title="Visit our Facebook" aria-label="Facebook">
               <i class="fab fa-facebook-f"></i>
@@ -504,29 +453,20 @@
         </div>
      </div>
 
-     <!-- Newsletter Section -->
-     <div class="footer-section">
-        <h3><i class="fa-solid fa-envelope-open"></i> Newsletter</h3>
-        <p style="color: #D7D0C4; margin: 0; font-size: 0.9rem;">Get exclusive updates and offers.</p>
-        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thank you for subscribing!'); this.reset();">
-           <input type="email" placeholder="your@email.com" required aria-label="Email address">
-           <button type="submit"><i class="fa-solid fa-paper-plane"></i> Subscribe</button>
-        </form>
-     </div>
   </div>
 
   <!-- Footer Bottom -->
   <div class="footer-bottom">
      <p>
-        &copy; <span id="year"></span> <strong>Six Origins Cafe</strong> <span class="divider">•</span> All Rights Reserved
+        &copy; <span id="year"></span> <strong><?php echo escapeOutput($footerSettings['brand_name'] . ' ' . $footerSettings['brand_tagline']); ?></strong> <span class="divider">•</span> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_rights_text')); ?>
      </p>
      <p>
-        <a href="#">Terms of Service</a> <span class="divider">•</span> 
-        <a href="#">Privacy Policy</a> <span class="divider">•</span> 
-        <a href="#">Cookie Policy</a>
+        <a href="#"><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_terms_label')); ?></a> <span class="divider">•</span>
+        <a href="#"><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_privacy_label')); ?></a> <span class="divider">•</span>
+        <a href="#"><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_cookies_label')); ?></a>
      </p>
      <p style="margin-top: 12px; font-size: 0.85rem;">
-        Crafted with <i class="fa-solid fa-heart" style="color: #FFF2E0;"></i> for coffee lovers everywhere ☕
+        Crafted with <i class="fa-solid fa-heart" style="color: #FFF2E0;"></i> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_signoff')); ?> ☕
      </p>
   </div>
 </footer>

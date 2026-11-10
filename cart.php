@@ -1113,8 +1113,8 @@ $open_checkout_on_load = isset($_GET['checkout']);
 
 <section class="hero" aria-labelledby="cartTitle" style="background: linear-gradient(135deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.65) 100%), url('images/aboback.png') center/cover no-repeat;">
   <div class="hero-content">
-    <h1 id="cartTitle">Your Shopping Cart</h1>
-    <p>Review your items and check out right here — no page hopping needed.</p>
+    <h1 id="cartTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'cart_hero_heading')); ?></h1>
+    <p><?php echo escapeOutput(site_customization_text($site_customization, 'cart_hero_description')); ?></p>
   </div>
 </section>
 
