@@ -1091,14 +1091,16 @@ $aboutImpactImageUrls = [
     </section>
 
     <!-- Team Section -->
+    <?php $members = $siteCustomization['team_members']; ?>
+    <?php if ($members !== []): ?>
     <section class="team">
       <h2>🌟 Meet Our Team</h2>
       <p>A passionate crew that brings Six Origins to life every single day, with dedication and a smile.</p>
       <div class="team-grid" role="list" aria-label="Team members">
         <?php
-          $members = $siteCustomization['team_members'];
           foreach ($members as $memberIndex => $m):
-            $memberImageUrl = site_customization_auth_image_url($m['image'], site_customization_default_team_members()[$memberIndex]['image']);
+            $defaultTeamMember = site_customization_default_team_members()[$memberIndex] ?? ['image' => 'images/logos.png'];
+            $memberImageUrl = site_customization_auth_image_url($m['image'], $defaultTeamMember['image']);
         ?>
         <div class="member" role="listitem" aria-label="<?php echo htmlspecialchars($m['name']); ?>">
           <img src="<?php echo escapeOutput($memberImageUrl); ?>" alt="<?php echo htmlspecialchars($m['name'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
@@ -1120,6 +1122,7 @@ $aboutImpactImageUrls = [
         <?php endforeach; ?>
       </div>
     </section>
+    <?php endif; ?>
 
   </main>
 </div>

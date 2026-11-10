@@ -151,9 +151,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $postedNames = $_POST['team_name'] ?? [];
         $postedRoles = $_POST['team_role'] ?? [];
         $postedBios = $_POST['team_bio'] ?? [];
+        $postedTeamPhotoResets = $_POST['reset_team_photo'] ?? [];
+        if (!is_array($postedNames) || !is_array($postedRoles) || !is_array($postedBios) || !is_array($postedTeamPhotoResets)) {
+            throw new RuntimeException('Enter valid text for each team member.');
+        }
+        if (count($postedNames) > 30) {
+            throw new RuntimeException('You can add up to 30 team members.');
+        }
         $newTeamMembers = [];
-        foreach ($oldTeamMembers as $index => $oldMember) {
-            $nameValue = $postedNames[$index] ?? '';
+        foreach ($postedNames as $index => $nameValue) {
             $roleValue = $postedRoles[$index] ?? '';
             $bioValue = $postedBios[$index] ?? '';
             if (!is_string($nameValue) || !is_string($roleValue) || !is_string($bioValue)) {
@@ -166,7 +172,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('Each team member needs a name, role, and bio within the displayed character limits.');
             }
 
-            $teamImage = $oldMember['image'];
+            $oldMember = $oldTeamMembers[$index] ?? null;
+            $defaultMember = site_customization_default_team_members()[$index] ?? null;
+            $teamImage = is_array($oldMember)
+                ? $oldMember['image']
+                : ($defaultMember['image'] ?? 'images/logos.png');
             $teamPhotoFile = [];
             foreach (['name', 'type', 'tmp_name', 'error', 'size'] as $fileKey) {
                 $teamPhotoFile[$fileKey] = $_FILES['team_photo'][$fileKey][$index] ?? null;
@@ -175,8 +185,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploadedTeamPhoto !== null) {
                 $newUploads[] = $uploadedTeamPhoto;
                 $teamImage = $uploadedTeamPhoto;
-            } elseif (!empty($_POST['reset_team_photo'][$index])) {
-                $teamImage = site_customization_default_team_members()[$index]['image'];
+            } elseif (!empty($postedTeamPhotoResets[$index])) {
+                $teamImage = $defaultMember['image'] ?? 'images/logos.png';
             }
             $newTeamMembers[] = ['name' => $name, 'role' => $role, 'bio' => $bio, 'image' => $teamImage];
         }
@@ -226,8 +236,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 delete_site_customization_upload($oldPageBackground, __DIR__);
             }
         }
-        foreach ($oldTeamMembers as $index => $oldMember) {
-            if ($oldMember['image'] !== $newTeamMembers[$index]['image']) {
+        foreach ($oldTeamMembers as $oldMember) {
+            $imageIsRetained = false;
+            foreach ($newTeamMembers as $newMember) {
+                if ($oldMember['image'] === $newMember['image']) {
+                    $imageIsRetained = true;
+                    break;
+                }
+            }
+            if (!$imageIsRetained) {
                 delete_site_customization_upload($oldMember['image'], __DIR__);
             }
         }
@@ -474,25 +491,46 @@ $customizationPages = [
                     </div>
                 <?php endforeach; ?>
             </div>
-            <div class="customization-team-grid">
+            <div class="customization-team-grid" id="customization-team-grid">
                 <?php foreach ($teamMembers as $index => $member):
-                    $teamImageUrl = site_customization_auth_image_url($member['image'], site_customization_default_team_members()[$index]['image']);
+                    $defaultTeamMember = site_customization_default_team_members()[$index] ?? ['image' => 'images/logos.png'];
+                    $teamImageUrl = site_customization_auth_image_url($member['image'], $defaultTeamMember['image']);
                 ?>
-                    <fieldset class="customization-team-member">
-                        <legend>Team member <?php echo $index + 1; ?></legend>
+                    <fieldset class="customization-team-member" data-team-member data-default-image="<?php echo escapeOutput($defaultTeamMember['image']); ?>">
+                        <legend>Team member</legend>
                         <label>Name <input type="text" name="team_name[<?php echo $index; ?>]" maxlength="100" required value="<?php echo escapeOutput($member['name']); ?>"></label>
                         <label>Role <input type="text" name="team_role[<?php echo $index; ?>]" maxlength="60" required value="<?php echo escapeOutput($member['role']); ?>"></label>
                         <label>Bio <textarea name="team_bio[<?php echo $index; ?>]" maxlength="250" rows="3" required><?php echo escapeOutput($member['bio']); ?></textarea></label>
                         <label>Profile picture <input type="file" name="team_photo[<?php echo $index; ?>]" accept="image/jpeg,image/png,image/webp"></label>
                         <div class="customization-preview-row">
-                            <img class="customization-team-preview" src="<?php echo escapeOutput($teamImageUrl); ?>" alt="<?php echo escapeOutput($member['name']); ?> current profile picture">
+                            <img class="customization-team-preview" src="<?php echo escapeOutput($teamImageUrl); ?>" data-original-src="<?php echo escapeOutput($teamImageUrl); ?>" alt="<?php echo escapeOutput($member['name']); ?> current profile picture">
                             <span>Current profile picture</span>
                         </div>
-                        <label class="customization-check"><input type="checkbox" name="reset_team_photo[<?php echo $index; ?>]" value="1"> Restore default picture</label>
+                        <label class="customization-check"><input type="checkbox" name="reset_team_photo[<?php echo $index; ?>]" value="1" data-team-reset> Restore default picture</label>
+                        <button class="customization-team-remove" type="button" data-remove-team-member><i class="fa-solid fa-trash-can"></i> Remove member</button>
                     </fieldset>
                 <?php endforeach; ?>
             </div>
-            <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
+            <div class="customization-team-actions">
+                <button class="customization-team-add" type="button" id="add-team-member"><i class="fa-solid fa-user-plus"></i> Add team member</button>
+                <span id="team-member-count" role="status"><?php echo count($teamMembers); ?> of 30 team members</span>
+            </div>
+            <template id="team-member-template">
+                <fieldset class="customization-team-member" data-team-member data-default-image="images/logos.png">
+                    <legend>Team member</legend>
+                    <label>Name <input type="text" name="team_name[__INDEX__]" maxlength="100" required></label>
+                    <label>Role <input type="text" name="team_role[__INDEX__]" maxlength="60" required></label>
+                    <label>Bio <textarea name="team_bio[__INDEX__]" maxlength="250" rows="3" required></textarea></label>
+                    <label>Profile picture <input type="file" name="team_photo[__INDEX__]" accept="image/jpeg,image/png,image/webp"></label>
+                    <div class="customization-preview-row">
+                        <img class="customization-team-preview" src="images/logos.png" data-original-src="images/logos.png" alt="Team member image preview">
+                        <span>Current profile picture</span>
+                    </div>
+                    <label class="customization-check"><input type="checkbox" name="reset_team_photo[__INDEX__]" value="1" data-team-reset> Restore default picture</label>
+                    <button class="customization-team-remove" type="button" data-remove-team-member><i class="fa-solid fa-trash-can"></i> Remove member</button>
+                </fieldset>
+            </template>
+            <small>Images must be JPG, PNG, or WebP and no larger than 5 MB. You can add up to 30 team members.</small>
         </section>
         <?php foreach ($customizationPages as $pageKey => $page):
             if ($pageKey === 'about') {
@@ -768,6 +806,12 @@ $customizationPages = [
 .customization-team-member legend{margin-left:8px;padding:0 8px;color:var(--dark-brown);font-weight:800}
 .customization-team-member textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid #d6c9c1;border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit;resize:vertical}
 .customization-team-preview{width:68px;height:68px;object-fit:cover;border:1px solid #eee4dd;border-radius:50%;background:#fff}
+.customization-team-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.customization-team-actions>span{color:var(--gray-brown);font-size:.88rem}
+.customization-team-add,.customization-team-remove{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 13px;border:1px solid color-mix(in srgb,var(--primary-red) 24%,var(--gray-brown));border-radius:9px;background:var(--site-surface);color:var(--dark-brown);font:inherit;font-size:.88rem;font-weight:800;cursor:pointer}
+.customization-team-add{background:var(--primary-red);color:#fff;border-color:var(--primary-red)}
+.customization-team-remove{justify-self:start;color:#8a1f19}
+.customization-team-add:hover,.customization-team-remove:hover{filter:brightness(.96)}
 .customization-save{grid-column:1/-1;min-height:52px;padding:13px 18px;border:0;border-radius:10px;background:var(--primary-red);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 20%,transparent);transition:transform .18s,box-shadow .18s}
 .customization-save:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 28%,transparent)}
 .customization-message{padding:14px;background:#e6f4e6;color:#245b2b;border-radius:9px;margin-bottom:16px}
@@ -857,6 +901,90 @@ $customizationPages = [
 @media(max-width:560px){.customization-page{padding:18px 14px 36px}.customization-intro{align-items:flex-start}.customization-intro-icon{width:44px;height:44px;border-radius:12px}.customization-colors,.customization-auth-image-grid,.customization-extra-colors,.customization-team-grid{grid-template-columns:1fr}.customization-card{padding:17px}.customization-color-setting>p{min-height:0}.customization-auth-preview{height:170px}}
 </style>
 <script>
+(() => {
+    const teamGrid = document.getElementById('customization-team-grid');
+    const addTeamMember = document.getElementById('add-team-member');
+    const teamTemplate = document.getElementById('team-member-template');
+    const teamCount = document.getElementById('team-member-count');
+    if (!teamGrid || !addTeamMember || !teamTemplate || !teamCount) return;
+
+    const maxMembers = 30;
+    const getNextIndex = () => {
+        const indexes = Array.from(teamGrid.querySelectorAll('[name^="team_name["]'))
+            .map((input) => Number(input.name.match(/\[(\d+)\]$/)?.[1]))
+            .filter(Number.isInteger);
+        return indexes.length ? Math.max(...indexes) + 1 : 0;
+    };
+    let nextIndex = getNextIndex();
+
+    const updateTeamCount = () => {
+        const members = teamGrid.querySelectorAll('[data-team-member]');
+        const count = members.length;
+        members.forEach((member, index) => {
+            member.querySelector('legend').textContent = `Team member ${index + 1}`;
+        });
+        teamCount.textContent = `${count} of ${maxMembers} team members`;
+        addTeamMember.disabled = count >= maxMembers;
+    };
+
+    addTeamMember.addEventListener('click', () => {
+        if (teamGrid.querySelectorAll('[data-team-member]').length >= maxMembers) return;
+        const member = teamTemplate.content.cloneNode(true);
+        member.querySelectorAll('[name]').forEach((input) => {
+            input.name = input.name.replace(/__INDEX__/g, String(nextIndex));
+        });
+        teamGrid.appendChild(member);
+        nextIndex += 1;
+        updateTeamCount();
+        const lastMember = teamGrid.lastElementChild;
+        if (lastMember) {
+            const nameInput = lastMember.querySelector('input[name^="team_name["]');
+            if (nameInput) nameInput.focus();
+        }
+    });
+
+    teamGrid.addEventListener('click', (event) => {
+        const removeButton = event.target.closest('[data-remove-team-member]');
+        if (!removeButton) return;
+        const member = removeButton.closest('[data-team-member]');
+        const preview = member?.querySelector('.customization-team-preview');
+        if (preview?.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+        member?.remove();
+        updateTeamCount();
+    });
+
+    teamGrid.addEventListener('change', (event) => {
+        if (event.target.matches('input[type="file"][name^="team_photo["]')) {
+            const file = event.target.files?.[0];
+            const preview = event.target.closest('[data-team-member]')?.querySelector('.customization-team-preview');
+            const resetCheckbox = event.target.closest('[data-team-member]')?.querySelector('[data-team-reset]');
+            if (file && preview) {
+                if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+                preview.dataset.objectUrl = URL.createObjectURL(file);
+                preview.src = preview.dataset.objectUrl;
+                if (resetCheckbox) resetCheckbox.checked = false;
+            }
+        }
+        if (event.target.matches('[data-team-reset]')) {
+            const member = event.target.closest('[data-team-member]');
+            const preview = member?.querySelector('.customization-team-preview');
+            if (preview) {
+                if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+                preview.dataset.objectUrl = '';
+                if (event.target.checked) {
+                    const fileInput = member?.querySelector('input[type="file"][name^="team_photo["]');
+                    if (fileInput) fileInput.value = '';
+                    preview.src = member.dataset.defaultImage || 'images/logos.png';
+                } else {
+                    preview.src = preview.dataset.originalSrc || member.dataset.defaultImage || 'images/logos.png';
+                }
+            }
+        }
+    });
+
+    updateTeamCount();
+})();
+
 document.querySelectorAll('.customization-color-control').forEach((control) => {
     const picker = control.querySelector('input[type="color"]');
     const hexInput = control.querySelector('.customization-hex-input');

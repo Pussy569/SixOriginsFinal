@@ -358,11 +358,20 @@ function get_site_customization(mysqli $conn): array
     }
     $teamMembers = is_string($settings['team_members']) ? json_decode($settings['team_members'], true) : $settings['team_members'];
     $defaultTeamMembers = site_customization_default_team_members();
-    if (!is_array($teamMembers) || count($teamMembers) !== count($defaultTeamMembers)) {
+    if (!is_array($teamMembers)) {
         $teamMembers = $defaultTeamMembers;
     } else {
-        foreach ($defaultTeamMembers as $index => $defaultMember) {
-            $member = $teamMembers[$index] ?? [];
+        $normalizedTeamMembers = [];
+        foreach (array_values($teamMembers) as $index => $member) {
+            $defaultMember = $defaultTeamMembers[$index] ?? [
+                'name' => 'Team member',
+                'role' => 'Team',
+                'bio' => 'Meet our team.',
+                'image' => 'images/logos.png',
+            ];
+            if (!is_array($member)) {
+                $member = [];
+            }
             foreach (['name' => 100, 'role' => 60, 'bio' => 250] as $field => $maxLength) {
                 if (!isset($member[$field]) || !is_string($member[$field]) || trim($member[$field]) === '' || strlen($member[$field]) > $maxLength) {
                     $member[$field] = $defaultMember[$field];
@@ -380,7 +389,9 @@ function get_site_customization(mysqli $conn): array
                 'bio' => $member['bio'],
                 'image' => $imagePath,
             ];
+            $normalizedTeamMembers[] = $teamMembers[$index];
         }
+        $teamMembers = $normalizedTeamMembers;
     }
     $settings['team_members'] = $teamMembers;
     foreach ([
