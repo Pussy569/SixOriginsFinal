@@ -6,6 +6,10 @@ define('OLLAMA_MODEL', 'qwen3:4b');
 define('OLLAMA_BASIC_AUTH_USERNAME', getenv('OLLAMA_BASIC_AUTH_USERNAME') ?: '');
 define('OLLAMA_BASIC_AUTH_PASSWORD', getenv('OLLAMA_BASIC_AUTH_PASSWORD') ?: '');
 
+function strip_ollama_thinking($content) {
+    return trim(preg_replace('/<think\b[^>]*>.*?<\/think\s*>/is', '', $content));
+}
+
 function ollama_basic_auth_options(): ?array {
     $hasUsername = OLLAMA_BASIC_AUTH_USERNAME !== '';
     $hasPassword = OLLAMA_BASIC_AUTH_PASSWORD !== '';
@@ -27,11 +31,9 @@ function ollama_basic_auth_options(): ?array {
 // answer follow-ups like "explain that forecast in more detail" or "why is that low".
 define('CHAT_HISTORY_TURNS', 6);
 
-// Separate, more generous timeouts for CPU-only inference. Classification is a
-// short JSON reply so it stays quick; forecast/general involve more reasoning
-// text and a CPU can genuinely take 60-100s+ for a few hundred output tokens,
-// especially right after a model switch (model has to load into RAM once).
-define('OLLAMA_TIMEOUT_CLASSIFY', 45);
+// Separate, more generous timeouts for CPU-only inference. Keep every Ollama
+// request at or above 90 seconds because Qwen3 reasoning can be slow.
+define('OLLAMA_TIMEOUT_CLASSIFY', 90);
 define('OLLAMA_TIMEOUT_FORECAST', 150);
 define('OLLAMA_TIMEOUT_GENERAL', 120);
 define('OLLAMA_CONNECT_TIMEOUT', 10);
@@ -98,9 +100,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode([
             'model' => OLLAMA_MODEL,
-            'messages' => [['role' => 'user', 'content' => 'Reply with exactly one word: pong /no_think']],
+            'messages' => [['role' => 'user', 'content' => 'Reply with exactly one word: pong']],
             'stream' => false,
-            'think' => false,
+            'think' => true,
             'options' => ['temperature' => 0],
         ]),
         CURLOPT_RETURNTRANSFER => true,
@@ -108,7 +110,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
             'Content-Type: application/json',
             'ngrok-skip-browser-warning: true',
         ],
-        CURLOPT_TIMEOUT => 60,
+        CURLOPT_TIMEOUT => 90,
         CURLOPT_CONNECTTIMEOUT => OLLAMA_CONNECT_TIMEOUT,
     ] + $authOptions);
     $raw = curl_exec($ch);
@@ -146,6 +148,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'ollama_ping') {
     }
 
     $content = $data['message']['content'] ?? null;
+    if (is_string($content)) {
+        $content = strip_ollama_thinking($content);
+    }
     echo json_encode([
         'ok' => $content !== null,
         'stage' => 'success',
@@ -287,28 +292,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
     // silently returning null for every possible failure mode. Check your
     // PHP error log (or run `tail -f` on it) after a failed query to see
     // exactly what happened.
-    function call_ollama($messages, $json_mode = false, $timeout = 45) {
-        // Qwen3 is a "hybrid thinking" model: by default it runs a hidden
-        // <think>...</think> reasoning pass before every reply, even for a
-        // one-word answer (this is why the ping test took 30s for "pong").
-        // We already do our own number-crunching in PHP before calling the
-        // model, so we don't need its chain-of-thought - just the final
-        // text. 'think' => false is the documented Ollama API flag to skip
-        // that phase entirely (supported on recent Ollama versions; older
-        // versions simply ignore the unknown field, which is harmless).
-        // As a belt-and-suspenders backup for Ollama versions that don't
-        // honor the flag, we also append the model's own "/no_think"
-        // directive to the system prompt, which is the Qwen3 chat-template
-        // convention for disabling thinking regardless of API support.
-        if (!empty($messages) && $messages[0]['role'] === 'system') {
-            $messages[0]['content'] = rtrim($messages[0]['content']) . "\n\n/no_think";
-        }
-
+    function call_ollama($messages, $json_mode = false, $timeout = 90) {
+        $timeout = max(90, (int)$timeout);
         $payload = [
             'model' => OLLAMA_MODEL,
             'messages' => $messages,
             'stream' => false,
-            'think' => false,
+            'think' => true,
             'options' => ['temperature' => 0.2],
         ];
         if ($json_mode) {
@@ -359,9 +349,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             return null;
         }
 
-        // Qwen3 sometimes emits a <think>...</think> reasoning trace before the real answer.
-        $content = preg_replace('/<think>.*?<\/think>/s', '', $content);
-        return trim($content);
+        return strip_ollama_thinking($content);
     }
 
     // ==================== NUMBER / ENTITY HELPERS ====================
