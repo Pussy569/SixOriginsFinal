@@ -148,12 +148,14 @@ function rewards_offer_description(array $offer): string
 <?php include 'header.php'; ?>
 <main class="page rewards-page">
     <header class="rewards-hero">
-        <span class="rewards-kicker">Your Six Origins perks</span>
-        <h1>Rewards &amp; points</h1>
-        <p>Check in, collect points, reveal surprises, and turn your rewards into wallet balance or vouchers.</p>
+        <div class="rewards-welcome">
+            <span class="rewards-kicker"><i class="fa-solid fa-sparkles"></i> Your Six Origins perks</span>
+            <h1>Rewards that make every visit count.</h1>
+            <p>Check in each day, reveal surprises, and turn your points into wallet balance or vouchers.</p>
+        </div>
         <div class="rewards-balances">
-            <div><span>Points</span><strong><?php echo number_format($points); ?></strong></div>
-            <div><span>Wallet</span><strong>₱<?php echo number_format((float)$user['wallet_balance'], 2); ?></strong></div>
+            <div class="balance-card points-balance"><span><i class="fa-solid fa-star"></i> Points balance</span><strong><?php echo number_format($points); ?></strong><small>Use points for wallet credit or vouchers</small></div>
+            <div class="balance-card wallet-balance"><span><i class="fa-solid fa-wallet"></i> Wallet balance</span><strong>₱<?php echo number_format((float)$user['wallet_balance'], 2); ?></strong><small>Ready to use at checkout</small></div>
         </div>
     </header>
 
@@ -168,7 +170,7 @@ function rewards_offer_description(array $offer): string
     <?php endif; ?>
 
     <section class="rewards-panel daily-panel">
-        <div class="panel-heading"><div><span class="rewards-kicker">Daily check-in</span><h2>Seven days of surprises</h2></div>
+        <div class="panel-heading"><div class="section-title"><span class="section-icon"><i class="fa-solid fa-calendar-check"></i></span><div><span class="rewards-kicker">Daily check-in</span><h2>Seven days of surprises</h2></div></div>
             <?php if (!empty($dailyState['available'])): ?><span class="day-chip">Day <?php echo (int)$dailyState['day_number']; ?> of 7</span><?php endif; ?>
         </div>
         <?php if (!empty($dailyState['available'])): ?>
@@ -202,7 +204,7 @@ function rewards_offer_description(array $offer): string
 
     <?php if ($availableOffers): ?>
         <section class="rewards-panel">
-            <div class="panel-heading"><div><span class="rewards-kicker">More to unlock</span><h2>Earn a voucher with your order</h2></div></div>
+            <div class="panel-heading"><div class="section-title"><span class="section-icon"><i class="fa-solid fa-bag-shopping"></i></span><div><span class="rewards-kicker">More to unlock</span><h2>Earn a voucher with your order</h2></div></div></div>
             <p>Offers are granted once per customer after a qualifying order is completed. When several tiers for the same condition qualify, the highest one is granted.</p>
             <div class="offer-grid">
                 <?php foreach ($availableOffers as $offer): ?>
@@ -222,7 +224,7 @@ function rewards_offer_description(array $offer): string
 
     <section class="rewards-columns">
         <article class="rewards-panel">
-            <span class="rewards-kicker">Use your points</span><h2>Redeem to wallet</h2>
+            <div class="section-title"><span class="section-icon"><i class="fa-solid fa-wallet"></i></span><div><span class="rewards-kicker">Use your points</span><h2>Redeem to wallet</h2></div></div>
             <p><?php echo $pointsRate; ?> points = ₱1.00 added to your wallet. Points are redeemed in whole-peso amounts.</p>
             <form method="post" class="redeem-form">
                 <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
@@ -234,7 +236,7 @@ function rewards_offer_description(array $offer): string
             </form>
         </article>
         <article class="rewards-panel">
-            <span class="rewards-kicker">Points shop</span><h2><?php echo (int)$loyaltySettings['points_voucher_cost']; ?> points for <?php echo (int)$loyaltySettings['points_voucher_percent']; ?>% off</h2>
+            <div class="section-title"><span class="section-icon"><i class="fa-solid fa-ticket"></i></span><div><span class="rewards-kicker">Points shop</span><h2><?php echo (int)$loyaltySettings['points_voucher_cost']; ?> points for <?php echo (int)$loyaltySettings['points_voucher_percent']; ?>% off</h2></div></div>
             <p><?php echo (float)$loyaltySettings['points_voucher_minimum_spend'] > 0 ? 'Minimum spend: ₱' . number_format((float)$loyaltySettings['points_voucher_minimum_spend'], 2) . '. ' : ''; ?>Voucher expires <?php echo (int)$loyaltySettings['points_voucher_validity_days']; ?> days after redemption.</p>
             <form method="post" class="redeem-form">
                 <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
@@ -246,7 +248,7 @@ function rewards_offer_description(array $offer): string
     </section>
 
     <section class="rewards-panel">
-        <div class="panel-heading"><div><span class="rewards-kicker">Ready when you are</span><h2>Your vouchers</h2></div><span class="day-chip"><?php echo count($vouchers); ?> available</span></div>
+        <div class="panel-heading"><div class="section-title"><span class="section-icon"><i class="fa-solid fa-ticket-simple"></i></span><div><span class="rewards-kicker">Ready when you are</span><h2>Your vouchers</h2></div></div><span class="day-chip"><?php echo count($vouchers); ?> available</span></div>
         <?php if ($vouchers): ?>
             <div class="voucher-grid">
                 <?php foreach ($vouchers as $voucher): ?>
@@ -265,37 +267,39 @@ function rewards_offer_description(array $offer): string
     </section>
 </main>
 <style>
-    .rewards-page{display:grid;gap:22px;padding-top:28px;padding-bottom:56px;color:var(--site-text)}
-    .rewards-hero,.rewards-panel{padding:clamp(20px,3vw,32px);border:1px solid color-mix(in srgb,var(--gray-brown) 19%,transparent);border-radius:20px;background:var(--site-surface);box-shadow:0 12px 32px rgba(61,43,39,.06)}
-    .rewards-hero{background:radial-gradient(circle at 90% 8%,color-mix(in srgb,var(--primary-red) 14%,transparent),transparent 36%),linear-gradient(120deg,var(--site-surface),color-mix(in srgb,var(--site-page-bg) 70%,var(--site-surface)))}
-    .rewards-kicker{display:block;color:var(--primary-red);font-size:.74rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
-    .rewards-hero h1,.rewards-panel h2{margin:7px 0 10px;color:var(--dark-brown)}
-    .rewards-hero>p,.rewards-panel>p{color:var(--gray-brown);line-height:1.65}
-    .rewards-balances{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
-    .rewards-balances div{display:grid;gap:4px;min-width:145px;padding:13px 16px;border:1px solid color-mix(in srgb,var(--primary-red) 22%,transparent);border-radius:13px;background:var(--site-surface)}
-    .rewards-balances span{color:var(--gray-brown);font-size:.82rem;font-weight:700}.rewards-balances strong{color:var(--dark-brown);font-size:1.35rem}
-    .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}.day-chip{padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--primary-red) 10%,var(--site-surface));color:var(--primary-red);font-size:.83rem;font-weight:800;white-space:nowrap}
-    .reward-progress{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:20px 0}
-    .reward-day{display:grid;justify-items:center;gap:8px;padding:11px 6px;border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:12px;color:var(--gray-brown);font-size:.74rem;font-weight:800}
-    .reward-day i{font-size:1.1rem;color:color-mix(in srgb,var(--gray-brown) 65%,transparent)}.reward-day.claimed{background:color-mix(in srgb,#32a66a 10%,var(--site-surface));color:#24844f}.reward-day.claimed i{color:#24844f}
-    .reward-day.today{border-color:var(--primary-red);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary-red) 16%,transparent)}.reward-day.today i{color:var(--primary-red)}
-    .rewards-button{min-height:44px;padding:11px 17px;border:0;border-radius:10px;background:linear-gradient(135deg,var(--primary-red),var(--dark-brown));color:#fff;font:800 .95rem Montserrat,sans-serif;cursor:pointer;transition:transform .16s,box-shadow .16s}
-    .rewards-button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px color-mix(in srgb,var(--primary-red) 22%,transparent)}.rewards-button:disabled{opacity:.55;cursor:not-allowed}
-    .game-actions{display:flex;flex-wrap:wrap;gap:12px}.spin-button{background:linear-gradient(135deg,#d89a27,#a95416)}.scratch-button{background:linear-gradient(135deg,#8055aa,#4b3270)}
-    .rewards-muted{padding:13px 15px;border-radius:10px;background:color-mix(in srgb,#32a66a 10%,var(--site-surface));color:#267448}
-    .rewards-notice{padding:14px 16px;border-radius:10px;background:#e8f5e9;color:#245b2b}.rewards-notice.error{background:#fde8e7;color:#8a1f19}
-    .rewards-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.redeem-form{display:grid;gap:10px;margin-top:20px}.redeem-form label{font-weight:800;color:var(--dark-brown)}
-    .redeem-form input[type=number]{min-height:44px;padding:9px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-surface));border-radius:9px;background:var(--site-surface);color:var(--site-text);font:inherit}
-    .voucher-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
-    .voucher-card{display:grid;gap:7px;min-width:0;padding:16px;border:1px dashed color-mix(in srgb,var(--primary-red) 48%,var(--gray-brown));border-radius:14px;background:color-mix(in srgb,var(--primary-red) 5%,var(--site-surface))}
-    .voucher-card strong{color:var(--dark-brown);font-size:1.2rem}.voucher-card span{color:var(--gray-brown);font-size:.84rem}.voucher-kind{font-weight:800}
-    .voucher-card code{width:fit-content;padding:6px 9px;border-radius:6px;background:var(--site-surface);color:var(--primary-red);font-weight:900;letter-spacing:.08em}
+    .rewards-page{display:grid;gap:22px;max-width:1320px;padding-top:30px;padding-bottom:64px;color:var(--site-text)}
+    .rewards-hero,.rewards-panel{min-width:0;padding:clamp(22px,3vw,34px);border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:22px;background:var(--site-surface);box-shadow:0 14px 36px rgba(61,43,39,.07)}
+    .rewards-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.82fr);align-items:center;gap:28px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 9% 0%,color-mix(in srgb,var(--primary-red) 14%,transparent),transparent 42%),linear-gradient(125deg,color-mix(in srgb,var(--site-page-bg) 78%,var(--site-surface)),var(--site-surface))}
+    .rewards-welcome{position:relative;z-index:1}.rewards-kicker{display:block;color:var(--primary-red);font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.rewards-kicker i{margin-right:5px}
+    .rewards-hero h1,.rewards-panel h2{margin:7px 0 10px;color:var(--dark-brown)}.rewards-hero h1{max-width:620px;font-size:clamp(1.8rem,3.8vw,3rem);line-height:1.12;letter-spacing:-.045em}.rewards-panel h2{font-size:1.28rem;letter-spacing:-.025em}
+    .rewards-welcome p,.rewards-panel>p{max-width:760px;color:var(--gray-brown);line-height:1.7}.rewards-balances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .balance-card{display:grid;gap:8px;min-width:0;padding:19px;border:1px solid color-mix(in srgb,var(--primary-red) 20%,transparent);border-radius:17px;background:color-mix(in srgb,var(--site-surface) 94%,transparent);box-shadow:0 9px 22px rgba(61,43,39,.05)}
+    .balance-card span{display:flex;align-items:center;gap:8px;color:var(--gray-brown);font-size:.78rem;font-weight:800}.balance-card span i{color:var(--primary-red)}.balance-card strong{color:var(--dark-brown);font-size:clamp(1.35rem,2vw,1.8rem);letter-spacing:-.03em}.balance-card small{color:var(--gray-brown);font-size:.7rem;line-height:1.4}
+    .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}.section-title{display:flex;align-items:center;gap:13px}.section-icon{display:grid;place-items:center;flex:none;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--primary-red) 10%,var(--site-surface));color:var(--primary-red);font-size:1.1rem}
+    .day-chip{padding:8px 12px;border:1px solid color-mix(in srgb,var(--primary-red) 17%,transparent);border-radius:999px;background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface));color:var(--primary-red);font-size:.78rem;font-weight:900;white-space:nowrap}
+    .daily-panel{background:linear-gradient(135deg,color-mix(in srgb,var(--primary-red) 3%,var(--site-surface)),var(--site-surface) 50%)}
+    .reward-progress{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin:21px 0}.reward-day{display:grid;justify-items:center;gap:9px;min-width:0;padding:14px 8px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:14px;background:color-mix(in srgb,var(--site-page-bg) 35%,var(--site-surface));color:var(--gray-brown);font-size:.75rem;font-weight:900;transition:transform .18s,border-color .18s}
+    .reward-day i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--gray-brown) 9%,var(--site-surface));font-size:1rem;color:color-mix(in srgb,var(--gray-brown) 65%,transparent)}.reward-day.claimed{border-color:color-mix(in srgb,#24844f 24%,transparent);background:color-mix(in srgb,#32a66a 7%,var(--site-surface));color:#24844f}.reward-day.claimed i{background:color-mix(in srgb,#32a66a 12%,var(--site-surface));color:#24844f}
+    .reward-day.today{transform:translateY(-2px);border-color:var(--primary-red);background:color-mix(in srgb,var(--primary-red) 5%,var(--site-surface));box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-red) 10%,transparent)}.reward-day.today i{background:color-mix(in srgb,var(--primary-red) 12%,var(--site-surface));color:var(--primary-red)}
+    .rewards-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 19px;border:0;border-radius:11px;background:linear-gradient(135deg,var(--primary-red),var(--dark-brown));color:#fff;font:800 .91rem Montserrat,sans-serif;cursor:pointer;box-shadow:0 7px 18px color-mix(in srgb,var(--primary-red) 18%,transparent);transition:transform .18s,box-shadow .18s}
+    .rewards-button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 11px 24px color-mix(in srgb,var(--primary-red) 25%,transparent)}.rewards-button:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-red) 40%,transparent);outline-offset:3px}.rewards-button:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+    .game-actions{display:flex;flex-wrap:wrap;gap:12px}.game-actions form{flex:1 1 220px}.game-actions .rewards-button{width:100%;min-height:54px}.spin-button{background:linear-gradient(135deg,#d89a27,#a95416)}.scratch-button{background:linear-gradient(135deg,#8055aa,#4b3270)}
+    .rewards-muted{padding:14px 16px;border:1px solid color-mix(in srgb,#24844f 18%,transparent);border-radius:12px;background:color-mix(in srgb,#32a66a 8%,var(--site-surface));color:#267448;line-height:1.5}
+    .rewards-notice{padding:15px 18px;border:1px solid color-mix(in srgb,#24844f 20%,transparent);border-radius:12px;background:color-mix(in srgb,#32a66a 9%,var(--site-surface));color:#245b2b;line-height:1.5}.rewards-notice.error{border-color:#f1c7c3;background:#fde8e7;color:#8a1f19}
+    .rewards-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.redeem-form{display:grid;gap:11px;margin-top:22px}.redeem-form label{color:var(--dark-brown);font-size:.84rem;font-weight:800}
+    .redeem-form input[type=number]{width:100%;min-height:48px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--gray-brown) 24%,var(--site-surface));border-radius:10px;background:var(--site-surface);color:var(--site-text);font:500 .95rem Montserrat,sans-serif}.redeem-form input:focus{outline:none;border-color:var(--primary-red);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-red) 14%,transparent)}.redeem-form .rewards-button{width:100%;margin-top:4px}
+    .voucher-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px;margin-top:18px}
+    .voucher-card{position:relative;display:grid;align-content:start;gap:9px;min-width:0;padding:19px;border:1px dashed color-mix(in srgb,var(--primary-red) 45%,var(--gray-brown));border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--primary-red) 6%,var(--site-surface)),var(--site-surface));box-shadow:0 8px 20px rgba(61,43,39,.035)}
+    .voucher-card strong{color:var(--dark-brown);font-size:1.25rem}.voucher-card span{color:var(--gray-brown);font-size:.8rem;line-height:1.45}.voucher-kind{font-weight:900}
+    .voucher-card code{width:fit-content;max-width:100%;overflow-wrap:anywhere;padding:8px 11px;border:1px dashed color-mix(in srgb,var(--primary-red) 28%,transparent);border-radius:8px;background:var(--site-surface);color:var(--primary-red);font-size:.85rem;font-weight:900;letter-spacing:.08em}
     .reward-reveal{display:flex;align-items:center;gap:18px;padding:18px 22px;border:1px solid color-mix(in srgb,var(--primary-red) 28%,transparent);border-radius:16px;background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface))}
-    .offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}.offer-card{display:grid;gap:8px;padding:17px;border:1px solid color-mix(in srgb,var(--primary-red) 22%,transparent);border-radius:14px;background:color-mix(in srgb,var(--site-page-bg) 55%,var(--site-surface))}.offer-card strong{color:var(--dark-brown)}.offer-card span{color:var(--gray-brown);font-size:.84rem;line-height:1.45}.offer-card b{color:var(--primary-red);font-size:1.08rem}
+    .offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}.offer-card{display:grid;align-content:start;gap:9px;padding:19px;border:1px solid color-mix(in srgb,var(--primary-red) 18%,transparent);border-radius:15px;background:color-mix(in srgb,var(--site-page-bg) 44%,var(--site-surface));box-shadow:0 8px 18px rgba(61,43,39,.035)}.offer-card strong{color:var(--dark-brown);font-size:.95rem}.offer-card span{color:var(--gray-brown);font-size:.78rem;line-height:1.5}.offer-card b{color:var(--primary-red);font-size:1.15rem}
     .reveal-art{display:grid;place-items:center;flex:none;width:56px;height:56px;border-radius:50%;background:var(--primary-red);color:#fff;font-size:1.5rem}
     .reward-reveal[data-game=spin] .reveal-art{animation:rewardSpin .8s cubic-bezier(.2,.8,.2,1) both}.reward-reveal[data-game=scratch] .reveal-art{animation:rewardScratch .8s ease-out both}
     .reward-reveal div:last-child{display:grid;gap:5px}.reward-reveal span{color:var(--gray-brown);font-size:.82rem}.reward-reveal strong{color:var(--dark-brown);font-size:1.2rem}
     @keyframes rewardSpin{to{transform:rotate(720deg) scale(1.08)}}@keyframes rewardScratch{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
-    @media(max-width:650px){.rewards-columns{grid-template-columns:1fr}.reward-progress{gap:4px}.reward-day{padding:9px 2px;font-size:.64rem}.reward-day i{font-size:.95rem}}
+    @media(max-width:900px){.rewards-hero{grid-template-columns:1fr}.rewards-balances{max-width:600px;width:100%}}
+    @media(max-width:650px){.rewards-page{gap:16px;padding-top:20px;padding-bottom:42px}.rewards-hero,.rewards-panel{padding:20px;border-radius:17px}.rewards-columns{grid-template-columns:1fr;gap:16px}.reward-progress{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 9px;scroll-snap-type:x mandatory}.reward-day{flex:0 0 78px;padding:11px 5px;scroll-snap-align:start}.reward-day i{width:31px;height:31px}.panel-heading{align-items:flex-start}.section-title{gap:10px}.section-icon{width:40px;height:40px;border-radius:12px}.day-chip{font-size:.7rem}.game-actions{display:grid}.game-actions form{width:100%}.reward-reveal{padding:15px}.rewards-button{width:100%}}
+    @media(max-width:400px){.rewards-balances{grid-template-columns:1fr}.balance-card{padding:15px}.panel-heading{flex-direction:column}.day-chip{align-self:flex-start}}
 </style>
 <?php include 'footer.php'; ?>

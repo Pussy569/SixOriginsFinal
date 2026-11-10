@@ -325,6 +325,7 @@ $loyaltySettings = loyalty_get_settings($conn);
 $campaignResult = $conn->query('SELECT * FROM voucher_campaigns ORDER BY trigger_type, condition_type, threshold_value, id');
 $campaigns = $campaignResult->fetch_all(MYSQLI_ASSOC);
 $campaignResult->free();
+$activeCampaignCount = count(array_filter($campaigns, static fn(array $campaign): bool => (int)$campaign['active'] === 1));
 $cycleResult = $conn->query(
     'SELECT * FROM loyalty_reward_cycles WHERE published = 1
      ORDER BY CASE WHEN DATE_ADD(starts_on, INTERVAL 6 DAY) >= CURDATE() THEN 0 ELSE 1 END, starts_on DESC LIMIT 1'
@@ -363,14 +364,19 @@ while (count($prizes) < 3) {
     <header class="rewards-intro">
         <div><span class="rewards-eyebrow">Head Admin controls</span><h1><i class="fa-solid fa-gift"></i> Rewards &amp; vouchers</h1>
             <p>Create automatic offers for verified sign-ups and qualifying completed orders, then manage points and daily login rewards.</p></div>
+        <div class="rewards-overview" aria-label="Rewards overview">
+            <div class="overview-stat"><span>Active offers</span><strong><?php echo $activeCampaignCount; ?></strong></div>
+            <div class="overview-stat"><span>Points exchange</span><strong><?php echo (int)$loyaltySettings['points_per_wallet_peso']; ?> <small>pts / ₱1</small></strong></div>
+        </div>
     </header>
     <?php if ($message !== ''): ?>
         <div class="rewards-message <?php echo $messageType === 'error' ? 'error' : ''; ?>" role="status"><?php echo escapeOutput($message); ?></div>
     <?php endif; ?>
 
     <section class="rewards-card">
-        <h2>Points redemption</h2>
+        <div class="rewards-section-heading"><span class="section-icon"><i class="fa-solid fa-coins"></i></span><div><h2>Points redemption</h2>
         <p>Customers can convert points into wallet balance or redeem a points-priced discount voucher.</p>
+        </div></div>
         <form method="post" class="rewards-grid">
             <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
             <input type="hidden" name="action" value="save_settings">
@@ -384,8 +390,9 @@ while (count($prizes) < 3) {
     </section>
 
     <section class="rewards-card">
-        <h2>Automatic voucher offers</h2>
+        <div class="rewards-section-heading"><span class="section-icon"><i class="fa-solid fa-ticket"></i></span><div><h2>Automatic voucher offers</h2>
         <p>Sign-up offers are granted after email verification. Each order offer is granted once per customer after a qualifying order reaches Completed; thresholds use one order's product subtotal or item quantity. When multiple tiers qualify for the same condition, only the highest tier is granted. Voucher minimum spend is checked when the customer redeems it.</p>
+        </div></div>
         <form method="post" class="rewards-grid campaign-form">
             <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
             <input type="hidden" name="action" value="create_campaign">
@@ -394,6 +401,7 @@ while (count($prizes) < 3) {
             <button class="rewards-button" type="submit">Create automatic offer</button>
         </form>
         <div class="campaign-list">
+            <?php if (!$campaigns): ?><p class="campaign-empty">No offers yet. Create your first voucher offer above.</p><?php endif; ?>
             <?php foreach ($campaigns as $campaign): ?>
                 <details class="campaign-item">
                     <summary><strong><?php echo escapeOutput($campaign['name']); ?></strong><span><?php echo escapeOutput(ucfirst($campaign['trigger_type'])); ?> · <?php echo $campaign['active'] ? 'Active' : 'Paused'; ?></span></summary>
@@ -411,7 +419,8 @@ while (count($prizes) < 3) {
     </section>
 
     <section class="rewards-card">
-        <h2>Seven-day login rewards</h2>
+        <div class="rewards-section-heading"><span class="section-icon"><i class="fa-solid fa-calendar-check"></i></span><div><h2>Seven-day login rewards</h2>
+        <p>Set the daily rewards, configure the Day 6 prize pool, then publish the next cycle when you are ready.</p></div></div>
         <?php if ($cycle): ?>
             <p>Current settings: <strong><?php echo escapeOutput($cycle['name']); ?></strong> · Starts <?php echo escapeOutput($cycle['starts_on']); ?> · Runs once for seven calendar days. Missed days are skipped.</p>
             <form method="post" class="rewards-grid reward-cycle-form">
@@ -469,26 +478,30 @@ while (count($prizes) < 3) {
     </section>
 </main>
 <style>
-    .rewards-admin{display:grid;gap:22px;padding-top:24px;padding-bottom:48px}
-    .rewards-intro,.rewards-card{padding:clamp(20px,3vw,32px);border:1px solid color-mix(in srgb,var(--gray-brown) 20%,transparent);border-radius:18px;background:var(--site-surface);box-shadow:0 10px 28px rgba(61,43,39,.06)}
-    .rewards-intro{background:linear-gradient(125deg,color-mix(in srgb,var(--primary-red) 9%,var(--site-surface)),var(--site-surface))}
-    .rewards-eyebrow{color:var(--primary-red);font-size:.75rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
-    .rewards-intro h1,.rewards-card h2{color:var(--dark-brown);margin:7px 0 10px}
-    .rewards-card h2{font-size:1.3rem}.rewards-card p,.rewards-intro p{color:var(--gray-brown);line-height:1.6}
-    .rewards-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
-    .rewards-grid label,.publish-cycle-form label{display:grid;gap:7px;color:var(--dark-brown);font-weight:700}
-    .rewards-grid input:not([type=checkbox]),.rewards-grid select,.publish-cycle-form input{width:100%;min-height:42px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--gray-brown) 30%,var(--site-surface));border-radius:8px;background:var(--site-surface);color:var(--site-text);font:inherit}
-    .rewards-check{display:flex!important;align-items:center;gap:9px}.rewards-check input{width:17px;height:17px;accent-color:var(--primary-red)}
-    .rewards-button{align-self:end;min-height:44px;padding:10px 17px;border:0;border-radius:9px;background:linear-gradient(135deg,var(--primary-red),var(--dark-brown));color:#fff;font:800 .95rem Montserrat,sans-serif;cursor:pointer}
-    .rewards-message{padding:13px 16px;border-radius:10px;background:#e8f5e9;color:#245b2b}.rewards-message.error{background:#fde8e7;color:#8a1f19}
-    .campaign-list{display:grid;gap:10px;margin-top:18px}.campaign-item{border:1px solid color-mix(in srgb,var(--gray-brown) 22%,transparent);border-radius:12px;padding:13px 16px}
-    .campaign-item summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;color:var(--dark-brown)}.campaign-item summary span{color:var(--gray-brown);font-size:.88rem}
-    .day-editor{display:grid;align-content:start;gap:10px;min-width:0;margin:0;padding:16px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,transparent);border-radius:12px}
-    .day-editor legend{padding:0 7px;color:var(--dark-brown);font-weight:900}.day-editor label{font-size:.87rem}
-    .reward-cycle-form{grid-template-columns:repeat(4,minmax(0,1fr))}.full-span{grid-column:1/-1}
-    .publish-cycle-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:14px;margin-top:24px;padding-top:20px;border-top:1px solid color-mix(in srgb,var(--gray-brown) 20%,transparent)}
-    .publish-cycle-form h3,.publish-cycle-form p{grid-column:1/-1}.publish-cycle-form p{margin:0}
-    @media(max-width:900px){.reward-cycle-form{grid-template-columns:repeat(2,minmax(0,1fr))}.rewards-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:600px){.reward-cycle-form,.rewards-grid,.publish-cycle-form{grid-template-columns:1fr}.full-span,.publish-cycle-form h3,.publish-cycle-form p{grid-column:auto}.campaign-item summary{flex-direction:column}}
+    .rewards-admin{display:grid;gap:24px;max-width:1440px;padding-top:30px;padding-bottom:60px}
+    .rewards-intro,.rewards-card{min-width:0;padding:clamp(22px,3vw,36px);border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:22px;background:var(--site-surface);box-shadow:0 14px 36px rgba(61,43,39,.07)}
+    .rewards-intro{display:flex;align-items:center;justify-content:space-between;gap:28px;overflow:hidden;background:radial-gradient(ellipse at 92% 10%,color-mix(in srgb,var(--primary-red) 18%,transparent),transparent 38%),linear-gradient(125deg,color-mix(in srgb,var(--primary-red) 7%,var(--site-surface)),var(--site-surface))}
+    .rewards-eyebrow{color:var(--primary-red);font-size:.74rem;font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+    .rewards-intro h1,.rewards-card h2{color:var(--dark-brown);margin:8px 0 9px}
+    .rewards-intro h1{font-size:clamp(1.7rem,3vw,2.4rem);letter-spacing:-.04em}.rewards-intro>div:first-child{max-width:720px}
+    .rewards-card h2{font-size:1.32rem;letter-spacing:-.02em}.rewards-card p,.rewards-intro p{color:var(--gray-brown);line-height:1.7;margin:5px 0 0}
+    .rewards-overview{display:flex;gap:12px;flex-shrink:0}.overview-stat{display:grid;gap:5px;min-width:138px;padding:16px 18px;border:1px solid color-mix(in srgb,var(--primary-red) 20%,transparent);border-radius:16px;background:color-mix(in srgb,var(--site-surface) 92%,transparent);box-shadow:0 8px 20px rgba(61,43,39,.04)}.overview-stat span{color:var(--gray-brown);font-size:.75rem;font-weight:800}.overview-stat strong{color:var(--dark-brown);font-size:1.45rem}.overview-stat small{font-size:.75rem}
+    .rewards-section-heading{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}.section-icon{display:grid;place-items:center;flex:none;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--primary-red) 11%,var(--site-surface));color:var(--primary-red);font-size:1.15rem}.rewards-section-heading h2{margin-top:0}
+    .rewards-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:16px;margin-top:20px}
+    .campaign-form{grid-template-columns:repeat(4,minmax(0,1fr));padding:20px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:17px;background:color-mix(in srgb,var(--site-page-bg) 36%,var(--site-surface))}
+    .rewards-grid label,.publish-cycle-form label{display:grid;align-content:start;gap:8px;min-width:0;color:var(--dark-brown);font-size:.84rem;font-weight:800;line-height:1.35}
+    .rewards-grid input:not([type=checkbox]),.rewards-grid select,.publish-cycle-form input{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-surface));border-radius:10px;background:var(--site-surface);color:var(--site-text);font:500 .92rem Montserrat,sans-serif;transition:border-color .18s,box-shadow .18s}
+    .rewards-grid input:focus,.rewards-grid select:focus,.publish-cycle-form input:focus{outline:none;border-color:var(--primary-red);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-red) 14%,transparent)}
+    .rewards-check{display:flex!important;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:10px;background:var(--site-surface)}.rewards-check input{width:18px;height:18px;accent-color:var(--primary-red)}
+    .rewards-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:end;min-height:46px;padding:11px 18px;border:0;border-radius:11px;background:linear-gradient(135deg,var(--primary-red),var(--dark-brown));color:#fff;font:800 .9rem Montserrat,sans-serif;cursor:pointer;box-shadow:0 7px 16px color-mix(in srgb,var(--primary-red) 18%,transparent);transition:transform .18s,box-shadow .18s}.rewards-button:hover{transform:translateY(-1px);box-shadow:0 10px 22px color-mix(in srgb,var(--primary-red) 25%,transparent)}
+    .rewards-message{padding:14px 17px;border:1px solid color-mix(in srgb,#24844f 24%,transparent);border-radius:12px;background:color-mix(in srgb,#32a66a 10%,var(--site-surface));color:#245b2b}.rewards-message.error{background:#fde8e7;color:#8a1f19}
+    .campaign-list{display:grid;gap:12px;margin-top:20px}.campaign-item{overflow:hidden;border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:14px;background:var(--site-surface);transition:border-color .18s,box-shadow .18s}.campaign-item[open]{border-color:color-mix(in srgb,var(--primary-red) 38%,transparent);box-shadow:0 8px 22px rgba(61,43,39,.05)}.campaign-item summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:58px;padding:14px 18px;cursor:pointer;color:var(--dark-brown);list-style:none}.campaign-item summary::-webkit-details-marker{display:none}.campaign-item summary::after{content:'Edit offer  +';margin-left:auto;color:var(--primary-red);font-size:.76rem;font-weight:900;white-space:nowrap}.campaign-item[open] summary::after{content:'Close  −'}.campaign-item summary strong{font-size:.95rem}.campaign-item summary span{padding:6px 10px;border-radius:999px;background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface));color:var(--gray-brown);font-size:.76rem;font-weight:800}.campaign-item .campaign-form{margin:0;border:0;border-top:1px solid color-mix(in srgb,var(--gray-brown) 14%,transparent);border-radius:0}
+    .campaign-empty{padding:20px;border:1px dashed color-mix(in srgb,var(--gray-brown) 28%,transparent);border-radius:14px;text-align:center}
+    .day-editor{display:grid;align-content:start;gap:13px;min-width:0;margin:0;padding:18px;border:1px solid color-mix(in srgb,var(--gray-brown) 19%,transparent);border-radius:15px;background:var(--site-surface)}.day-editor legend{padding:0 8px;color:var(--dark-brown);font-size:.93rem;font-weight:900}.day-editor label{font-size:.8rem}
+    .reward-cycle-form{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}.reward-cycle-form .day-editor{grid-column:span 2}.reward-cycle-form .prize-editor{grid-column:span 1}.full-span{grid-column:1/-1}
+    .publish-cycle-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,.55fr) auto;align-items:end;gap:16px;margin-top:28px;padding:22px;border:1px solid color-mix(in srgb,var(--primary-red) 18%,transparent);border-radius:16px;background:color-mix(in srgb,var(--primary-red) 4%,var(--site-surface))}
+    .publish-cycle-form h3,.publish-cycle-form p{grid-column:1/-1}.publish-cycle-form h3{margin:0;color:var(--dark-brown)}.publish-cycle-form p{margin:-8px 0 0}
+    @media(max-width:1100px){.rewards-intro{align-items:flex-start;flex-direction:column}.rewards-grid,.campaign-form{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-cycle-form .day-editor{grid-column:span 1}.reward-cycle-form .prize-editor{grid-column:span 1}}
+    @media(max-width:680px){.rewards-admin{gap:16px;padding-top:18px}.rewards-intro,.rewards-card{padding:20px;border-radius:17px}.rewards-overview{width:100%}.overview-stat{flex:1;min-width:0}.rewards-grid,.campaign-form,.reward-cycle-form,.publish-cycle-form{grid-template-columns:1fr}.reward-cycle-form .day-editor,.reward-cycle-form .prize-editor{grid-column:auto}.full-span,.publish-cycle-form h3,.publish-cycle-form p{grid-column:auto}.campaign-item summary{align-items:flex-start;flex-direction:column}.campaign-item summary::after{margin:0}.publish-cycle-form{padding:17px}.rewards-button{width:100%}}
 </style>
 <?php include 'admin_footer.php'; ?>
