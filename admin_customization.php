@@ -282,6 +282,44 @@ foreach ([
     ];
 }
 $contentFieldGroups = site_customization_content_fields();
+$contentFieldsByPage = [
+    'home' => [],
+    'about' => [],
+    'shop' => [],
+    'contact' => [],
+    'orders' => [],
+    'search' => [],
+    'cart' => [],
+    'profile' => [],
+    'topup' => [],
+    'footer' => [],
+    'account' => [],
+];
+$contentPagePrefixes = [
+    'home' => ['home_'],
+    'about' => ['about_'],
+    'shop' => ['shop_'],
+    'contact' => ['contact_'],
+    'orders' => ['orders_'],
+    'search' => ['search_'],
+    'cart' => ['cart_'],
+    'profile' => ['profile_'],
+    'topup' => ['topup_'],
+    'footer' => ['footer_'],
+    'account' => ['login_', 'register_', 'logout_'],
+];
+foreach ($contentFieldGroups as $contentFields) {
+    foreach ($contentFields as $key => $field) {
+        foreach ($contentPagePrefixes as $pageKey => $prefixes) {
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with($key, $prefix)) {
+                    $contentFieldsByPage[$pageKey][$key] = $field;
+                    continue 3;
+                }
+            }
+        }
+    }
+}
 $homeCarouselImages = [];
 foreach ([
     'home_about_slide_1_image_path' => ['title' => 'Coffee origins slide', 'input' => 'home_about_slide_1_image'],
@@ -319,6 +357,19 @@ $authImages = [
     'register_image_path' => ['title' => 'Customer registration picture', 'input' => 'register_image', 'default' => 'images/logback.jpeg'],
     'admin_register_image_path' => ['title' => 'Admin registration picture', 'input' => 'admin_register_image', 'default' => 'images/logback.jpeg'],
 ];
+$customizationPages = [
+    'home' => ['id' => 'home-customization', 'title' => 'Homepage', 'icon' => 'fa-house', 'description' => 'Customize the homepage copy and images. The background video and loading animation are in the system setup above.', 'banner' => null],
+    'about' => ['id' => 'about-customization', 'title' => 'About page', 'icon' => 'fa-circle-question', 'description' => 'Customize About page text, banner, story images, and team profiles.', 'banner' => 'about_hero_image_path'],
+    'shop' => ['id' => 'shop-customization', 'title' => 'Shop', 'icon' => 'fa-bag-shopping', 'description' => 'Customize the shop banner and related text.', 'banner' => 'shop_background_image_path'],
+    'contact' => ['id' => 'contact-customization', 'title' => 'Contact', 'icon' => 'fa-envelope', 'description' => 'Customize the contact banner, buttons, and contact information.', 'banner' => 'contact_background_image_path'],
+    'orders' => ['id' => 'orders-customization', 'title' => 'Orders', 'icon' => 'fa-box', 'description' => 'Customize the customer orders banner and its text.', 'banner' => 'orders_background_image_path'],
+    'search' => ['id' => 'search-customization', 'title' => 'Search', 'icon' => 'fa-magnifying-glass', 'description' => 'Customize the search page banner and its text.', 'banner' => 'search_background_image_path'],
+    'cart' => ['id' => 'cart-customization', 'title' => 'Cart', 'icon' => 'fa-cart-shopping', 'description' => 'Customize the shopping cart banner and its text.', 'banner' => 'cart_background_image_path'],
+    'profile' => ['id' => 'profile-customization', 'title' => 'Profile', 'icon' => 'fa-user', 'description' => 'Customize the customer profile banner and its text.', 'banner' => 'profile_background_image_path'],
+    'topup' => ['id' => 'topup-customization', 'title' => 'Wallet top-up', 'icon' => 'fa-wallet', 'description' => 'Customize the wallet top-up banner, payment instructions, and related text.', 'banner' => 'topup_background_image_path'],
+    'footer' => ['id' => 'footer-customization', 'title' => 'Footer', 'icon' => 'fa-link', 'description' => 'Customize the footer description and contact details. Quick links remain connected to their existing pages.', 'banner' => null],
+    'account' => ['id' => 'account-customization', 'title' => 'Login, register, and logout', 'icon' => 'fa-right-to-bracket', 'description' => 'Customize the account screens and their welcome images. Authentication behavior and links remain unchanged.', 'banner' => null],
+];
 ?>
 <?php include 'admin_header.php'; ?>
 <main class="page customization-page">
@@ -334,11 +385,18 @@ $authImages = [
     <nav class="customization-jump-nav" aria-label="Customization sections">
         <a href="#brand-identity"><i class="fa-solid fa-signature"></i> Brand</a>
         <a href="#system-colors"><i class="fa-solid fa-droplet"></i> Colors</a>
-        <a href="#about-team"><i class="fa-solid fa-people-group"></i> About &amp; team</a>
-        <a href="#site-copy"><i class="fa-solid fa-pen-to-square"></i> Site text</a>
-        <a href="#page-backgrounds"><i class="fa-regular fa-images"></i> Page banners</a>
-        <a href="#homepage-video"><i class="fa-solid fa-film"></i> Homepage</a>
-        <a href="#sign-in-pictures"><i class="fa-regular fa-images"></i> Sign-in pages</a>
+        <a href="#homepage-video"><i class="fa-solid fa-film"></i> Video &amp; loading</a>
+        <a href="#home-customization"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="#about-customization"><i class="fa-regular fa-circle-question"></i> About</a>
+        <a href="#shop-customization"><i class="fa-solid fa-bag-shopping"></i> Shop</a>
+        <a href="#contact-customization"><i class="fa-regular fa-envelope"></i> Contact</a>
+        <a href="#orders-customization"><i class="fa-solid fa-box"></i> Orders</a>
+        <a href="#search-customization"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
+        <a href="#cart-customization"><i class="fa-solid fa-cart-shopping"></i> Cart</a>
+        <a href="#profile-customization"><i class="fa-regular fa-user"></i> Profile</a>
+        <a href="#topup-customization"><i class="fa-solid fa-wallet"></i> Wallet top-up</a>
+        <a href="#footer-customization"><i class="fa-solid fa-link"></i> Footer</a>
+        <a href="#account-customization"><i class="fa-solid fa-right-to-bracket"></i> Account screens</a>
         <a href="#chatbot-settings"><i class="fa-solid fa-comments"></i> Chatbots</a>
     </nav>
     <?php if ($message !== ''): ?>
@@ -355,9 +413,34 @@ $authImages = [
             <div class="customization-preview-row"><img class="customization-logo-preview" src="<?php echo escapeOutput($logoUrl); ?>" alt="Current logo"><span>Current logo</span></div>
             <label class="customization-check"><input type="checkbox" name="reset_logo" value="1"> Restore the default logo</label>
         </section>
-        <section class="customization-card customization-about-team" id="about-team">
-            <h2><i class="fa-solid fa-people-group"></i> About page and team</h2>
-            <p class="customization-help">Change the featured cafe and product images, the homepage About carousel images, and the six team profiles shown to customers. About page banner images are managed with the other page banners below.</p>
+        <section class="customization-card customization-about-team" id="about-customization">
+            <h2><i class="fa-solid fa-circle-question"></i> About page</h2>
+            <p class="customization-help">Customize About page text, banner, feature images, story-card images, quick-facts image, and team profiles.</p>
+            <fieldset class="customization-team-member customization-field-group">
+                <legend>About page text</legend>
+                <?php foreach ($contentFieldsByPage['about'] as $key => $field):
+                    $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                ?>
+                    <label><?php echo escapeOutput($field[0]); ?>
+                        <?php if (strlen($field[1]) > 90): ?>
+                            <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
+                        <?php else: ?>
+                            <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                        <?php endif; ?>
+                    </label>
+                <?php endforeach; ?>
+            </fieldset>
+            <?php $aboutHeroBanner = $pageBackgroundImages['about_hero_image_path']; ?>
+            <div class="customization-page-background-setting">
+                <label><?php echo escapeOutput($aboutHeroBanner['title']); ?>
+                    <input type="file" name="<?php echo escapeOutput($aboutHeroBanner['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                </label>
+                <div class="customization-page-background-preview">
+                    <img src="<?php echo escapeOutput($aboutHeroBanner['url']); ?>" alt="<?php echo escapeOutput($aboutHeroBanner['title']); ?> preview">
+                    <span>Current banner image</span>
+                </div>
+                <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($aboutHeroBanner['input']); ?>" value="1"> Restore default banner</label>
+            </div>
             <div class="customization-auth-image-grid">
                 <?php foreach ([
                     'about_cafe_image_path' => ['title' => 'Featured cafe image', 'input' => 'about_cafe_image', 'url' => $aboutCafeImageUrl, 'default' => 'images/promo-cafe.png'],
@@ -391,22 +474,6 @@ $authImages = [
                     </div>
                 <?php endforeach; ?>
             </div>
-            <h3>Homepage About carousel</h3>
-            <p class="customization-help">Upload a JPG, PNG, or WebP image for each carousel slide. Leave an upload empty to keep its current image.</p>
-            <div class="customization-auth-image-grid">
-                <?php foreach ($homeCarouselImages as $settingKey => $imageConfig): ?>
-                    <div class="customization-image-setting">
-                        <label><?php echo escapeOutput($imageConfig['title']); ?>
-                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
-                        </label>
-                        <div class="customization-preview-row">
-                            <img class="customization-auth-preview" src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
-                            <span>Current image</span>
-                        </div>
-                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
-                    </div>
-                <?php endforeach; ?>
-            </div>
             <div class="customization-team-grid">
                 <?php foreach ($teamMembers as $index => $member):
                     $teamImageUrl = site_customization_auth_image_url($member['image'], site_customization_default_team_members()[$index]['image']);
@@ -427,31 +494,34 @@ $authImages = [
             </div>
             <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
         </section>
-        <section class="customization-card" id="site-copy">
-            <h2><i class="fa-solid fa-pen-to-square"></i> Storefront text</h2>
-            <p class="customization-help">Edit customer-facing headings, descriptions, footer copy, and informational text. Available button labels can be changed without changing their existing links or actions; buttons marked as fixed stay unchanged.</p>
-            <?php foreach ($contentFieldGroups as $groupTitle => $contentFields): ?>
-                <fieldset class="customization-team-member">
-                    <legend><?php echo escapeOutput($groupTitle); ?></legend>
-                    <?php foreach ($contentFields as $key => $field):
-                        $fieldValue = $settings['content_texts'][$key] ?? $field[1];
-                    ?>
-                        <label><?php echo escapeOutput($field[0]); ?>
-                            <?php if (strlen($field[1]) > 90): ?>
-                                <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
-                            <?php else: ?>
-                                <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
-                            <?php endif; ?>
-                        </label>
-                    <?php endforeach; ?>
-                </fieldset>
-            <?php endforeach; ?>
-        </section>
-        <section class="customization-card customization-page-backgrounds" id="page-backgrounds">
-            <h2><i class="fa-regular fa-images"></i> Customer page hero/banner images</h2>
-            <p class="customization-help">Choose an image for the top hero/banner on each page. This changes only the banner—not the full-page background. Leave an upload empty to keep its current image, or restore the page's default banner.</p>
-            <div class="customization-page-background-grid">
-                <?php foreach ($pageBackgroundImages as $settingKey => $imageConfig): ?>
+        <?php foreach ($customizationPages as $pageKey => $page):
+            if ($pageKey === 'about') {
+                continue;
+            }
+        ?>
+            <section class="customization-card customization-page-card" id="<?php echo escapeOutput($page['id']); ?>">
+                <h2><i class="fa-solid <?php echo escapeOutput($page['icon']); ?>"></i> <?php echo escapeOutput($page['title']); ?></h2>
+                <p class="customization-help"><?php echo escapeOutput($page['description']); ?></p>
+                <?php if ($contentFieldsByPage[$pageKey] !== []): ?>
+                    <fieldset class="customization-team-member customization-field-group">
+                        <legend><?php echo escapeOutput($page['title']); ?> text</legend>
+                        <?php foreach ($contentFieldsByPage[$pageKey] as $key => $field):
+                            $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                        ?>
+                            <label><?php echo escapeOutput($field[0]); ?>
+                                <?php if (strlen($field[1]) > 90): ?>
+                                    <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
+                                <?php else: ?>
+                                    <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                                <?php endif; ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </fieldset>
+                <?php endif; ?>
+
+                <?php if ($page['banner'] !== null):
+                    $imageConfig = $pageBackgroundImages[$page['banner']];
+                ?>
                     <div class="customization-page-background-setting">
                         <label><?php echo escapeOutput($imageConfig['title']); ?>
                             <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
@@ -466,10 +536,60 @@ $authImages = [
                         </div>
                         <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default banner</label>
                     </div>
-                <?php endforeach; ?>
-            </div>
-            <small>Accepted formats: JPG, PNG, or WebP. Maximum file size: 5 MB per image.</small>
-        </section>
+                <?php endif; ?>
+
+                <?php if ($pageKey === 'home'): ?>
+                    <h3>Homepage About carousel images</h3>
+                    <p class="customization-help">Leave an upload empty to keep its current image.</p>
+                    <div class="customization-auth-image-grid">
+                        <?php foreach ($homeCarouselImages as $imageConfig): ?>
+                            <div class="customization-image-setting">
+                                <label><?php echo escapeOutput($imageConfig['title']); ?>
+                                    <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                                </label>
+                                <div class="customization-preview-row">
+                                    <img class="customization-auth-preview" src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                                    <span>Current image</span>
+                                </div>
+                                <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php
+                    $showcaseImageUrl = site_customization_auth_image_url($settings['showcase_image_path'], 'images/coffee-splash.png');
+                    ?>
+                    <h3>Homepage featured section</h3>
+                    <p class="customization-help">Its background and text automatically use your system colors.</p>
+                    <label>Featured image <input type="file" name="showcase_image" accept="image/jpeg,image/png,image/webp"></label>
+                    <div class="customization-preview-row"><img class="customization-auth-preview customization-showcase-preview" src="<?php echo escapeOutput($showcaseImageUrl); ?>" alt="Featured section image preview"><span>Current image</span></div>
+                    <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
+                <?php endif; ?>
+
+                <?php if ($pageKey === 'account'): ?>
+                    <div class="customization-auth-image-grid">
+                        <?php foreach ($authImages as $settingKey => $imageConfig):
+                            $imageUrl = site_customization_auth_image_url($settings[$settingKey], $imageConfig['default']);
+                        ?>
+                            <div class="customization-image-setting">
+                                <label><?php echo escapeOutput($imageConfig['title']); ?>
+                                    <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                                </label>
+                                <div class="customization-preview-row">
+                                    <img class="customization-auth-preview" src="<?php echo escapeOutput($imageUrl); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                                    <span>Current picture</span>
+                                </div>
+                                <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <small>Images must be JPG, PNG, or WebP and no larger than 5 MB.</small>
+                <?php endif; ?>
+
+                <?php if ($pageKey === 'footer'): ?>
+                    <p class="customization-help">Quick links and their destinations stay fixed so they continue to work as expected.</p>
+                <?php endif; ?>
+            </section>
+        <?php endforeach; ?>
         <section class="customization-card customization-colors" id="system-colors">
             <h2><i class="fa-solid fa-droplet"></i> System colors</h2>
             <p class="customization-help customization-colors-intro">Use the color swatch or type a six-digit hex code (for example, #8B4A2F). Keep text and background colors easy to read together.</p>
@@ -570,36 +690,6 @@ $authImages = [
                 <div class="customization-loading-note"><i class="fa-regular fa-lightbulb"></i><span>Pick an animation that fits your brand. Choose “No loading animation” for the fastest, simplest experience.</span></div>
             </section>
         </div>
-        <section class="customization-card customization-auth-images" id="sign-in-pictures">
-            <h2><i class="fa-regular fa-images"></i> Sign-in and registration pictures</h2>
-            <p class="customization-help">Upload a different JPG, PNG, or WebP image for each welcome screen. Images can be up to 5 MB.</p>
-            <div class="customization-auth-image-grid">
-                <?php foreach ($authImages as $settingKey => $imageConfig):
-                    $imageUrl = site_customization_auth_image_url($settings[$settingKey], $imageConfig['default']);
-                ?>
-                    <div class="customization-image-setting">
-                        <label><?php echo escapeOutput($imageConfig['title']); ?>
-                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
-                        </label>
-                        <div class="customization-preview-row">
-                            <img class="customization-auth-preview" src="<?php echo escapeOutput($imageUrl); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
-                            <span>Current picture</span>
-                        </div>
-                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </section>
-        <section class="customization-card customization-auth-images" id="featured-section">
-            <h2><i class="fa-solid fa-mug-hot"></i> Homepage featured section</h2>
-            <p class="customization-help">This is the “Every Cup Starts with a Smile” section shown below the main homepage banner. Its background and text automatically use your system navbar colors.</p>
-            <?php
-            $showcaseImageUrl = site_customization_auth_image_url($settings['showcase_image_path'], 'images/coffee-splash.png');
-            ?>
-            <label>Featured image <input type="file" name="showcase_image" accept="image/jpeg,image/png,image/webp"></label>
-            <div class="customization-preview-row"><img class="customization-auth-preview customization-showcase-preview" src="<?php echo escapeOutput($showcaseImageUrl); ?>" alt="Featured section image preview"><span>Current image</span></div>
-            <label class="customization-check"><input type="checkbox" name="reset_showcase_image" value="1"> Restore default featured image</label>
-        </section>
         <section class="customization-card customization-auth-images" id="chatbot-settings">
             <h2><i class="fa-solid fa-comments"></i> Customer and admin chatbots</h2>
             <p class="customization-help">These colors and the icon are shared by the floating chatbot on the storefront and the assistant in the admin panel.</p>
@@ -714,6 +804,26 @@ $authImages = [
 .customization-save:hover{box-shadow:0 10px 24px color-mix(in srgb,var(--primary-red) 30%,transparent)}
 .customization-form section[id],.customization-media-row section[id]{scroll-margin-top:84px}
 #brand-identity,#system-colors{grid-column:1/-1}
+#brand-identity{order:1}
+#system-colors{order:2}
+.customization-media-row{order:3}
+#home-customization{order:4}
+#about-customization{order:5}
+#shop-customization{order:6}
+#contact-customization{order:7}
+#orders-customization{order:8}
+#search-customization{order:9}
+#cart-customization{order:10}
+#profile-customization{order:11}
+#topup-customization{order:12}
+#footer-customization{order:13}
+#account-customization{order:14}
+#chatbot-settings{order:15}
+.customization-page-card{grid-column:1/-1}
+.customization-save-bar{order:99}
+.customization-page-card h3{margin:8px 0 -4px;color:var(--dark-brown);font-size:1rem}
+.customization-field-group{grid-template-columns:repeat(2,minmax(0,1fr))}
+.customization-field-group legend{grid-column:1/-1}
 #brand-identity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start}
 #brand-identity h2,#brand-identity>p{grid-column:1/-1}
 #brand-identity>label:not(.customization-check){align-content:start}
@@ -739,7 +849,7 @@ $authImages = [
 @media(max-width:1050px){#system-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){#brand-identity{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.customization-about-team .customization-image-setting{grid-template-columns:1fr}.customization-about-team .customization-image-setting>label:first-child,.customization-about-team .customization-image-setting .customization-check{grid-column:auto}.customization-page-background-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}.customization-page-background-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}.customization-page-background-grid{grid-template-columns:1fr}.customization-field-group{grid-template-columns:1fr}}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
