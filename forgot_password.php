@@ -326,7 +326,7 @@ if (isset($_POST['submit'])) {
     <div class="auth-card">
         <section class="info-side">
             <div class="cafe-logo-mock">
-                <i class="fa-solid fa-mug-hot fa-xl"></i>
+                <i class="fa-solid fa-seedling fa-xl"></i>
             </div>
             <h2>Forgot your password?</h2>
             <p>It happens to the best of us! Provide your email address and we'll help you get back into your account in no time.</p>

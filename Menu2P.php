@@ -322,7 +322,7 @@ $products = array_merge($base_products, $base_products, $base_products);
   </section>
 
   <div class="sx-tabs" role="toolbar" aria-label="Category navigation">
-    <a href="Menu1P.php" class="sx-tab active" aria-current="page"><i class="fa-solid fa-mug-saucer"></i> Coffee</a>
+    <a href="Menu1P.php" class="sx-tab active" aria-current="page"><i class="fa-solid fa-seedling"></i> Coffee</a>
     <a href="Menu2P.php" class="sx-tab"><i class="fa-solid fa-glass-water"></i> Drinks</a>
     <a href="Menu3P.php" class="sx-tab"><i class="fa-solid fa-cookie"></i> Sweets</a>
   </div>

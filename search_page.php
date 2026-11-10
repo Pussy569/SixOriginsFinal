@@ -23,7 +23,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Friendly label/icon per size_type — kept in sync with Item.php / admin_products.php
 $SIZE_TYPE_META = [
-   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-mug-hot'],
+   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-droplet'],
    'slice' => ['label' => 'Slice / Pieces', 'icon' => 'fa-cake-candles'],
 ];
 

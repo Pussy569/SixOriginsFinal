@@ -22,7 +22,7 @@ $aboutImpactImageUrls = [
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
   <style>
     :root {
@@ -572,11 +572,14 @@ $aboutImpactImageUrls = [
     }
 
     ul.clear-list li::before {
-      content: '☕';
+      content: '';
       position: absolute;
       left: -12px;
-      color: var(--primary-red);
-      font-size: 0.9em;
+      top: 0.65em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-red);
     }
 
     /* ============ IMPACT ============ */
@@ -935,7 +938,7 @@ $aboutImpactImageUrls = [
     }
   </style>
 </head>
-<body>
+<body class="page-about">
 <?php include 'header.php'; ?>
 
 <!-- HERO SECTION WITH BACKGROUND IMAGE - FULL WIDTH AT TOP -->
@@ -1019,13 +1022,13 @@ $aboutImpactImageUrls = [
         <img src="<?php echo escapeOutput($aboutCafeImageUrl); ?>" alt="Six Origins featured coffee blend" loading="lazy">
       </div>
       <div class="promo-body">
-        <span class="promo-tag"><i class="fa-solid fa-mug-hot"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_tag')); ?></span>
+        <span class="promo-tag"><i class="fa-solid fa-star"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_tag')); ?></span>
         <h2 id="promo1Title"><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_heading')); ?></h2>
         <p><?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_description')); ?></p>
         <ul class="promo-points" aria-label="Highlights">
           <li><i class="fa-solid fa-earth-asia"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_1')); ?></li>
           <li><i class="fa-solid fa-fire"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_2')); ?></li>
-          <li><i class="fa-solid fa-mug-saucer"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_3')); ?></li>
+          <li><i class="fa-solid fa-seedling"></i> <?php echo escapeOutput(site_customization_text($siteCustomization, 'about_featured_point_3')); ?></li>
         </ul>
         <div class="promo-actions">
           <a href="Item.php" class="promo-btn"><i class="fa-solid fa-bag-shopping"></i> Explore Our Blends</a>

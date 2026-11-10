@@ -22,7 +22,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Friendly label/icon per size_type — kept in sync with admin_products.php
 $SIZE_TYPE_META = [
-   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-mug-hot'],
+   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-droplet'],
    'slice' => ['label' => 'Slice / Pieces', 'icon' => 'fa-cake-candles'],
 ];
 
@@ -1353,7 +1353,7 @@ img, video { max-width: 100%; }
    <section class="products-section" aria-labelledby="productsTitle">
       <div class="section-header">
          <div>
-            <h2 id="productsTitle">☕ Latest Products</h2>
+            <h2 id="productsTitle">Latest Products</h2>
             <div>Discover our newest arrivals — choose your size and add to cart</div>
          </div>
          <div class="section-filters">
@@ -1521,11 +1521,11 @@ img, video { max-width: 100%; }
    <section class="coffee-moment" id="coffeeMoment" aria-label="A moment worth savoring">
       <div class="coffee-moment-inner">
          <div class="coffee-moment-text">
-            <span class="coffee-moment-tag"><i class="fa-solid fa-mug-hot"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_tag')); ?></span>
+            <span class="coffee-moment-tag"><i class="fa-solid fa-seedling"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_tag')); ?></span>
             <h2><?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_heading')); ?></h2>
             <p><?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_description')); ?></p>
             <div class="CTA-wrap">
-               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-mug-saucer"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_button_1')); ?></a>
+               <a href="Item.php" class="cta-btn"><i class="fa-solid fa-arrow-right"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_button_1')); ?></a>
                <a href="Menu1P.php" class="cta-btn secondary-btn"><i class="fa-solid fa-book-open"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'home_coffee_button_2')); ?></a>
             </div>
          </div>

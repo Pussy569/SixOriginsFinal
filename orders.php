@@ -458,11 +458,14 @@ if (isset($_POST['cancel_customer_order'])) {
       }
 
       .products-list li::before {
-        content: '☕';
+        content: '';
         position: absolute;
         left: 0;
-        color: var(--primary-red);
-        font-size: 0.9em;
+        top: 0.65em;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary-red);
       }
 
       .products-list li:last-child {

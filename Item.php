@@ -22,7 +22,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Friendly label/icon per size_type — kept in sync with admin_products.php
 $SIZE_TYPE_META = [
-   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-mug-hot'],
+   'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-droplet'],
    'slice' => ['label' => 'Slice / Pieces', 'icon' => 'fa-cake-candles'],
 ];
 
@@ -445,7 +445,7 @@ unset($_SESSION['message']);
     /* Scoped to the Quick Facts list (a bare "ul" rule would also restyle the header menu) */
     .facts-list { padding-left: 1.5rem; margin: 0 0 14px 0; color: var(--dark-brown); font-weight: 600; list-style: none; }
     .facts-list li { margin-bottom: 10px; position: relative; padding-left: 12px; font-size: 0.95em; }
-    .facts-list li::before { content: '☕'; position: absolute; left: -12px; color: var(--primary-red); font-size: 0.9em; }
+    .facts-list li::before { content: ''; position: absolute; left: -12px; top: 0.65em; width: 6px; height: 6px; border-radius: 50%; background: var(--primary-red); }
 
     .btn-full-width { display: inline-flex; width: 100%; justify-content: center; }
 

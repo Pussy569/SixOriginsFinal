@@ -57,8 +57,8 @@ if (!$is_guest && $user_id && isset($conn)) {
 <meta name="apple-mobile-web-app-title" content="Six Origins" />
 <title>Six Origins Cafe</title>
 <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="images/app-icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="images/app-icon-192.png">
+<link rel="apple-touch-icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
+<link rel="icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
 <link rel="stylesheet" href="Css/app-launch.css">
 <script>
 (() => {
@@ -76,7 +76,7 @@ if (!$is_guest && $user_id && isset($conn)) {
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 <!-- FONT AWESOME - FIXED FOR PROPER ICON RENDERING -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-DTOQO9RWCH3H5NxKLo6GLOBALYUFF3F8vlG7OYwLDa3p40YXzBTqMjhQS6TmOYw+RbcTwNhDTGPpqEKaFz7LWzg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
@@ -990,17 +990,7 @@ html{-webkit-text-size-adjust:100%}
 <body>
 <div class="pwa-launch-screen" role="status" aria-live="polite" aria-label="Brewing your Six Origins experience">
   <div class="pwa-launch-card">
-    <div class="pwa-coffee-art" aria-hidden="true">
-      <span class="pwa-steam pwa-steam-one"></span>
-      <span class="pwa-steam pwa-steam-two"></span>
-      <span class="pwa-steam pwa-steam-three"></span>
-      <span class="pwa-bean pwa-bean-one"></span>
-      <span class="pwa-bean pwa-bean-two"></span>
-      <div class="pwa-cup"><span></span></div>
-      <div class="pwa-cup-handle"></div>
-      <div class="pwa-saucer"></div>
-    </div>
-    <img class="pwa-launch-logo" src="images/app-icon-192.png" alt="">
+    <img class="pwa-launch-logo" src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="">
     <p class="pwa-launch-kicker">SIX ORIGINS CAFE</p>
     <h1>Good coffee is brewing</h1>
     <p class="pwa-launch-message">A little warmth is on its way.</p>

@@ -11,7 +11,7 @@ function site_customization_content_fields(): array
             'home_coffee_description' => ['Coffee section description', 'From the first pour to the final sip, every cup is made to feel warm, easy, and worth slowing down for.'],
             'home_coffee_button_1' => ['Coffee section button 1', 'Grab Your Cup'],
             'home_coffee_button_2' => ['Coffee section button 2', 'Explore Menu'],
-            'home_about_heading' => ['About section heading', '☕ About Six Origins'],
+            'home_about_heading' => ['About section heading', 'About Six Origins'],
             'home_about_description' => ['About section introduction', 'Discover the story behind our passion for quality coffee and premium apparel'],
             'home_story_heading' => ['Our story heading', 'Our Story'],
             'home_story_paragraph_1' => ['Our story paragraph 1', "Six Origins Cafe isn't just a coffee shop—it's a dream built from the ground up. It started with a vision to create a cozy Japanese-inspired café where quality meets simplicity."],
@@ -165,6 +165,31 @@ function site_customization_content_fields(): array
             'footer_cookies_label' => ['Cookies link label', 'Cookie Policy'],
             'footer_signoff' => ['Footer sign-off', 'for coffee lovers everywhere'],
         ],
+        'Sign-in and registration' => [
+            'login_panel_heading' => ['Login welcome heading', 'Welcome Back!'],
+            'login_panel_description' => ['Login welcome description', 'Step into your cozy coffee corner. Your account is secure and ready for you.'],
+            'login_loading_text' => ['Login loading text', 'Brewing your page'],
+            'login_form_heading' => ['Login form heading', 'Sign In'],
+            'login_form_description' => ['Login form description', 'Welcome back! Enter your credentials to continue.'],
+            'login_submit_button' => ['Login button label', 'Sign In'],
+            'register_form_heading' => ['Registration form heading', 'Sign Up'],
+            'register_form_description' => ['Registration form description', 'Join our coffee community in just a few steps'],
+            'register_submit_button' => ['Registration button label', 'Create Account'],
+            'register_panel_heading' => ['Registration welcome heading', 'Join Our Community'],
+            'register_benefit_1' => ['Registration benefit 1', 'Exclusive member rewards & perks'],
+            'register_benefit_2' => ['Registration benefit 2', 'Early access to new blends'],
+            'register_benefit_3' => ['Registration benefit 3', 'Special discounts & offers'],
+            'register_benefit_4' => ['Registration benefit 4', 'Connect with coffee lovers'],
+        ],
+        'Logout screen' => [
+            'logout_heading' => ['Logout heading', 'See you soon!'],
+            'logout_description' => ['Logout description', "Thanks for spending time with Six Origins Cafe. We've safely ended your session to protect your account — come back whenever you're ready for your next cup."],
+            'logout_loading_text' => ['Logout loading text', 'Signing you out...'],
+            'logout_security_badge' => ['Logout confirmation label', 'Session Cleared'],
+            'logout_signin_button' => ['Logout sign-in button', 'Sign In Again'],
+            'logout_home_button' => ['Logout home button', 'Back to Home'],
+            'logout_footer_note' => ['Logout footer note', 'Your cart and preferences are saved for your next visit.'],
+        ],
     ];
 }
 
@@ -190,7 +215,7 @@ function site_customization_text(array $settings, string $key): string
     $default = site_customization_content_defaults()[$key] ?? '';
     $value = $settings['content_texts'][$key] ?? $default;
 
-    return is_string($value) ? $value : $default;
+    return is_string($value) ? trim(str_replace('☕', '', $value)) : $default;
 }
 
 function site_customization_defaults(): array

@@ -188,7 +188,7 @@ if (isset($_POST['get_response']) && isset($_POST['message'])) {
     $message = strtolower($raw_msg);
 
     if (trim($raw_msg) === '') {
-        jsonResponse(["type" => "text", "message" => "Please type a message so I can help! ☕"]);
+        jsonResponse(["type" => "text", "message" => "Please type a message so I can help!"]);
     }
 
     if (!isset($_SESSION['confusion_count'])) {
@@ -242,7 +242,7 @@ if (isset($_POST['get_menu'])) {
         }
     }
     if (empty($products)) {
-        jsonResponse(["type" => "text", "message" => "Our menu is empty right now. Please check back soon! ☕"]);
+        jsonResponse(["type" => "text", "message" => "Our menu is empty right now. Please check back soon!"]);
     }
     jsonResponse([
         "type" => "menu",
@@ -254,7 +254,7 @@ if (isset($_POST['get_menu'])) {
 // ================= GET ORDERS HANDLER =================
 if (isset($_POST['get_orders'])) {
     if ($user_id == 0) {
-        jsonResponse(["type" => "text", "message" => "Please log in to track your orders! ☕"]);
+        jsonResponse(["type" => "text", "message" => "Please log in to track your orders!"]);
     }
 
     $stmt = $conn->prepare("SELECT id, placed_on, payment_status, total_price, total_products FROM `orders` WHERE user_id = ? ORDER BY id DESC LIMIT 5");
@@ -268,7 +268,7 @@ if (isset($_POST['get_orders'])) {
 
     if ($order_query->num_rows === 0) {
         $stmt->close();
-        jsonResponse(["type" => "text", "message" => "📭 You haven't placed any orders yet. Browse our menu! ☕"]);
+        jsonResponse(["type" => "text", "message" => "📭 You haven't placed any orders yet. Browse our menu!"]);
     }
 
     $img_stmt = $conn->prepare("SELECT image FROM `products` WHERE name LIKE ? LIMIT 1");
@@ -333,7 +333,7 @@ function generateResponse($message, $conn, $user_id) {
         $_SESSION['confusion_count'] = 0;
 
         if (!$user_id || $user_id == 0) {
-            return ["type" => "text", "message" => "Please log in to track your orders! ☕"];
+            return ["type" => "text", "message" => "Please log in to track your orders!"];
         }
 
         return ["type" => "get_orders", "message" => "Fetching your orders..."];
@@ -356,7 +356,7 @@ function generateResponse($message, $conn, $user_id) {
             "options" => cb_default_topics()
         ];
     }
-    return ["type" => "text", "message" => "I'm not quite sure about that. Try asking about our menu, hours or orders! ☕"];
+    return ["type" => "text", "message" => "I'm not quite sure about that. Try asking about our menu, hours or orders!"];
 }
 
 // ===== SEARCH KNOWLEDGE BASE =====
@@ -462,7 +462,7 @@ function formatProduct($product, $conn) {
     <div id="cb-body">
       <div class="cb-quick-bar">
         <button type="button" class="cb-quick-btn" id="cb-q-menu"><i class="fa-solid fa-list"></i> Menu</button>
-        <button type="button" class="cb-quick-btn hot" id="cb-q-rec"><i class="fa-solid fa-mug-hot"></i> Recommend</button>
+        <button type="button" class="cb-quick-btn hot" id="cb-q-rec"><i class="fa-solid fa-wand-magic-sparkles"></i> Recommend</button>
         <button type="button" class="cb-quick-btn" id="cb-q-orders"><i class="fa-solid fa-box"></i> Orders</button>
       </div>
 
@@ -1079,7 +1079,7 @@ html.cb-lock, html.cb-lock body { overflow: hidden !important; }
   function addMessage(text, who, sub) {
     var row = el('div', 'cb-msg-row ' + who);
     var av = el('div', 'cb-avatar ' + who);
-    av.appendChild(icon(who === 'user' ? 'fa-user' : 'fa-mug-hot'));
+    av.appendChild(icon(who === 'user' ? 'fa-user' : 'fa-robot'));
     var bubble = el('div', 'cb-msg-bubble');
     var main = el('div', 'cb-msg-main');
     fillText(main, text);
@@ -1108,7 +1108,7 @@ html.cb-lock, html.cb-lock body { overflow: hidden !important; }
   function showTyping() {
     hideTyping();
     typingEl = el('div', 'cb-msg-row bot');
-    var av = el('div', 'cb-avatar bot'); av.appendChild(icon('fa-mug-hot'));
+    var av = el('div', 'cb-avatar bot'); av.appendChild(icon('fa-robot'));
     var bubble = el('div', 'cb-msg-bubble');
     var dots = el('span', 'cb-typing');
     dots.appendChild(el('span')); dots.appendChild(el('span')); dots.appendChild(el('span'));
@@ -1122,7 +1122,7 @@ html.cb-lock, html.cb-lock body { overflow: hidden !important; }
 
   function welcome(title, sub) {
     msgs.innerHTML = '';
-    addMessage(title || 'Welcome to Six Origins! ☕', 'bot', sub || 'How can I help you today?');
+    addMessage(title || 'Welcome to Six Origins!', 'bot', sub || 'How can I help you today?');
   }
 
   /* ---------- product cards ---------- */

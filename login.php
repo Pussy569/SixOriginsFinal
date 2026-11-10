@@ -419,16 +419,16 @@ if (isset($_POST['submit'])) {
    <meta name="apple-mobile-web-app-capable" content="yes" />
    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
    <meta name="apple-mobile-web-app-title" content="Six Origins" />
-   <title>Login | Six Origins Cafe</title>
+   <title><?php echo escapeOutput($site_customization['brand_name']); ?> | Login</title>
    <link rel="manifest" href="./manifest.json">
-   <link rel="apple-touch-icon" href="images/app-icon-192.png">
+   <link rel="apple-touch-icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
    <script src="Js/app-launch.js" defer></script>
 
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-   <link rel="icon" type="image/png" href="images/app-icon-192.png">
+   <link rel="icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
    <style>
       :root{--primary-red:#C6453E;--dark-brown:#5E1F13;--gray-brown:#664C47;--light-cream:#FFF2E0;--white:#FFFFFF;--radius:16px;--shadow:0 8px 24px rgba(94,31,19,.08);--shadow-hover:0 12px 36px rgba(94,31,19,.12);--transition:all .3s cubic-bezier(.4,0,.2,1)}
       *{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',system-ui,-apple-system,"Segoe UI",Roboto,Arial}
@@ -732,11 +732,10 @@ if (isset($_POST['submit'])) {
       <div class="loader-logo-wrap">
          <div class="loader-ring"></div>
          <div class="loader-ring second"></div>
-         <img src="images/app-icon-192.png" alt="Six Origins" class="loader-logo">
-         <div class="coffee-loader" aria-hidden="true"><i class="fa-solid fa-mug-hot"></i></div>
+         <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?>" class="loader-logo">
       </div>
       <div class="loader-title"><?php echo escapeOutput($site_customization['brand_name']); ?></div>
-      <div class="loader-text"><span id="loaderMsg">Brewing your page</span>
+      <div class="loader-text"><span id="loaderMsg"><?php echo escapeOutput(site_customization_text($site_customization, 'login_loading_text')); ?></span>
          <span class="loader-dots"><span></span><span></span><span></span></span>
       </div>
       <div class="loader-bar"><span></span></div>
@@ -747,10 +746,10 @@ if (isset($_POST['submit'])) {
          <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['login_image_path'], 'images/logback.jpeg')); ?>" alt="Coffee background">
          <div class="image-overlay">
             <h2>
-               Welcome Back!
+               <?php echo escapeOutput(site_customization_text($site_customization, 'login_panel_heading')); ?>
                <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
-            <p>Step into your cozy coffee corner. Your account is secure and ready for you.</p>
+            <p><?php echo escapeOutput(site_customization_text($site_customization, 'login_panel_description')); ?></p>
          </div>
 
          <!-- ✅ HOME BUTTON ON IMAGE PANEL -->
@@ -834,8 +833,8 @@ if (isset($_POST['submit'])) {
             </div>
 
             <div class="form-header">
-               <div class="title">Sign In</div>
-               <div class="subtitle">Welcome back! Enter your credentials to continue.</div>
+               <div class="title"><?php echo escapeOutput(site_customization_text($site_customization, 'login_form_heading')); ?></div>
+               <div class="subtitle"><?php echo escapeOutput(site_customization_text($site_customization, 'login_form_description')); ?></div>
             </div>
 
             <?php
@@ -894,9 +893,9 @@ if (isset($_POST['submit'])) {
                   <div class="signup-link">Don't have an account? <a href="register.php">Sign up</a></div>
                </div>
 
-               <button class="btn" type="submit" name="submit" aria-label="Sign in button">
+               <button class="btn" type="submit" name="submit" aria-label="<?php echo escapeOutput(site_customization_text($site_customization, 'login_submit_button')); ?>">
                   <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                  <span id="btnLabel">Sign In</span>
+                  <span id="btnLabel"><?php echo escapeOutput(site_customization_text($site_customization, 'login_submit_button')); ?></span>
                </button>
 
 

@@ -77,7 +77,7 @@ if (!isset($_SESSION['message'])) {
 
 // Friendly label/icon per size_type — kept in sync with admin_products.php
 $SIZE_TYPE_META = [
-    'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-mug-hot'],
+    'cup'   => ['label' => 'Cup Size',       'icon' => 'fa-droplet'],
     'slice' => ['label' => 'Slice / Pieces', 'icon' => 'fa-cake-candles'],
 ];
 

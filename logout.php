@@ -25,7 +25,9 @@ if (($_GET['reason'] ?? '') === 'timeout') {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Goodbye — Six Origins Cafe</title>
+    <title><?php echo escapeOutput(site_customization_text($site_customization, 'logout_heading')); ?> — <?php echo escapeOutput($site_customization['brand_name']); ?></title>
+    <link rel="icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
+    <link rel="apple-touch-icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,18 +72,16 @@ if (($_GET['reason'] ?? '') === 'timeout') {
             transition: opacity 0.5s ease;
         }
 
-        .coffee-loader {
-            width: 80px;
-            height: 80px;
-            border: 5px solid var(--light-cream);
-            border-top: 5px solid var(--primary-red);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .logout-loader-logo {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            padding: 8px;
+            border-radius: 16px;
+            background: var(--white);
+            box-shadow: var(--shadow-soft);
             margin-bottom: 20px;
         }
-        .coffee-loader i { font-size: 30px; color: var(--primary-red); }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .loader-text {
             color: var(--dark-brown);
@@ -125,6 +125,7 @@ if (($_GET['reason'] ?? '') === 'timeout') {
             color: var(--primary-red);
             margin: 0 auto 24px;
         }
+        .icon-circle img { width: 62px; height: 62px; object-fit: contain; }
 
         .logout-card h2 {
             font-size: 1.9rem;
@@ -229,39 +230,39 @@ if (($_GET['reason'] ?? '') === 'timeout') {
 <body data-loading-style="<?php echo escapeOutput($site_customization['loading_style']); ?>">
 
     <div id="loader-overlay">
-        <div class="coffee-loader"><i class="fa-solid fa-mug-hot"></i></div>
+        <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="" class="logout-loader-logo">
         <div class="logout-loader-spinner"></div>
         <div class="logout-loader-dots"><i></i><i></i><i></i></div>
         <div class="logout-loader-bar"><i></i></div>
-        <div class="loader-text"><?php echo escapeOutput($site_customization['brand_name']); ?> Logout...</div>
+        <div class="loader-text"><?php echo escapeOutput(site_customization_text($site_customization, 'logout_loading_text')); ?></div>
     </div>
 
     <main class="logout-card" id="mainCard">
         <div class="icon-circle">
-            <i class="fa-solid fa-mug-hot"></i>
+            <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?>">
         </div>
 
-        <h2>See you soon!</h2>
-        <p>Thanks for spending time with Six Origins Cafe. We've safely ended your session to protect your account — come back whenever you're ready for your next cup.</p>
+        <h2><?php echo escapeOutput(site_customization_text($site_customization, 'logout_heading')); ?></h2>
+        <p><?php echo escapeOutput(site_customization_text($site_customization, 'logout_description')); ?></p>
 
         <div class="security-badge">
-            <i class="fa-solid fa-shield-check"></i> Session Cleared
+            <i class="fa-solid fa-shield-check"></i> <?php echo escapeOutput(site_customization_text($site_customization, 'logout_security_badge')); ?>
         </div>
 
         <div class="button-group">
             <a href="login.php" class="btn btn-primary">
                 <i class="fa-solid fa-arrow-left-to-bracket"></i>
-                Sign In Again
+                <?php echo escapeOutput(site_customization_text($site_customization, 'logout_signin_button')); ?>
             </a>
             <a href="index.php" class="btn btn-outline">
                 <i class="fa-solid fa-house"></i>
-                Back to Home
+                <?php echo escapeOutput(site_customization_text($site_customization, 'logout_home_button')); ?>
             </a>
         </div>
 
         <div class="footer-note">
             <i class="fa-solid fa-circle-info"></i>
-            <span>Your cart and preferences are saved for your next visit.</span>
+            <span><?php echo escapeOutput(site_customization_text($site_customization, 'logout_footer_note')); ?></span>
         </div>
     </main>
 

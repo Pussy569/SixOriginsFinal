@@ -6,7 +6,7 @@ $footerSettings = isset($site_customization) && is_array($site_customization)
 ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
 <style>
 :root {
@@ -72,22 +72,12 @@ $footerSettings = isset($site_customization) && is_array($site_customization)
 .footer-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0;
   margin-bottom: 18px;
 }
 
-.footer-brand-icon {
-  font-size: 2.6rem;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
-}
-
 .footer-brand-text h1 {
-  font-family: 'Romelio Sans', serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.85rem;
   font-weight: 900;
   color: #FFFBF7;
@@ -333,10 +323,6 @@ $footerSettings = isset($site_customization) && is_array($site_customization)
     font-size: 1.6rem;
   }
 
-  .footer-brand-icon {
-    font-size: 2.2rem;
-  }
-
   .footer-brand p {
     max-width: none;
   }
@@ -390,12 +376,33 @@ $footerSettings = isset($site_customization) && is_array($site_customization)
 }
 </style>
 
+<style>
+.site-main :is(h1, h2, h3),
+.page-about .page :is(h1, h2, h3) {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+
+.site-main .section-header h2,
+.page-about .section-intro h2,
+.page-about .promo-body h2,
+.page-about .card h2,
+.page-about .hero h1 {
+  line-height: 1.18;
+}
+
+.site-main p,
+.page-about .page p {
+  line-height: 1.75;
+}
+</style>
+
 <footer class="site-footer" role="contentinfo">
   <div class="footer-inner">
      <!-- Brand Section -->
      <div>
         <div class="footer-brand">
-           <div class="footer-brand-icon">☕</div>
            <div class="footer-brand-text">
               <h1><?php echo escapeOutput($footerSettings['brand_name']); ?></h1>
               <span class="accent"><?php echo escapeOutput($footerSettings['brand_tagline']); ?></span>
@@ -466,7 +473,7 @@ $footerSettings = isset($site_customization) && is_array($site_customization)
         <a href="#"><?php echo escapeOutput(site_customization_text($footerSettings, 'footer_cookies_label')); ?></a>
      </p>
      <p style="margin-top: 12px; font-size: 0.85rem;">
-        Crafted with <i class="fa-solid fa-heart" style="color: #FFF2E0;"></i> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_signoff')); ?> ☕
+        Crafted with <i class="fa-solid fa-heart" style="color: #FFF2E0;"></i> <?php echo escapeOutput(site_customization_text($footerSettings, 'footer_signoff')); ?>
      </p>
   </div>
 </footer>

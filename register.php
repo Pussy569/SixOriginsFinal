@@ -84,9 +84,9 @@ if(isset($_POST['submit'])){
    <meta name="apple-mobile-web-app-capable" content="yes" />
    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
    <meta name="apple-mobile-web-app-title" content="Six Origins" />
-   <title>Register | Six Origins Cafe</title>
+   <title><?php echo escapeOutput($site_customization['brand_name']); ?> | Register</title>
    <link rel="manifest" href="./manifest.json">
-   <link rel="apple-touch-icon" href="images/app-icon-192.png">
+   <link rel="apple-touch-icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
    <script src="Js/app-launch.js" defer></script>
 
    <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,7 +94,7 @@ if(isset($_POST['submit'])){
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-   <link rel="icon" type="image/png" href="images/app-icon-192.png">
+   <link rel="icon" href="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>">
    <style>
       :root {
         --primary-red: #C6453E;
@@ -1186,8 +1186,8 @@ if(isset($_POST['submit'])){
             </div>
 
             <div class="form-header">
-               <div class="title" id="registerTitle">Sign Up</div>
-               <div class="subtitle">Join our coffee community in just a few steps</div>
+               <div class="title" id="registerTitle"><?php echo escapeOutput(site_customization_text($site_customization, 'register_form_heading')); ?></div>
+               <div class="subtitle"><?php echo escapeOutput(site_customization_text($site_customization, 'register_form_description')); ?></div>
             </div>
 
             <?php
@@ -1324,9 +1324,9 @@ if(isset($_POST['submit'])){
 
                <input type="hidden" id="captcha_verified" name="captcha_verified" value="">
 
-               <button class="btn" type="submit" name="submit" id="submitBtn">
+               <button class="btn" type="submit" name="submit" id="submitBtn" aria-label="<?php echo escapeOutput(site_customization_text($site_customization, 'register_submit_button')); ?>">
                   <i class="fa-solid fa-user-plus"></i>
-                  <span>Create Account</span>
+                  <span><?php echo escapeOutput(site_customization_text($site_customization, 'register_submit_button')); ?></span>
                </button>
 
                <div class="login-link">
@@ -1340,26 +1340,26 @@ if(isset($_POST['submit'])){
          <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['register_image_path'], 'images/logback.jpeg')); ?>" alt="Coffee background - registration page" loading="lazy">
          <div class="image-overlay">
             <h2>
-               Join Our Community
+               <?php echo escapeOutput(site_customization_text($site_customization, 'register_panel_heading')); ?>
                <img src="<?php echo escapeOutput(site_customization_logo_url($site_customization['logo_path'])); ?>" alt="<?php echo escapeOutput($site_customization['brand_name']); ?> Icon">
             </h2>
 
             <div class="benefits">
                <div class="benefit-item">
                   <i class="fa-solid fa-star"></i>
-                  <span>Exclusive member rewards &amp; perks</span>
+                  <span><?php echo escapeOutput(site_customization_text($site_customization, 'register_benefit_1')); ?></span>
                </div>
                <div class="benefit-item">
                   <i class="fa-solid fa-bolt"></i>
-                  <span>Early access to new blends</span>
+                  <span><?php echo escapeOutput(site_customization_text($site_customization, 'register_benefit_2')); ?></span>
                </div>
                <div class="benefit-item">
                   <i class="fa-solid fa-gift"></i>
-                  <span>Special discounts &amp; offers</span>
+                  <span><?php echo escapeOutput(site_customization_text($site_customization, 'register_benefit_3')); ?></span>
                </div>
                <div class="benefit-item">
                   <i class="fa-solid fa-users"></i>
-                  <span>Connect with coffee lovers</span>
+                  <span><?php echo escapeOutput(site_customization_text($site_customization, 'register_benefit_4')); ?></span>
                </div>
             </div>
          </div>
