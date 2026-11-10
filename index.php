@@ -1341,9 +1341,6 @@ img, video { max-width: 100%; }
          </div>
          <div class="section-filters">
             <a href="Item.php"><i class="fa-solid fa-star"></i> All Products</a>
-            <a href="Menu1P.php"><i class="fa-solid fa-mug-hot"></i> Coffee</a>
-            <a href="Menu2P.php"><i class="fa-solid fa-cup"></i> Drinks</a>
-            <a href="Menu3P.php"><i class="fa-solid fa-cookie"></i> Sweets</a>
          </div>
       </div>
 
@@ -1548,28 +1545,28 @@ img, video { max-width: 100%; }
          <div class="carousel-wrapper">
             <div class="carousel-container">
                <div class="carousel-slide active">
-                  <img src="images/typica bg.png" alt="Six Origins Coffee Origins" loading="lazy">
+                  <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_1_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Coffee Origins" loading="lazy">
                   <div class="carousel-text">
                      <h3>Our Coffee Origins</h3>
                      <p>Sourced from six distinct origins around the world</p>
                   </div>
                </div>
                <div class="carousel-slide">
-                  <img src="images/typica bg.png" alt="Six Origins Roasting" loading="lazy">
+                  <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_2_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Roasting" loading="lazy">
                   <div class="carousel-text">
                      <h3>Expert Roasting</h3>
                      <p>Each batch carefully roasted to perfection</p>
                   </div>
                </div>
                <div class="carousel-slide">
-                  <img src="images/typica bg.png" alt="Six Origins Brewing" loading="lazy">
+                  <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_3_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Brewing" loading="lazy">
                   <div class="carousel-text">
                      <h3>Artisan Brewing</h3>
                      <p>Brewed with precision and passion</p>
                   </div>
                </div>
                <div class="carousel-slide">
-                  <img src="images/typica bg.png" alt="Six Origins Premium Apparel" loading="lazy">
+                  <img src="<?php echo escapeOutput(site_customization_auth_image_url($site_customization['home_about_slide_4_image_path'], 'images/typica bg.png')); ?>" alt="Six Origins Premium Apparel" loading="lazy">
                   <div class="carousel-text">
                      <h3>Premium Apparel</h3>
                      <p>Quality clothing crafted for our community</p>

@@ -9,6 +9,10 @@ function site_customization_defaults(): array
         'about_hero_image_path' => 'images/aboback.png',
         'about_cafe_image_path' => 'images/promo-cafe.png',
         'about_product_image_path' => 'images/promo-product.png',
+        'home_about_slide_1_image_path' => 'images/typica bg.png',
+        'home_about_slide_2_image_path' => 'images/typica bg.png',
+        'home_about_slide_3_image_path' => 'images/typica bg.png',
+        'home_about_slide_4_image_path' => 'images/typica bg.png',
         'shop_background_image_path' => null,
         'contact_background_image_path' => null,
         'orders_background_image_path' => null,
@@ -67,7 +71,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -87,12 +91,23 @@ function get_site_customization(mysqli $conn): array
             && (!is_string($settings[$imageKey]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$imageKey]))) {
             $settings[$imageKey] = $defaultImage;
         }
-        foreach (['shop', 'contact', 'orders', 'search', 'cart', 'profile', 'topup'] as $pageKey) {
-            $imageKey = $pageKey . '_background_image_path';
-            $imagePath = $settings[$imageKey] ?? null;
-            if ($imagePath !== null && (!is_string($imagePath) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $imagePath))) {
-                $settings[$imageKey] = null;
-            }
+    }
+    foreach ([
+        'home_about_slide_1_image_path' => 'images/typica bg.png',
+        'home_about_slide_2_image_path' => 'images/typica bg.png',
+        'home_about_slide_3_image_path' => 'images/typica bg.png',
+        'home_about_slide_4_image_path' => 'images/typica bg.png',
+    ] as $imageKey => $defaultImage) {
+        if ($settings[$imageKey] !== $defaultImage
+            && (!is_string($settings[$imageKey]) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $settings[$imageKey]))) {
+            $settings[$imageKey] = $defaultImage;
+        }
+    }
+    foreach (['shop', 'contact', 'orders', 'search', 'cart', 'profile', 'topup'] as $pageKey) {
+        $imageKey = $pageKey . '_background_image_path';
+        $imagePath = $settings[$imageKey] ?? null;
+        if ($imagePath !== null && (!is_string($imagePath) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $imagePath))) {
+            $settings[$imageKey] = null;
         }
     }
     $teamMembers = is_string($settings['team_members']) ? json_decode($settings['team_members'], true) : $settings['team_members'];
@@ -526,12 +541,16 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
     }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ' . implode(', ', array_fill(0, 46, '?')) . ')
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
             about_product_image_path = VALUES(about_product_image_path),
+            home_about_slide_1_image_path = VALUES(home_about_slide_1_image_path),
+            home_about_slide_2_image_path = VALUES(home_about_slide_2_image_path),
+            home_about_slide_3_image_path = VALUES(home_about_slide_3_image_path),
+            home_about_slide_4_image_path = VALUES(home_about_slide_4_image_path),
             shop_background_image_path = VALUES(shop_background_image_path), contact_background_image_path = VALUES(contact_background_image_path),
             orders_background_image_path = VALUES(orders_background_image_path), search_background_image_path = VALUES(search_background_image_path),
             cart_background_image_path = VALUES(cart_background_image_path), profile_background_image_path = VALUES(profile_background_image_path),
@@ -553,13 +572,17 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 41) . 'i',
+        str_repeat('s', 45) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
         $settings['about_hero_image_path'],
         $settings['about_cafe_image_path'],
         $settings['about_product_image_path'],
+        $settings['home_about_slide_1_image_path'],
+        $settings['home_about_slide_2_image_path'],
+        $settings['home_about_slide_3_image_path'],
+        $settings['home_about_slide_4_image_path'],
         $settings['shop_background_image_path'],
         $settings['contact_background_image_path'],
         $settings['orders_background_image_path'],

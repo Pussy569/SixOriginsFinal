@@ -94,6 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'about_hero_image_path' => 'about_hero_image',
             'about_cafe_image_path' => 'about_cafe_image',
             'about_product_image_path' => 'about_product_image',
+            'home_about_slide_1_image_path' => 'home_about_slide_1_image',
+            'home_about_slide_2_image_path' => 'home_about_slide_2_image',
+            'home_about_slide_3_image_path' => 'home_about_slide_3_image',
+            'home_about_slide_4_image_path' => 'home_about_slide_4_image',
         ] as $settingKey => $uploadKey) {
             $oldAboutImages[$settingKey] = $settings[$settingKey];
             $uploadedAboutImage = save_site_customization_upload($_FILES[$uploadKey] ?? [], 'image', __DIR__);
@@ -246,6 +250,19 @@ $mediaUrl = site_customization_video_url($settings['hero_media_path']);
 $hasLegacyHeroImage = $settings['hero_media_type'] === 'image' && $settings['hero_media_path'] !== null;
 $aboutCafeImageUrl = site_customization_auth_image_url($settings['about_cafe_image_path'], 'images/promo-cafe.png');
 $aboutProductImageUrl = site_customization_auth_image_url($settings['about_product_image_path'], 'images/promo-product.png');
+$homeCarouselImages = [];
+foreach ([
+    'home_about_slide_1_image_path' => ['title' => 'Coffee origins slide', 'input' => 'home_about_slide_1_image'],
+    'home_about_slide_2_image_path' => ['title' => 'Expert roasting slide', 'input' => 'home_about_slide_2_image'],
+    'home_about_slide_3_image_path' => ['title' => 'Artisan brewing slide', 'input' => 'home_about_slide_3_image'],
+    'home_about_slide_4_image_path' => ['title' => 'Premium apparel slide', 'input' => 'home_about_slide_4_image'],
+] as $settingKey => $imageConfig) {
+    $homeCarouselImages[$settingKey] = [
+        'title' => $imageConfig['title'],
+        'input' => $imageConfig['input'],
+        'url' => site_customization_auth_image_url($settings[$settingKey], 'images/typica bg.png'),
+    ];
+}
 $pageBackgroundOptions = [
     'about_hero_image_path' => ['title' => 'About page hero/banner', 'input' => 'about_hero_image', 'default' => 'images/aboback.png'],
     'shop_background_image_path' => ['title' => 'Shop hero/banner', 'input' => 'shop_background'],
@@ -307,12 +324,28 @@ $authImages = [
         </section>
         <section class="customization-card customization-about-team" id="about-team">
             <h2><i class="fa-solid fa-people-group"></i> About page and team</h2>
-            <p class="customization-help">Change the featured cafe and product images, and the six team profiles shown to customers. About page banner images are managed with the other page banners below.</p>
+            <p class="customization-help">Change the featured cafe and product images, the homepage About carousel images, and the six team profiles shown to customers. About page banner images are managed with the other page banners below.</p>
             <div class="customization-auth-image-grid">
                 <?php foreach ([
                     'about_cafe_image_path' => ['title' => 'Featured cafe image', 'input' => 'about_cafe_image', 'url' => $aboutCafeImageUrl, 'default' => 'images/promo-cafe.png'],
                     'about_product_image_path' => ['title' => 'Featured product image', 'input' => 'about_product_image', 'url' => $aboutProductImageUrl, 'default' => 'images/promo-product.png'],
                 ] as $settingKey => $imageConfig): ?>
+                    <div class="customization-image-setting">
+                        <label><?php echo escapeOutput($imageConfig['title']); ?>
+                            <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <div class="customization-preview-row">
+                            <img class="customization-auth-preview" src="<?php echo escapeOutput($imageConfig['url']); ?>" alt="<?php echo escapeOutput($imageConfig['title']); ?> preview">
+                            <span>Current image</span>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default</label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <h3>Homepage About carousel</h3>
+            <p class="customization-help">Upload a JPG, PNG, or WebP image for each carousel slide. Leave an upload empty to keep its current image.</p>
+            <div class="customization-auth-image-grid">
+                <?php foreach ($homeCarouselImages as $settingKey => $imageConfig): ?>
                     <div class="customization-image-setting">
                         <label><?php echo escapeOutput($imageConfig['title']); ?>
                             <input type="file" name="<?php echo escapeOutput($imageConfig['input']); ?>" accept="image/jpeg,image/png,image/webp">

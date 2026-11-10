@@ -17,6 +17,7 @@ finalshopdatabase.sql
 !/database/migrations/20261109_site_customization_order_header_text.sql
 !/database/migrations/20261109_site_customization_page_backgrounds.sql
 !/database/migrations/20261109_site_customization_navbar_hover_colors.sql
+!/database/migrations/20261110_home_about_carousel_images.sql
 *.sqlite
 *.sqlite3
 *.db
