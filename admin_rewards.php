@@ -502,7 +502,8 @@ while (count($prizes) < 3) {
     .rewards-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:16px;margin-top:20px}
     .campaign-form{grid-template-columns:repeat(4,minmax(0,1fr));padding:20px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:17px;background:color-mix(in srgb,var(--site-page-bg) 36%,var(--site-surface))}
     .rewards-grid label,.publish-cycle-form label{display:grid;align-content:start;gap:8px;min-width:0;color:var(--dark-brown);font-size:.84rem;font-weight:800;line-height:1.35}
-    .campaign-cap-field[hidden]{display:none!important}
+    .campaign-cap-field.is-disabled input{background:color-mix(in srgb,var(--gray-brown) 7%,var(--site-surface));color:var(--gray-brown);cursor:not-allowed}
+    .campaign-cap-field.is-disabled small{color:var(--gray-brown);font-weight:600}
     .rewards-grid input:not([type=checkbox]),.rewards-grid select,.publish-cycle-form input{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-surface));border-radius:10px;background:var(--site-surface);color:var(--site-text);font:500 .92rem Montserrat,sans-serif;transition:border-color .18s,box-shadow .18s}
     .rewards-grid input:focus,.rewards-grid select:focus,.publish-cycle-form input:focus{outline:none;border-color:var(--primary-red);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-red) 14%,transparent)}
     .rewards-check{display:flex!important;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:10px;background:var(--site-surface)}.rewards-check input{width:18px;height:18px;accent-color:var(--primary-red)}
@@ -526,8 +527,8 @@ document.querySelectorAll('.campaign-form').forEach((form) => {
 
     const updateCapField = () => {
         const isPercentage = rewardType.value === 'percentage';
-        capField.hidden = !isPercentage;
         capInput.disabled = !isPercentage;
+        capField.classList.toggle('is-disabled', !isPercentage);
     };
 
     rewardType.addEventListener('change', updateCapField);

@@ -42,10 +42,10 @@ $campaignFields = $campaign ?? [
 <label>Reward amount / percentage
     <input type="number" min="0" step="1" name="reward_amount" required value="<?php echo escapeOutput($campaignFields['reward_amount']); ?>">
 </label>
-<label class="campaign-cap-field" data-campaign-cap-field>
+<label class="campaign-cap-field <?php echo $campaignFields['reward_type'] === 'percentage' ? '' : 'is-disabled'; ?>" data-campaign-cap-field>
     Maximum discount cap (₱)
-    <input type="number" min="0" max="99999999.99" step="0.01" name="max_discount_cap" value="<?php echo escapeOutput($campaignFields['max_discount_cap'] ?? 0); ?>">
-    <small>Percentage offers only. Leave at 0 for no cap.</small>
+    <input type="number" min="0" max="99999999.99" step="0.01" name="max_discount_cap" value="<?php echo escapeOutput($campaignFields['max_discount_cap'] ?? 0); ?>" <?php echo $campaignFields['reward_type'] === 'percentage' ? '' : 'disabled'; ?>>
+    <small>Only applies to percentage offers. Leave at 0 for no cap.</small>
 </label>
 <label>Voucher minimum spend (₱)
     <input type="number" min="0" step="1" name="minimum_spend" required value="<?php echo escapeOutput($campaignFields['minimum_spend']); ?>">
