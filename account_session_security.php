@@ -3,6 +3,7 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/app/services/login_session_security.php';
 require_once __DIR__ . '/app/services/admin_log_activity.php';
 require_once __DIR__ . '/mail_helper.php';
+require_once __DIR__ . '/app/helpers/site_customization.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, private');
@@ -76,8 +77,15 @@ if ($action === 'send_email_code') {
 
     $safeName = htmlspecialchars((string)$accountName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $html = "<p>Hello {$safeName},</p><p>Your code to approve this sign-in is:<br><strong style='font-size:1.4rem'>{$safeCode}</strong></p><p>This code expires in 10 minutes. Entering it will sign out the other active device. If you did not request this, ignore this email.</p>";
-    if (!send_six_origins_mail((string)$accountEmail, (string)$accountName, 'Your Six Origins sign-in code', $html)) {
+    $customization = get_site_customization($conn);
+    $greeting = str_replace('{name}', $safeName, htmlspecialchars(site_customization_text($customization, 'verification_session_email_greeting'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+    $instruction = htmlspecialchars(site_customization_text($customization, 'verification_session_email_instruction'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $title = htmlspecialchars(site_customization_text($customization, 'verification_session_email_title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $note = nl2br(htmlspecialchars(site_customization_text($customization, 'verification_session_email_note'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), false);
+    $subject = site_customization_email_subject($customization, 'verification_session_email_subject');
+    $footer = site_customization_text($customization, 'verification_email_footer');
+    $html = "<p>{$greeting}</p><p>{$instruction}<br><strong style='font-size:1.4rem'>{$safeCode}</strong></p><p>{$note}</p>";
+    if (!send_six_origins_mail((string)$accountEmail, (string)$accountName, $subject, six_origins_email_layout($title, $html, $footer))) {
         $clear = $conn->prepare("UPDATE login_session_requests SET email_code_hash = NULL, email_code_expires_at = NULL WHERE request_id = ? AND status = 'pending'");
         $clear->bind_param('s', $requestId);
         $clear->execute();

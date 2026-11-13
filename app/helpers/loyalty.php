@@ -2,6 +2,7 @@
 
 function loyalty_send_signup_verification(mysqli $conn, int $userId): bool
 {
+    require_once __DIR__ . '/site_customization.php';
     require_once dirname(__DIR__) . '/services/mail_helper.php';
     $stmt = $conn->prepare('SELECT name, email, email_verified FROM users WHERE id = ? AND user_type = \'user\' LIMIT 1');
     $stmt->bind_param('i', $userId);
@@ -34,7 +35,7 @@ function loyalty_send_signup_verification(mysqli $conn, int $userId): bool
     $insert->execute();
     $insert->close();
 
-    return send_signup_verification_mail((string)$user['name'], (string)$user['email'], $code);
+    return send_signup_verification_mail((string)$user['name'], (string)$user['email'], $code, get_site_customization($conn));
 }
 
 function loyalty_get_settings(mysqli $conn): array

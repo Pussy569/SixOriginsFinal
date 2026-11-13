@@ -147,6 +147,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $oldVerificationBackground = $settings['email_verification_background_image_path'];
+        $uploadedVerificationBackground = save_site_customization_upload($_FILES['email_verification_background'] ?? [], 'image', __DIR__);
+        if ($uploadedVerificationBackground !== null) {
+            $newUploads[] = $uploadedVerificationBackground;
+            $newSettings['email_verification_background_image_path'] = $uploadedVerificationBackground;
+        } elseif (!empty($_POST['reset_email_verification_background'])) {
+            $newSettings['email_verification_background_image_path'] = null;
+        }
+
         $oldTeamMembers = $settings['team_members'];
         $postedNames = $_POST['team_name'] ?? [];
         $postedRoles = $_POST['team_role'] ?? [];
@@ -236,6 +245,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 delete_site_customization_upload($oldPageBackground, __DIR__);
             }
         }
+        if ($oldVerificationBackground !== $newSettings['email_verification_background_image_path']) {
+            delete_site_customization_upload($oldVerificationBackground, __DIR__);
+        }
         foreach ($oldTeamMembers as $oldMember) {
             $imageIsRetained = false;
             foreach ($newTeamMembers as $newMember) {
@@ -312,6 +324,7 @@ $contentFieldsByPage = [
     'footer' => [],
     'loading' => [],
     'account' => [],
+    'verification' => [],
 ];
 $contentPagePrefixes = [
     'loading' => ['login_loading_text', 'login_submit_loading_text'],
@@ -326,6 +339,7 @@ $contentPagePrefixes = [
     'topup' => ['topup_'],
     'footer' => ['footer_'],
     'account' => ['login_', 'register_', 'logout_'],
+    'verification' => ['verification_'],
 ];
 foreach ($contentFieldGroups as $contentFields) {
     foreach ($contentFields as $key => $field) {
@@ -388,6 +402,7 @@ $customizationPages = [
     'topup' => ['id' => 'topup-customization', 'title' => 'Wallet top-up', 'icon' => 'fa-wallet', 'description' => 'Customize the wallet top-up banner, payment instructions, and related text.', 'banner' => 'topup_background_image_path'],
     'footer' => ['id' => 'footer-customization', 'title' => 'Footer', 'icon' => 'fa-link', 'description' => 'Customize the footer description and contact details. Quick links remain connected to their existing pages.', 'banner' => null],
     'account' => ['id' => 'account-customization', 'title' => 'Login, register, and logout', 'icon' => 'fa-right-to-bracket', 'description' => 'Customize the account screens and their welcome images. Authentication behavior and links remain unchanged.', 'banner' => null],
+    'verification' => ['id' => 'email-verification-customization', 'title' => 'Email verification', 'icon' => 'fa-envelope-circle-check', 'description' => 'Customize sign-up and sign-in verification copy, email messages, and the verification screen background. Code expiry, security, and delivery behavior stay unchanged.', 'banner' => null],
 ];
 ?>
 <?php include 'admin_header.php'; ?>
@@ -416,6 +431,7 @@ $customizationPages = [
         <a href="#topup-customization"><i class="fa-solid fa-wallet"></i> Wallet top-up</a>
         <a href="#footer-customization"><i class="fa-solid fa-link"></i> Footer</a>
         <a href="#account-customization"><i class="fa-solid fa-right-to-bracket"></i> Account screens</a>
+        <a href="#email-verification-customization"><i class="fa-solid fa-envelope-circle-check"></i> Email verification</a>
         <a href="#chatbot-settings"><i class="fa-solid fa-comments"></i> Chatbots</a>
     </nav>
     <?php if ($message !== ''): ?>
@@ -575,6 +591,29 @@ $customizationPages = [
                             <?php endif; ?>
                         </div>
                         <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default banner</label>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($pageKey === 'verification'):
+                    $verificationBackgroundUrl = site_customization_auth_image_url(
+                        $settings['email_verification_background_image_path'],
+                        ''
+                    );
+                ?>
+                    <div class="customization-page-background-setting">
+                        <label>Verification screen background image
+                            <input type="file" name="email_verification_background" accept="image/jpeg,image/png,image/webp">
+                        </label>
+                        <div class="customization-page-background-preview">
+                            <?php if ($verificationBackgroundUrl !== ''): ?>
+                                <img src="<?php echo escapeOutput($verificationBackgroundUrl); ?>" alt="Verification background preview">
+                                <span>Current background image</span>
+                            <?php else: ?>
+                                <div class="customization-page-background-empty"><i class="fa-regular fa-image"></i><span>Using your system background color</span></div>
+                            <?php endif; ?>
+                        </div>
+                        <label class="customization-check"><input type="checkbox" name="reset_email_verification_background" value="1"> Restore system background color</label>
+                        <small>JPG, PNG, or WebP; maximum 5 MB. This image appears behind the sign-up and sign-in code screens.</small>
                     </div>
                 <?php endif; ?>
 

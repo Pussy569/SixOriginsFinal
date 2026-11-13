@@ -23,6 +23,7 @@ finalshopdatabase.sql
 !/database/migrations/20261110_checkout_payment_methods.sql
 !/database/migrations/20261110_loyalty_fractional_wallet_rate.sql
 !/database/migrations/20261113_voucher_maximum_discount_cap.sql
+!/database/migrations/20261113_email_verification_customization.sql
 *.sqlite
 *.sqlite3
 *.db

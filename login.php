@@ -36,12 +36,18 @@ function dbg($m){
 }
 
 function send_verification_mail(string $toEmail, string $code): bool|string {
+    global $site_customization;
     $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $html = "<p>Hello,</p>
-             <p>Your login verification code is:<br><strong style='font-size:1.4rem;'>{$safeCode}</strong></p>
-             <p>This code expires in 10 minutes. If you did not request this, please ignore this email.</p>
-             <p>— Six Origins Team</p>";
-    return send_six_origins_mail($toEmail, '', 'Your Login Verification Code', $html);
+    $greeting = htmlspecialchars(site_customization_text($site_customization, 'verification_login_email_greeting'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $instruction = htmlspecialchars(site_customization_text($site_customization, 'verification_login_email_instruction'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $title = htmlspecialchars(site_customization_text($site_customization, 'verification_login_email_title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $note = nl2br(htmlspecialchars(site_customization_text($site_customization, 'verification_login_email_note'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), false);
+    $subject = site_customization_email_subject($site_customization, 'verification_login_email_subject');
+    $footer = site_customization_text($site_customization, 'verification_email_footer');
+    $html = "<p>{$greeting}</p>
+             <p>{$instruction}<br><strong style='font-size:1.4rem;'>{$safeCode}</strong></p>
+             <p>{$note}</p>";
+    return send_six_origins_mail($toEmail, '', $subject, six_origins_email_layout($title, $html, $footer));
 }
 
 function send_lockout_mail(string $toEmail, string $name, int $lockout_minutes): bool|string {

@@ -215,13 +215,27 @@ if ($next_resend_seconds === 0) {
 }
 
 $expires_display = $_SESSION['pending_2fa_expires'] ?? null;
+$verificationText = [
+    'heading' => site_customization_text($site_customization, 'verification_login_heading'),
+    'description' => site_customization_text($site_customization, 'verification_login_description'),
+    'why_heading' => site_customization_text($site_customization, 'verification_login_why_heading'),
+    'why_description' => site_customization_text($site_customization, 'verification_login_why_description'),
+    'resend_heading' => site_customization_text($site_customization, 'verification_login_resend_heading'),
+    'resend_description' => site_customization_text($site_customization, 'verification_login_resend_description'),
+    'code_label' => site_customization_text($site_customization, 'verification_login_code_label'),
+    'expires_label' => site_customization_text($site_customization, 'verification_login_expires_label'),
+    'attempts_label' => site_customization_text($site_customization, 'verification_login_attempts_label'),
+    'verify_button' => site_customization_text($site_customization, 'verification_login_button'),
+    'resend_button' => site_customization_text($site_customization, 'verification_login_resend_button'),
+    'cancel_button' => site_customization_text($site_customization, 'verification_login_cancel_button'),
+];
 ?>
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Enter verification code — Six Origins Cafe</title>
+<title><?php echo escapeOutput($verificationText['heading']); ?> — <?php echo escapeOutput($site_customization['brand_name']); ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -673,8 +687,9 @@ label {
 }
 </style>
 <?php echo site_customization_css($site_customization); ?>
+<?php echo site_customization_verification_background_css($site_customization); ?>
 </head>
-<body>
+<body class="email-verification-page">
 
 <div class="container">
   <aside class="panel" aria-hidden="false">
@@ -687,19 +702,19 @@ label {
     </div>
 
     <div class="info-section">
-      <strong><i class="fa-solid fa-shield"></i> Why this step?</strong>
-      <p>We send a verification code to your email to confirm it's you. This improves account security and prevents unauthorized access.</p>
+      <strong><i class="fa-solid fa-shield"></i> <?php echo escapeOutput($verificationText['why_heading']); ?></strong>
+      <p><?php echo escapeOutput($verificationText['why_description']); ?></p>
     </div>
 
     <div class="info-section">
-      <strong><i class="fa-solid fa-envelope"></i> Didn't receive the email?</strong>
-      <p>Check your spam/junk folder. You can resend the code below (rate limited to 30 seconds).</p>
+      <strong><i class="fa-solid fa-envelope"></i> <?php echo escapeOutput($verificationText['resend_heading']); ?></strong>
+      <p><?php echo escapeOutput($verificationText['resend_description']); ?></p>
     </div>
   </aside>
 
   <main class="form-card" role="main" aria-labelledby="verifyTitle">
-    <h2 class="title" id="verifyTitle"><i class="fa-solid fa-lock"></i> Enter verification code</h2>
-    <p class="subtitle">We emailed a 6-digit code to your account. Enter it below to complete sign-in.</p>
+    <h2 class="title" id="verifyTitle"><i class="fa-solid fa-lock"></i> <?php echo escapeOutput($verificationText['heading']); ?></h2>
+    <p class="subtitle"><?php echo escapeOutput($verificationText['description']); ?></p>
 
     <?php if ($message): ?>
       <div class="msg error">
@@ -717,7 +732,7 @@ label {
 
     <form method="post" id="verifyForm">
       <div class="input-group">
-        <label for="code"><i class="fa-solid fa-hashtag"></i> Verification code</label>
+        <label for="code"><i class="fa-solid fa-hashtag"></i> <?php echo escapeOutput($verificationText['code_label']); ?></label>
         <div class="input">
           <input id="code" name="code" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="123456" required autofocus>
         </div>
@@ -726,24 +741,24 @@ label {
       <div class="button-group">
         <button type="submit" name="verify_code" class="btn">
           <i class="fa-solid fa-check-circle"></i>
-          <span>Verify</span>
+          <span><?php echo escapeOutput($verificationText['verify_button']); ?></span>
         </button>
         <button type="button" id="resendBtn" class="btn ghost">
           <i class="fa-solid fa-redo"></i>
-          <span>Resend code</span>
+          <span><?php echo escapeOutput($verificationText['resend_button']); ?></span>
         </button>
         <button type="button" id="cancelBtn" class="btn ghost">
           <i class="fa-solid fa-times-circle"></i>
-          <span>Cancel</span>
+          <span><?php echo escapeOutput($verificationText['cancel_button']); ?></span>
         </button>
       </div>
     </form>
 
     <div class="info">
       <?php if (!empty($expires_display)): ?>
-        <div><strong><i class="fa-solid fa-hourglass-end"></i> Code expires at:</strong> <?php echo htmlspecialchars($expires_display); ?></div>
+        <div><strong><i class="fa-solid fa-hourglass-end"></i> <?php echo escapeOutput($verificationText['expires_label']); ?></strong> <?php echo htmlspecialchars($expires_display); ?></div>
       <?php endif; ?>
-      <div><strong><i class="fa-solid fa-attempt"></i> Attempts left:</strong> <?php echo max(0, 5 - ($_SESSION['2fa_attempts'] ?? 0)); ?>/5</div>
+      <div><strong><i class="fa-solid fa-attempt"></i> <?php echo escapeOutput($verificationText['attempts_label']); ?></strong> <?php echo max(0, 5 - ($_SESSION['2fa_attempts'] ?? 0)); ?>/5</div>
       <div id="resendInfo"></div>
     </div>
 

@@ -6,6 +6,15 @@ require_once __DIR__ . '/app/helpers/site_customization.php';
 require_once __DIR__ . '/app/helpers/loyalty.php';
 
 $settings = get_site_customization($conn);
+$verificationHeading = site_customization_text($settings, 'verification_signup_heading');
+$verificationDescription = str_replace(
+    '{email}',
+    escapeOutput($email),
+    escapeOutput(site_customization_text($settings, 'verification_signup_description'))
+);
+$verificationCodeLabel = site_customization_text($settings, 'verification_signup_code_label');
+$verificationSubmitLabel = site_customization_text($settings, 'verification_signup_button');
+$verificationResendLabel = site_customization_text($settings, 'verification_signup_resend_button');
 $email = (string)($_SESSION['pending_signup_email'] ?? '');
 $message = $_SESSION['message'] ?? '';
 unset($_SESSION['message']);
@@ -126,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verify your email | Six Origins</title>
+    <title><?php echo escapeOutput($verificationHeading); ?> | <?php echo escapeOutput($settings['brand_name']); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -143,24 +152,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .notice.error{background:#fff0ee;color:#8a1f19}
     </style>
     <?php echo site_customization_css($settings); ?>
+    <?php echo site_customization_verification_background_css($settings); ?>
 </head>
-<body>
+<body class="email-verification-page">
     <main class="verify-card">
         <div class="verify-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
-        <h1>Verify your email</h1>
-        <p>Enter the six-digit code sent to <strong><?php echo escapeOutput($email); ?></strong>. Your welcome voucher will be added after verification.</p>
+        <h1><?php echo escapeOutput($verificationHeading); ?></h1>
+        <p><?php echo $verificationDescription; ?></p>
         <?php if ($message !== ''): ?>
             <div class="notice <?php echo $messageType === 'error' ? 'error' : ''; ?>" role="status"><?php echo escapeOutput($message); ?></div>
         <?php endif; ?>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
-            <label for="code">Verification code</label>
+            <label for="code"><?php echo escapeOutput($verificationCodeLabel); ?></label>
             <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="\d{6}" maxlength="6" required>
-            <button type="submit"><i class="fa-solid fa-check"></i> Verify account</button>
+            <button type="submit"><i class="fa-solid fa-check"></i> <?php echo escapeOutput($verificationSubmitLabel); ?></button>
         </form>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escapeOutput($_SESSION['csrf_token']); ?>">
-            <button class="resend" type="submit" name="resend_code" value="1">Resend code</button>
+            <button class="resend" type="submit" name="resend_code" value="1"><?php echo escapeOutput($verificationResendLabel); ?></button>
         </form>
     </main>
 </body>
