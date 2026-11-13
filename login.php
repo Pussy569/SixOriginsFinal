@@ -547,19 +547,19 @@ if (isset($_POST['submit'])) {
       .cookie-btn.accept:hover{background:#B83A34;transform:translateY(-2px);box-shadow:0 4px 12px rgba(198,69,62,.3)}
 
       /* ✅ NEW: LOADING SCREEN */
-      .loading-screen{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;text-align:center;background:linear-gradient(135deg,#FFFAF5 0%,var(--light-cream) 100%);opacity:1;visibility:visible;transition:opacity .5s ease,visibility .5s ease}
+      .loading-screen{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;text-align:center;background:linear-gradient(135deg,var(--site-page-bg,var(--light-cream)) 0%,var(--light-cream) 100%);opacity:1;visibility:visible;transition:opacity .5s ease,visibility .5s ease}
       .loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-      .loading-screen.overlay-mode{background:rgba(255,246,235,.92);backdrop-filter:blur(6px)}
+      .loading-screen.overlay-mode{background:color-mix(in srgb,var(--site-page-bg,var(--light-cream)) 92%,transparent);backdrop-filter:blur(6px)}
       .loader-logo-wrap{position:relative;width:132px;height:132px;display:flex;align-items:center;justify-content:center}
-      .loader-ring{position:absolute;inset:0;border-radius:50%;border:5px solid rgba(198,69,62,.15);border-top-color:var(--primary-red);border-right-color:var(--primary-red);animation:loaderSpin 1s linear infinite}
+      .loader-ring{position:absolute;inset:0;border-radius:50%;border:5px solid color-mix(in srgb,var(--primary-red) 15%,transparent);border-top-color:var(--primary-red);border-right-color:var(--primary-red);animation:loaderSpin 1s linear infinite}
       .loader-ring.second{inset:12px;border-width:4px;border-top-color:var(--dark-brown);border-right-color:transparent;border-left-color:var(--dark-brown);animation-duration:1.6s;animation-direction:reverse}
-      .loader-logo{width:70px;height:70px;object-fit:contain;background:#fff;border-radius:16px;padding:8px;box-shadow:0 6px 16px rgba(94,31,19,.15);animation:loaderPulse 1.6s ease-in-out infinite}
+      .loader-logo{width:70px;height:70px;object-fit:contain;background:var(--site-surface,#fff);border-radius:16px;padding:8px;box-shadow:0 6px 16px color-mix(in srgb,var(--dark-brown) 15%,transparent);animation:loaderPulse 1.6s ease-in-out infinite}
       .loader-title{font-size:1.6rem;font-weight:900;color:var(--dark-brown);letter-spacing:-.3px}
-      .loader-text{font-size:.95rem;font-weight:600;color:var(--gray-brown);display:flex;align-items:center;gap:4px}
+      .loader-text{font-size:.95rem;font-weight:600;color:var(--site-text,var(--gray-brown));display:flex;align-items:center;gap:4px}
       .loader-dots span{display:inline-block;width:5px;height:5px;margin-left:3px;border-radius:50%;background:var(--primary-red);animation:loaderDot 1.2s infinite ease-in-out both}
       .loader-dots span:nth-child(2){animation-delay:.18s}
       .loader-dots span:nth-child(3){animation-delay:.36s}
-      .loader-bar{width:220px;max-width:70vw;height:6px;background:rgba(198,69,62,.15);border-radius:10px;overflow:hidden}
+      .loader-bar{width:220px;max-width:70vw;height:6px;background:color-mix(in srgb,var(--primary-red) 15%,transparent);border-radius:10px;overflow:hidden}
       .loader-bar span{display:block;height:100%;width:40%;border-radius:10px;background:linear-gradient(90deg,var(--primary-red),var(--dark-brown));animation:loaderBar 1.4s ease-in-out infinite}
       @keyframes loaderSpin{to{transform:rotate(360deg)}}
       @keyframes loaderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -728,7 +728,7 @@ if (isset($_POST['submit'])) {
 <body data-loading-style="<?php echo escapeOutput($site_customization['loading_style']); ?>">
 
    <!-- ✅ NEW: LOADING SCREEN (shows while the page loads and again when you press Sign In) -->
-   <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading">
+   <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading" data-submit-message="<?php echo escapeOutput(site_customization_text($site_customization, 'login_submit_loading_text')); ?>">
       <div class="loader-logo-wrap">
          <div class="loader-ring"></div>
          <div class="loader-ring second"></div>
@@ -1012,7 +1012,7 @@ if (isset($_POST['submit'])) {
 
          // Do NOT disable the submit button here - PHP checks $_POST['submit']
          isSubmittingLogin = true;
-         showLoading('Signing you in');
+         showLoading(loadingScreen.dataset.submitMessage);
       });
 
       document.getElementById('email').addEventListener('input', () => {

@@ -46,7 +46,7 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from `database/schema.sql` already include the customization table and do not need this migration. For XAMPP, ensure `images/site_customization` is writable by the PHP/Apache process and set `upload_max_filesize=52M` and `post_max_size=53M` in `php.ini` so the Head Admin can upload video files.
 
-The Head Admin can also set separate login, customer-registration, and admin-registration pictures (JPG, PNG, or WebP, 5 MB max) and choose a loading style for the login/logout screens. If the original customization migration was already applied to an existing database, apply `database/migrations/20261109_site_customization_experience.sql` as well; fresh schema imports already include these fields.
+The Head Admin can also set separate login, customer-registration, and admin-registration pictures (JPG, PNG, or WebP, 5 MB max), choose a loading style, and edit the login page-load and sign-in progress messages. Loading screens use the configured logo, brand name, and system colors. If the original customization migration was already applied to an existing database, apply `database/migrations/20261109_site_customization_experience.sql` as well; fresh schema imports already include these fields.
 
 The featured homepage section image and shared customer/admin chatbot icon/colors are also customizable. The featured section background, text, and buttons follow the system color palette. On existing databases, apply `20261109_site_customization_chatbots.sql` after the initial customization table and, when needed, the experience migration. Fresh schema imports already include these settings.
 
@@ -99,6 +99,14 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 ```
 
 Fresh databases initialized from the current `database/schema.sql` already include the reward tables and an initial seven-day cycle. Customer registration now requires email verification; configure `RESEND_API_KEY`, `MAIL_FROM_EMAIL`, and `MAIL_FROM_NAME` for the verification code to be delivered. A welcome voucher is granted after verification. Order-based campaigns use one order's product subtotal or item quantity and are granted once per customer when an admin marks a qualifying order **Completed**; when multiple tiers for the same condition qualify, only the highest tier is granted. Cancelling an order revokes its unused campaign vouchers; already-redeemed vouchers are not clawed back. Daily rewards follow calendar dates, so missed days are skipped. The next seven-day cycle must be published by the Head Admin.
+
+Automatic percentage voucher offers can optionally set a maximum discount cap. The cap applies to the whole product subtotal for one redemption; blank or zero means unlimited. Existing databases must apply `database/migrations/20261113_voucher_maximum_discount_cap.sql` after the loyalty rewards migration:
+
+```sh
+mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261113_voucher_maximum_discount_cap.sql
+```
+
+Fresh databases initialized from the current `database/schema.sql` already include the cap columns.
 
 The wallet-points conversion can use fractional point rates (for example, 2.50 points per ₱1, equivalent to 5 points for ₱2). For an existing database, back it up and apply this migration after the loyalty rewards migration and before deploying code that changes the wallet conversion:
 

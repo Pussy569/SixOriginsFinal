@@ -48,6 +48,15 @@ function rewards_validate_campaign(array $productNames, array $input): array
     $rewardType = (string)($input['reward_type'] ?? '');
     $threshold = (float)($input['threshold_value'] ?? 0);
     $amount = (float)($input['reward_amount'] ?? 0);
+    $maxDiscountCap = 0.0;
+    if ($rewardType === 'percentage') {
+        $rawMaxDiscountCap = $input['max_discount_cap'] ?? '0';
+        if (!is_scalar($rawMaxDiscountCap)) {
+            throw new RuntimeException('Enter a valid maximum discount cap.');
+        }
+        $rawMaxDiscountCap = trim((string)$rawMaxDiscountCap);
+        $maxDiscountCap = $rawMaxDiscountCap === '' ? 0.0 : filter_var($rawMaxDiscountCap, FILTER_VALIDATE_FLOAT);
+    }
     $minimumSpend = (float)($input['minimum_spend'] ?? 0);
     $validityDays = filter_var($input['validity_days'] ?? null, FILTER_VALIDATE_INT);
 
@@ -59,8 +68,10 @@ function rewards_validate_campaign(array $productNames, array $input): array
         || !in_array($rewardType, ['fixed', 'percentage', 'free_shipping', 'free_product'], true)) {
         throw new RuntimeException('Choose valid offer trigger, condition, and reward types.');
     }
-    if ($minimumSpend < 0 || $validityDays === false || $validityDays < 1 || $validityDays > 365) {
-        throw new RuntimeException('Minimum spend must be zero or more and voucher validity must be 1–365 days.');
+    if ($maxDiscountCap === false || !is_finite((float)$maxDiscountCap) || $maxDiscountCap < 0 || $maxDiscountCap > 99999999.99
+        || round((float)$maxDiscountCap, 2) !== (float)$maxDiscountCap
+        || $minimumSpend < 0 || $validityDays === false || $validityDays < 1 || $validityDays > 365) {
+        throw new RuntimeException('Maximum discount cap and minimum spend must be zero or more, and voucher validity must be 1–365 days.');
     }
     if ($triggerType === 'signup' && $conditionType !== 'none') {
         throw new RuntimeException('Sign-up vouchers are issued after email verification and do not use purchase thresholds.');
@@ -85,7 +96,7 @@ function rewards_validate_campaign(array $productNames, array $input): array
         throw new RuntimeException('Choose a free product for this offer.');
     }
 
-    return [$name, $triggerType, $conditionType, $threshold, $rewardType, $amount, $minimumSpend, $productId, $validityDays];
+    return [$name, $triggerType, $conditionType, $threshold, $rewardType, $amount, (float)$maxDiscountCap, $minimumSpend, $productId, $validityDays];
 }
 
 function rewards_validate_day(array $productNames, int $dayNumber, array $input): array
@@ -152,16 +163,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
             $message = 'Points redemption settings saved.';
         } elseif ($action === 'create_campaign' || $action === 'update_campaign') {
-            [$name, $trigger, $condition, $threshold, $rewardType, $amount, $minimumSpend, $productId, $validity] = rewards_validate_campaign($productNames, $_POST);
+            [$name, $trigger, $condition, $threshold, $rewardType, $amount, $maxDiscountCap, $minimumSpend, $productId, $validity] = rewards_validate_campaign($productNames, $_POST);
             $active = !empty($_POST['active']) ? 1 : 0;
             if ($action === 'create_campaign') {
                 $stmt = $conn->prepare(
                     'INSERT INTO voucher_campaigns
-                     (name, trigger_type, condition_type, threshold_value, reward_type, reward_amount, minimum_spend, free_product_id, validity_days, active, created_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     (name, trigger_type, condition_type, threshold_value, reward_type, reward_amount, max_discount_cap, minimum_spend, free_product_id, validity_days, active, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $adminId = (int)$_SESSION['admin_id'];
-                $stmt->bind_param('sssdsddiiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $minimumSpend, $productId, $validity, $active, $adminId);
+                $stmt->bind_param('sssdsdddiiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $maxDiscountCap, $minimumSpend, $productId, $validity, $active, $adminId);
             } else {
                 $campaignId = filter_var($_POST['campaign_id'] ?? null, FILTER_VALIDATE_INT);
                 if ($campaignId === false || $campaignId < 1) {
@@ -170,10 +181,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $conn->prepare(
                     'UPDATE voucher_campaigns
                      SET name = ?, trigger_type = ?, condition_type = ?, threshold_value = ?, reward_type = ?,
-                         reward_amount = ?, minimum_spend = ?, free_product_id = ?, validity_days = ?, active = ?
+                         reward_amount = ?, max_discount_cap = ?, minimum_spend = ?, free_product_id = ?, validity_days = ?, active = ?
                      WHERE id = ?'
                 );
-                $stmt->bind_param('sssdsddiiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $minimumSpend, $productId, $validity, $active, $campaignId);
+                $stmt->bind_param('sssdsdddiiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $maxDiscountCap, $minimumSpend, $productId, $validity, $active, $campaignId);
             }
             $stmt->execute();
             $stmt->close();
@@ -491,6 +502,7 @@ while (count($prizes) < 3) {
     .rewards-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:16px;margin-top:20px}
     .campaign-form{grid-template-columns:repeat(4,minmax(0,1fr));padding:20px;border:1px solid color-mix(in srgb,var(--gray-brown) 16%,transparent);border-radius:17px;background:color-mix(in srgb,var(--site-page-bg) 36%,var(--site-surface))}
     .rewards-grid label,.publish-cycle-form label{display:grid;align-content:start;gap:8px;min-width:0;color:var(--dark-brown);font-size:.84rem;font-weight:800;line-height:1.35}
+    .campaign-cap-field[hidden]{display:none!important}
     .rewards-grid input:not([type=checkbox]),.rewards-grid select,.publish-cycle-form input{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,var(--site-surface));border-radius:10px;background:var(--site-surface);color:var(--site-text);font:500 .92rem Montserrat,sans-serif;transition:border-color .18s,box-shadow .18s}
     .rewards-grid input:focus,.rewards-grid select:focus,.publish-cycle-form input:focus{outline:none;border-color:var(--primary-red);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-red) 14%,transparent)}
     .rewards-check{display:flex!important;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--gray-brown) 17%,transparent);border-radius:10px;background:var(--site-surface)}.rewards-check input{width:18px;height:18px;accent-color:var(--primary-red)}
@@ -505,4 +517,21 @@ while (count($prizes) < 3) {
     @media(max-width:1100px){.rewards-intro{align-items:flex-start;flex-direction:column}.rewards-grid,.campaign-form{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-cycle-form .day-editor{grid-column:span 1}.reward-cycle-form .prize-editor{grid-column:span 1}}
     @media(max-width:680px){.rewards-admin{gap:16px;padding:18px 16px 42px}.rewards-intro,.rewards-card{padding:20px;border-radius:17px}.rewards-overview{width:100%}.overview-stat{flex:1;min-width:0}.rewards-grid,.campaign-form,.reward-cycle-form,.publish-cycle-form{grid-template-columns:1fr}.reward-cycle-form .day-editor,.reward-cycle-form .prize-editor{grid-column:auto}.full-span,.publish-cycle-form h3,.publish-cycle-form p{grid-column:auto}.campaign-item summary{align-items:flex-start;flex-direction:column}.campaign-item summary::after{margin:0}.publish-cycle-form{padding:17px}.rewards-button{width:100%}}
 </style>
+<script>
+document.querySelectorAll('.campaign-form').forEach((form) => {
+    const rewardType = form.querySelector('select[name="reward_type"]');
+    const capField = form.querySelector('[data-campaign-cap-field]');
+    const capInput = capField?.querySelector('input[name="max_discount_cap"]');
+    if (!rewardType || !capField || !capInput) return;
+
+    const updateCapField = () => {
+        const isPercentage = rewardType.value === 'percentage';
+        capField.hidden = !isPercentage;
+        capInput.disabled = !isPercentage;
+    };
+
+    rewardType.addEventListener('change', updateCapField);
+    updateCapField();
+});
+</script>
 <?php include 'admin_footer.php'; ?>

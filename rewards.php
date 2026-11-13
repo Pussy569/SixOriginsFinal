@@ -94,7 +94,7 @@ $pointsRateLabel = rtrim(rtrim(number_format($pointsRate, 2, '.', ''), '0'), '.'
 $maxWalletRedeem = $points;
 $dailyState = loyalty_get_daily_state($conn, $userId);
 $stmt = $conn->prepare(
-    'SELECT d.name, d.code, d.amount, d.type, d.reward_type, d.minimum_spend, d.valid_until, p.name AS product_name
+    'SELECT d.name, d.code, d.amount, d.type, d.reward_type, d.maximum_discount_cap, d.minimum_spend, d.valid_until, p.name AS product_name
      FROM user_discounts ud JOIN discounts d ON d.id = ud.discount_id
      LEFT JOIN products p ON p.id = d.free_product_id
      WHERE ud.user_id = ? AND ud.used = 0 AND d.status = \'active\' AND d.valid_until >= CURDATE()
@@ -107,7 +107,7 @@ $stmt->close();
 $history = $dailyState['history'] ?? [];
 $claimedDays = array_fill_keys(array_map(static fn(array $claim): int => (int)$claim['day_number'], $history), true);
 $offersStmt = $conn->prepare(
-    'SELECT vc.name, vc.condition_type, vc.threshold_value, vc.reward_type, vc.reward_amount,
+    'SELECT vc.name, vc.condition_type, vc.threshold_value, vc.reward_type, vc.reward_amount, vc.max_discount_cap,
             vc.minimum_spend, vc.validity_days, p.name AS product_name
      FROM voucher_campaigns vc LEFT JOIN products p ON p.id = vc.free_product_id
      WHERE vc.active = 1 AND vc.trigger_type = \'order\'
@@ -130,7 +130,11 @@ function rewards_voucher_description(array $voucher): string
     if ($voucher['reward_type'] === 'free_product') {
         return 'Free ' . (string)($voucher['product_name'] ?? 'product');
     }
-    return ($voucher['type'] === 'percentage' ? (int)$voucher['amount'] . '% off' : '₱' . number_format((float)$voucher['amount'], 2) . ' off');
+    $description = $voucher['type'] === 'percentage' ? (int)$voucher['amount'] . '% off' : '₱' . number_format((float)$voucher['amount'], 2) . ' off';
+    if ($voucher['type'] === 'percentage' && (float)($voucher['maximum_discount_cap'] ?? 0) > 0) {
+        $description .= ' (up to ₱' . number_format((float)$voucher['maximum_discount_cap'], 2) . ')';
+    }
+    return $description;
 }
 
 function rewards_offer_description(array $offer): string
@@ -141,9 +145,14 @@ function rewards_offer_description(array $offer): string
     if ($offer['reward_type'] === 'free_product') {
         return 'Free ' . (string)($offer['product_name'] ?? 'product');
     }
-    return $offer['reward_type'] === 'percentage'
-        ? (int)$offer['reward_amount'] . '% off'
-        : '₱' . number_format((float)$offer['reward_amount'], 2) . ' off';
+    if ($offer['reward_type'] === 'percentage') {
+        $description = (int)$offer['reward_amount'] . '% off';
+        if ((float)($offer['max_discount_cap'] ?? 0) > 0) {
+            $description .= ' (up to ₱' . number_format((float)$offer['max_discount_cap'], 2) . ')';
+        }
+        return $description;
+    }
+    return '₱' . number_format((float)$offer['reward_amount'], 2) . ' off';
 }
 ?>
 <?php include 'header.php'; ?>

@@ -507,9 +507,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
             } elseif (preg_match('/(?:\x{20B1}|php)\s*([\d,]+(?:\.\d+)?)\s*(?:off|discount)\b/iu', $query, $m)) {
                 $entities['reward_type'] = 'fixed';
                 $entities['reward_amount'] = clean_number($m[1]);
-            } elseif (preg_match('/\b(\d+(?:\.\d+)?)\s*%/', $query, $m)) {
+            } elseif (preg_match('/\b(\d+(?:\.\d+)?)\s*(?:%|percent(?:age)?\b)/i', $query, $m)) {
                 $entities['reward_type'] = 'percentage';
                 $entities['reward_amount'] = (float)$m[1];
+            }
+            if (($entities['reward_type'] ?? '') === 'percentage') {
+                if (preg_match('/\b(?:maximum\s+discount\s+cap|max(?:imum)?\s+discount|max\s+cap|cap(?:ped)?)(?:\s+(?:at|of))?\s*(?:₱|php)?\s*([\d,]+(?:\.\d{1,2})?)/iu', $query, $m)
+                    || preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d{1,2})?)\s+(?:maximum\s+)?cap\b/iu', $query, $m)) {
+                    $entities['max_discount_cap'] = clean_number($m[1]);
+                }
             }
             if (preg_match('/\b(?:minimum spend|min spend)\s*(?:of|at least|:|=)?\s*(?:\x{20B1}|php)?\s*([\d,]+(?:\.\d+)?)/iu', $query, $m)) {
                 $entities['minimum_spend'] = clean_number($m[1]);
@@ -610,7 +616,8 @@ min_stock_level (low-stock alert level, 0 if not given).
 For create_voucher, extract entities: name, trigger_type ("signup" or "order"),
 condition_type ("none", "spend", or "products"), threshold_value, reward_type
 ("fixed", "percentage", "free_shipping", or "free_product"), reward_amount,
-minimum_spend, free_product_id, validity_days.
+minimum_spend, max_discount_cap, free_product_id, validity_days. For percentage
+rewards, max_discount_cap is an optional peso cap; 0 or omitted means no cap.
 For edit_loyalty_settings, extract any requested fields: points_per_wallet_peso,
 points_voucher_cost, points_voucher_percent, points_voucher_minimum_spend,
 points_voucher_validity_days. Do not invent values; omit unspecified fields.
@@ -831,6 +838,11 @@ SYS;
         $threshold = (float)($entities['threshold_value'] ?? 0);
         $rewardType = (string)($entities['reward_type'] ?? '');
         $amount = (float)($entities['reward_amount'] ?? 0);
+        $rawMaxDiscountCap = $entities['max_discount_cap'] ?? 0;
+        if ($rewardType === 'percentage' && !is_numeric($rawMaxDiscountCap)) {
+            return ['success' => false, 'message' => 'The maximum discount cap must be a peso amount of zero or more.'];
+        }
+        $maxDiscountCap = $rewardType === 'percentage' ? (float)$rawMaxDiscountCap : 0.0;
         $minimumSpend = (float)($entities['minimum_spend'] ?? 0);
         $freeProductId = isset($entities['free_product_id']) ? (int)$entities['free_product_id'] : null;
         $validityDays = (int)($entities['validity_days'] ?? 14);
@@ -851,8 +863,13 @@ SYS;
         }
         if (($rewardType === 'fixed' && $amount <= 0)
             || ($rewardType === 'percentage' && ($amount <= 0 || $amount > 100))
+            || !is_finite($maxDiscountCap) || $maxDiscountCap < 0 || $maxDiscountCap > 99999999.99
+            || round($maxDiscountCap, 2) !== $maxDiscountCap
             || $minimumSpend < 0 || $validityDays < 1 || $validityDays > 365) {
-            return ['success' => false, 'message' => 'The reward amount, minimum spend, or voucher validity is outside the allowed range.'];
+            return ['success' => false, 'message' => 'The reward amount, cap, minimum spend, or voucher validity is outside the allowed range.'];
+        }
+        if ($rewardType !== 'percentage') {
+            $maxDiscountCap = 0;
         }
         if ($condition === 'products' && $threshold !== floor($threshold)) {
             return ['success' => false, 'message' => 'The product eligibility threshold must be a whole number.'];
@@ -876,11 +893,11 @@ SYS;
         try {
             $stmt = $conn->prepare(
                 'INSERT INTO voucher_campaigns
-                    (name, trigger_type, condition_type, threshold_value, reward_type, reward_amount, minimum_spend, free_product_id, validity_days, active, created_by)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)'
+                    (name, trigger_type, condition_type, threshold_value, reward_type, reward_amount, max_discount_cap, minimum_spend, free_product_id, validity_days, active, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)'
             );
             $adminId = (int)$_SESSION['admin_id'];
-            $stmt->bind_param('sssdsddiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $minimumSpend, $freeProductId, $validityDays, $adminId);
+            $stmt->bind_param('sssdsdddiii', $name, $trigger, $condition, $threshold, $rewardType, $amount, $maxDiscountCap, $minimumSpend, $freeProductId, $validityDays, $adminId);
             $stmt->execute();
             $campaignId = (int)$conn->insert_id;
             $stmt->close();
@@ -1240,6 +1257,9 @@ SYS;
                 $amount = $entities['reward_amount'] ?? 0;
                 $reward = $rewardType === 'fixed' ? '₱' . number_format((float)$amount, 2) . ' off'
                     : ($rewardType === 'percentage' ? number_format((float)$amount, 2) . '% off' : str_replace('_', ' ', $rewardType));
+                if ($rewardType === 'percentage' && (float)($entities['max_discount_cap'] ?? 0) > 0) {
+                    $reward .= ' up to ₱' . number_format((float)$entities['max_discount_cap'], 2);
+                }
                 $eligibility = $condition === 'spend' ? 'after spending ₱' . number_format((float)$threshold, 2)
                     : ($condition === 'products' ? 'after buying ' . (int)$threshold . ' products' : 'without an order threshold');
                 return "Create automatic campaign \"$name\": $trigger trigger, $eligibility, reward $reward, minimum redemption spend ₱"
@@ -1545,10 +1565,11 @@ SYS;
             $fallbackEntities = regex_extract_reward_entities($intent, $query);
             $entities = array_merge($entities, $fallbackEntities);
             $numericFields = $intent === 'create_voucher'
-                ? ['threshold_value', 'reward_amount', 'minimum_spend', 'validity_days']
+                ? ['threshold_value', 'reward_amount', 'minimum_spend', 'validity_days', 'max_discount_cap']
                 : ['points_per_wallet_peso', 'points_voucher_cost', 'points_voucher_percent', 'points_voucher_minimum_spend', 'points_voucher_validity_days'];
             foreach ($numericFields as $field) {
                 if (isset($entities[$field]) && is_numeric($entities[$field]) && (float)$entities[$field] <= 0
+                    && $field !== 'max_discount_cap'
                     && !array_key_exists($field, $fallbackEntities)) {
                     unset($entities[$field]);
                 }
@@ -1982,6 +2003,14 @@ SYS;
                 if (empty($entities['trigger_type'])) $missing[] = 'trigger (signup or order)';
                 if (empty($entities['reward_type'])) $missing[] = 'reward type (fixed, percentage, free shipping, or free product)';
                 if (in_array($entities['reward_type'] ?? '', ['fixed', 'percentage'], true) && empty($entities['reward_amount'])) $missing[] = 'reward amount';
+                if (($entities['reward_type'] ?? '') === 'percentage' && isset($entities['max_discount_cap'])
+                    && (!is_numeric($entities['max_discount_cap'])
+                        || !is_finite((float)$entities['max_discount_cap'])
+                        || (float)$entities['max_discount_cap'] < 0
+                        || (float)$entities['max_discount_cap'] > 99999999.99
+                        || round((float)$entities['max_discount_cap'], 2) !== (float)$entities['max_discount_cap'])) {
+                    $missing[] = 'a valid maximum discount cap (zero or more, up to two decimals)';
+                }
                 if (($entities['trigger_type'] ?? '') === 'order' && empty($entities['condition_type'])) $missing[] = 'eligibility condition (none, spend, or number of products)';
                 if (($entities['condition_type'] ?? '') === 'spend' && (float)($entities['threshold_value'] ?? 0) <= 0) $missing[] = 'spend threshold';
                 if (($entities['condition_type'] ?? '') === 'products' && (int)($entities['threshold_value'] ?? 0) <= 0) $missing[] = 'product count threshold';

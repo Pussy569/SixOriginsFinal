@@ -168,7 +168,6 @@ function site_customization_content_fields(): array
         'Sign-in and registration' => [
             'login_panel_heading' => ['Login welcome heading', 'Welcome Back!'],
             'login_panel_description' => ['Login welcome description', 'Step into your cozy coffee corner. Your account is secure and ready for you.'],
-            'login_loading_text' => ['Login loading text', 'Brewing your page'],
             'login_form_heading' => ['Login form heading', 'Sign In'],
             'login_form_description' => ['Login form description', 'Welcome back! Enter your credentials to continue.'],
             'login_submit_button' => ['Login button label', 'Sign In'],
@@ -180,6 +179,10 @@ function site_customization_content_fields(): array
             'register_benefit_2' => ['Registration benefit 2', 'Early access to new blends'],
             'register_benefit_3' => ['Registration benefit 3', 'Special discounts & offers'],
             'register_benefit_4' => ['Registration benefit 4', 'Connect with coffee lovers'],
+        ],
+        'Loading screen' => [
+            'login_loading_text' => ['Page loading text', 'Brewing your page'],
+            'login_submit_loading_text' => ['Sign-in progress text', 'Signing you in'],
         ],
         'Logout screen' => [
             'logout_heading' => ['Logout heading', 'See you soon!'],

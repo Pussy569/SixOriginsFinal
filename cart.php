@@ -1286,6 +1286,9 @@ $open_checkout_on_load = isset($_GET['checkout']);
               <?php foreach ($discounts as $d):
                  $d_type_disp = $d['type'] ?? 'fixed';
                  $amount_display = ($d_type_disp === 'percentage') ? $d['amount'] . '%' : '₱' . number_format($d['amount'], 2);
+                 if ($d_type_disp === 'percentage' && (float)($d['maximum_discount_cap'] ?? 0) > 0) {
+                   $amount_display .= ' (up to ₱' . number_format((float)$d['maximum_discount_cap'], 2) . ')';
+                 }
                  $reward_label = ($d['reward_type'] ?? 'discount') === 'free_shipping' ? 'Free delivery' : ((($d['reward_type'] ?? 'discount') === 'free_product') ? 'Free product' : $amount_display);
                  $voucher_name = $d['name'] !== '' ? $d['name'] : $d['code'];
               ?>

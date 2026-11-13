@@ -1035,6 +1035,9 @@ if (isset($_POST['order_btn'])) {
                 <option value="" disabled selected>Select a discount code</option>
                 <?php foreach ($discounts as $d): 
                   $amount_display = ($d['type'] === 'percentage') ? $d['amount'].'%' : '₱'.number_format($d['amount'], 2);
+                  if ($d['type'] === 'percentage' && (float)($d['maximum_discount_cap'] ?? 0) > 0) {
+                    $amount_display .= ' (up to ₱' . number_format((float)$d['maximum_discount_cap'], 2) . ')';
+                  }
                   $reward_label = ($d['reward_type'] ?? 'discount') === 'free_shipping' ? 'Free delivery' : ((($d['reward_type'] ?? 'discount') === 'free_product') ? 'Free product' : $amount_display);
                   $voucher_name = $d['name'] !== '' ? $d['name'] : $d['code'];
                 ?>

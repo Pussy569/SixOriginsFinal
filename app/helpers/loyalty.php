@@ -57,7 +57,8 @@ function loyalty_issue_discount(
     float $amount,
     float $minimumSpend,
     ?int $freeProductId,
-    int $validityDays
+    int $validityDays,
+    float $maxDiscountCap = 0
 ): int {
     if ($userId <= 0 || $validityDays < 1 || $validityDays > 365) {
         throw new InvalidArgumentException('A valid customer and voucher validity period are required.');
@@ -75,14 +76,20 @@ function loyalty_issue_discount(
     if ($rewardType === 'free_product' && ($freeProductId === null || $freeProductId <= 0)) {
         throw new InvalidArgumentException('A free-product reward must specify a product.');
     }
+    if (!is_finite($maxDiscountCap) || $maxDiscountCap < 0 || $maxDiscountCap > 99999999.99) {
+        throw new InvalidArgumentException('The maximum discount cap must be zero or a valid peso amount.');
+    }
+    if ($rewardType !== 'percentage') {
+        $maxDiscountCap = 0;
+    }
 
     $code = 'SO' . strtoupper(bin2hex(random_bytes(5)));
     $validUntil = date('Y-m-d', strtotime('+' . $validityDays . ' days'));
     $stmt = $conn->prepare(
-        'INSERT INTO discounts (name, code, amount, type, reward_type, minimum_spend, free_product_id, status, valid_until, user_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, \'active\', ?, ?)'
+        'INSERT INTO discounts (name, code, amount, type, reward_type, maximum_discount_cap, minimum_spend, free_product_id, status, valid_until, user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'active\', ?, ?)'
     );
-    $stmt->bind_param('ssissdisi', $name, $code, $discountAmount, $discountType, $storedRewardType, $minimumSpend, $freeProductId, $validUntil, $userId);
+    $stmt->bind_param('ssissddisi', $name, $code, $discountAmount, $discountType, $storedRewardType, $maxDiscountCap, $minimumSpend, $freeProductId, $validUntil, $userId);
     $stmt->execute();
     $discountId = (int)$conn->insert_id;
     $stmt->close();
@@ -141,7 +148,12 @@ function loyalty_calculate_discount(
     }
 
     if (($discount['type'] ?? 'fixed') === 'percentage') {
-        $amount = ($subtotal + $vat + $deliveryFee) * ((float)$discount['amount'] / 100);
+        $maxDiscountCap = (float)($discount['maximum_discount_cap'] ?? 0);
+        if ($maxDiscountCap > 0) {
+            $amount = min($subtotal * ((float)$discount['amount'] / 100), $maxDiscountCap);
+        } else {
+            $amount = ($subtotal + $vat + $deliveryFee) * ((float)$discount['amount'] / 100);
+        }
     } else {
         $amount = (float)$discount['amount'];
     }
@@ -204,7 +216,8 @@ function loyalty_award_campaigns(mysqli $conn, int $userId, string $triggerType,
                 (float)$campaign['reward_amount'],
                 (float)$campaign['minimum_spend'],
                 isset($campaign['free_product_id']) ? (int)$campaign['free_product_id'] : null,
-                (int)$campaign['validity_days']
+                (int)$campaign['validity_days'],
+                (float)($campaign['max_discount_cap'] ?? 0)
             );
             $claim = $conn->prepare(
                 'INSERT INTO voucher_claims (campaign_id, user_id, discount_id, source_order_id, status)

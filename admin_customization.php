@@ -310,9 +310,11 @@ $contentFieldsByPage = [
     'profile' => [],
     'topup' => [],
     'footer' => [],
+    'loading' => [],
     'account' => [],
 ];
 $contentPagePrefixes = [
+    'loading' => ['login_loading_text', 'login_submit_loading_text'],
     'home' => ['home_'],
     'about' => ['about_'],
     'shop' => ['shop_'],
@@ -713,8 +715,18 @@ $customizationPages = [
                 <small>Accepted formats: MP4 or WebM. Maximum file size: 50 MB.</small>
             </section>
             <section class="customization-card customization-loading-card" id="loading-animation">
-                <h2><i class="fa-solid fa-spinner"></i> Loading animation</h2>
-                <p class="customization-help">Choose the loading style shown on the login and logout screens.</p>
+                <h2><i class="fa-solid fa-spinner"></i> Loading screen</h2>
+                <p class="customization-help">Customize the login and logout loading style and the text shown while pages load or sign-in is in progress. The screen uses your current system colors, logo, and brand name.</p>
+                <fieldset class="customization-team-member customization-field-group">
+                    <legend>Loading screen text</legend>
+                    <?php foreach ($contentFieldsByPage['loading'] as $key => $field):
+                        $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                    ?>
+                        <label><?php echo escapeOutput($field[0]); ?>
+                            <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                        </label>
+                    <?php endforeach; ?>
+                </fieldset>
                 <label for="loading-style">Loading style
                     <select id="loading-style" name="loading_style">
                         <option value="rings" <?php echo $settings['loading_style'] === 'rings' ? 'selected' : ''; ?>>Coffee rings and progress</option>
