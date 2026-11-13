@@ -969,9 +969,13 @@ $open_checkout_on_load = isset($_GET['checkout']);
      }
      .instruction-field textarea:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(198,69,62,0.1); }
 
-     .discount-section, .wallet-panel { background: linear-gradient(135deg,#FFFBF7 0%,#FEFDFB 100%); padding: 16px 18px; border-radius: 14px; border: 2px solid #F0E6D8; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(94,31,19,0.05); }
+     .discount-section { background: linear-gradient(135deg,color-mix(in srgb,var(--primary-red) 4%,var(--site-surface)) 0%,var(--site-surface) 100%); padding: 16px 18px; border-radius: 14px; border: 1px solid color-mix(in srgb,var(--primary-red) 20%,var(--site-surface)); margin-bottom: 12px; box-shadow: 0 8px 22px rgba(61,43,39,0.06); }
+     .wallet-panel { background: linear-gradient(135deg,#FFFBF7 0%,#FEFDFB 100%); padding: 16px 18px; border-radius: 14px; border: 2px solid #F0E6D8; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(94,31,19,0.05); }
      .discount-section h3, .wallet-panel h3 { margin: 0 0 12px; color: var(--dark-brown); font-size: 1.05rem; font-weight: 900; }
-     .discount-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+     .discount-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; }
+     .discount-form select.box { min-width: 0; min-height: 48px; margin: 0; padding: 11px 14px; border: 1px solid color-mix(in srgb,var(--primary-red) 22%,var(--site-surface)); border-radius: 12px; background: var(--site-surface); color: var(--site-text); font-family: inherit; font-size: .95rem; font-weight: 600; box-shadow: 0 3px 10px rgba(61,43,39,.04); }
+     .discount-form select.box:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 4px color-mix(in srgb,var(--primary-red) 13%,transparent); }
+     .discount-form .btn { min-height: 48px; justify-content: center; border-radius: 12px; }
 
      .checkout .box {
        width: 100%; padding: 11px 13px; border-radius: 10px; border: 1.5px solid #F0E6D8;
@@ -1503,6 +1507,7 @@ $open_checkout_on_load = isset($_GET['checkout']);
     var AUTO_DISCOUNT       = <?php echo json_encode($preview_auto_discount_amount); ?>;
     var CODE_DISCOUNT_TYPE  = <?php echo json_encode($active_discount_type); ?>;
     var CODE_DISCOUNT_RAW   = <?php echo json_encode($active_discount_raw_amount); ?>;
+    var CODE_DISCOUNT_CAP   = <?php echo json_encode((float)($previewDiscount['maximum_discount_cap'] ?? 0)); ?>;
     var CODE_DISCOUNT_REWARD = <?php echo json_encode($active_discount_reward_type); ?>;
     var WALLET_BALANCE      = <?php echo json_encode($wallet_balance); ?>;
     var IS_GUEST             = <?php echo json_encode($is_guest); ?>;
@@ -1541,9 +1546,12 @@ $open_checkout_on_load = isset($_GET['checkout']);
       if (CODE_DISCOUNT_REWARD === 'free_shipping') {
         codeDiscount = isPickup ? 0 : deliveryFee;
       } else if (CODE_DISCOUNT_RAW > 0) {
-        codeDiscount = (CODE_DISCOUNT_TYPE === 'percentage')
-          ? (CART_TOTAL + VAT + deliveryFee) * (CODE_DISCOUNT_RAW / 100)
-          : CODE_DISCOUNT_RAW;
+        if (CODE_DISCOUNT_TYPE === 'percentage') {
+          codeDiscount = Math.min(CART_TOTAL, CART_TOTAL * (CODE_DISCOUNT_RAW / 100));
+          if (CODE_DISCOUNT_CAP > 0) codeDiscount = Math.min(codeDiscount, CODE_DISCOUNT_CAP);
+        } else {
+          codeDiscount = Math.min(CART_TOTAL, CODE_DISCOUNT_RAW);
+        }
       }
       if (codeDiscountRow) codeDiscountRow.style.display = codeDiscount > 0 ? '' : 'none';
       if (codeDiscountValue) codeDiscountValue.textContent = '-₱' + money(codeDiscount);

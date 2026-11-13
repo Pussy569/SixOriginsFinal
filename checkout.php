@@ -523,7 +523,10 @@ if (isset($_POST['order_btn'])) {
       .discount-section, .wallet-panel { background: linear-gradient(135deg,#FFFBF7 0%,#FEFDFB 100%); padding: 20px; border-radius: var(--radius); border: 2px solid #F0E6D8; margin-bottom: 12px; transition: var(--transition); box-shadow: 0 4px 12px rgba(94,31,19,0.05); }
       .discount-section:hover { border-color: var(--primary-red); box-shadow: 0 6px 16px rgba(198,69,62,0.1); }
       .discount-section h3, .wallet-panel h3 { margin: 0 0 16px; color: var(--dark-brown); font-size: 1.3rem; font-weight: 900; letter-spacing: -0.5px; }
-      .discount-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+      .discount-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
+      .discount-form select.box { min-width: 0; min-height: 48px; margin: 0; border: 1px solid color-mix(in srgb,var(--primary-red) 22%,var(--site-surface)); border-radius: 12px; background: var(--site-surface); box-shadow: 0 3px 10px rgba(61,43,39,.04); }
+      .discount-form select.box:focus { border-color: var(--primary-red); box-shadow: 0 0 0 4px color-mix(in srgb,var(--primary-red) 13%,transparent); }
+      .discount-form .btn { min-height: 48px; justify-content: center; border-radius: 12px; }
 
       .btn, .btn-ghost { padding: 11px 24px; border-radius: 10px; font-weight: 800; border: 0; display: inline-flex; align-items: center; gap: 8px; font-size: 0.98em; cursor: pointer; transition: var(--transition); text-decoration: none; box-shadow: 0 6px 16px rgba(198,69,62,0.25); white-space: nowrap; position: relative; overflow: hidden; }
       .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); transition: left 0.5s ease; }
@@ -906,8 +909,8 @@ if (isset($_POST['order_btn'])) {
         .hero p { font-size: 1rem; }
         .card { padding: 18px; }
         .card h2 { font-size: 1.3rem; }
-        .discount-form { gap: 8px; flex-direction: column; }
-        .discount-form select { width: 100%; }
+        .discount-form { gap: 10px; grid-template-columns: minmax(0,1fr); }
+        .discount-form select.box { width: 100%; }
         .discount-form .btn { width: 100%; justify-content: center; }
         .form-group { gap: 8px; margin-top: 14px; }
         .receipt-modal-actions { flex-direction: column; }
@@ -1289,6 +1292,7 @@ if (isset($_POST['order_btn'])) {
     const voucherType    = <?= json_encode($discountData['type'] ?? 'fixed') ?>;
     const voucherReward  = <?= json_encode($discountData['reward_type'] ?? '') ?>;
     const voucherAmount  = parseFloat("<?= floatval($discountData['amount'] ?? 0) ?>");
+    const voucherMaximumDiscountCap = <?= json_encode((float)($discountData['maximum_discount_cap'] ?? 0)) ?>;
     const freeProductValue = parseFloat("<?= floatval($free_product_discount_value) ?>");
     const hasVoucher     = <?= json_encode($discountData !== null && $discount_error === '') ?>;
     let finalTotal       = parseFloat("<?= floatval($final_total) ?>");
@@ -1313,9 +1317,12 @@ if (isset($_POST['order_btn'])) {
         } else if (voucherReward === 'free_product') {
           discount = Math.min(orderBeforeDiscount, freeProductValue + deliveryFee);
         } else if (voucherType === 'percentage') {
-          discount = orderBeforeDiscount * (voucherAmount / 100);
+          discount = Math.min(cartTotal, cartTotal * (voucherAmount / 100));
+          if (voucherMaximumDiscountCap > 0) {
+            discount = Math.min(discount, voucherMaximumDiscountCap);
+          }
         } else {
-          discount = Math.min(orderBeforeDiscount, voucherAmount);
+          discount = Math.min(cartTotal, voucherAmount);
         }
       }
       finalTotal = Math.max(0, orderBeforeDiscount - autoDiscount - discount);

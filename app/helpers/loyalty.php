@@ -149,15 +149,14 @@ function loyalty_calculate_discount(
 
     if (($discount['type'] ?? 'fixed') === 'percentage') {
         $maxDiscountCap = (float)($discount['maximum_discount_cap'] ?? 0);
+        $amount = $subtotal * ((float)$discount['amount'] / 100);
         if ($maxDiscountCap > 0) {
-            $amount = min($subtotal * ((float)$discount['amount'] / 100), $maxDiscountCap);
-        } else {
-            $amount = ($subtotal + $vat + $deliveryFee) * ((float)$discount['amount'] / 100);
+            $amount = min($amount, $maxDiscountCap);
         }
     } else {
         $amount = (float)$discount['amount'];
     }
-    return min(max(0, $amount), $subtotal + $vat + $deliveryFee);
+    return min(max(0, $amount), max(0, $subtotal));
 }
 
 function loyalty_award_campaigns(mysqli $conn, int $userId, string $triggerType, float $orderSpend = 0, int $itemCount = 0, ?int $sourceOrderId = null): array
