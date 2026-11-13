@@ -512,8 +512,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'query') {
                 $entities['reward_amount'] = (float)$m[1];
             }
             if (($entities['reward_type'] ?? '') === 'percentage') {
-                if (preg_match('/\b(?:maximum\s+discount\s+cap|max(?:imum)?\s+discount|max\s+cap|cap(?:ped)?)(?:\s+(?:at|of))?\s*(?:₱|php)?\s*([\d,]+(?:\.\d{1,2})?)/iu', $query, $m)
-                    || preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d{1,2})?)\s+(?:maximum\s+)?cap\b/iu', $query, $m)) {
+                if (preg_match('/\b(?:maximum\s+discount\s+cap|max(?:imum)?\s+discount(?:\s+cap)?|max(?:imum)?\s+cap|cap(?:ped)?)(?:\s+(?:at|of|is|to))?\s*[:=]?\s*(?:\x{20B1}|php)?\s*([\d,]+(?:\.\d{1,2})?)/iu', $query, $m)
+                    || preg_match('/(?:₱|php)\s*([\d,]+(?:\.\d{1,2})?)\s+(?:maximum\s+)?cap\b/iu', $query, $m)
+                    || preg_match('/\bup\s+to\s+(?:₱|php)?\s*([\d,]+(?:\.\d{1,2})?)/iu', $query, $m)) {
                     $entities['max_discount_cap'] = clean_number($m[1]);
                 }
             }
@@ -909,7 +910,13 @@ SYS;
         if (function_exists('log_admin_activity')) {
             log_admin_activity($adminId, 'Created Voucher Campaign', 'Created campaign via chatbot: ' . $name, 'success', 'voucher_campaigns', $campaignId, null, $entities);
         }
-        return ['success' => true, 'message' => 'Automatic voucher campaign "' . $name . '" is active (ID: ' . $campaignId . ').'];
+        $capSummary = $rewardType === 'percentage' && $maxDiscountCap > 0
+            ? ' with a maximum discount cap of ₱' . number_format($maxDiscountCap, 2)
+            : '';
+        return [
+            'success' => true,
+            'message' => 'Automatic voucher campaign "' . $name . '" is active' . $capSummary . ' (ID: ' . $campaignId . ').',
+        ];
     }
 
     function execute_update_loyalty_settings($conn, $entities) {
@@ -1258,7 +1265,7 @@ SYS;
                 $reward = $rewardType === 'fixed' ? '₱' . number_format((float)$amount, 2) . ' off'
                     : ($rewardType === 'percentage' ? number_format((float)$amount, 2) . '% off' : str_replace('_', ' ', $rewardType));
                 if ($rewardType === 'percentage' && (float)($entities['max_discount_cap'] ?? 0) > 0) {
-                    $reward .= ' up to ₱' . number_format((float)$entities['max_discount_cap'], 2);
+                    $reward .= ', maximum discount cap ₱' . number_format((float)$entities['max_discount_cap'], 2);
                 }
                 $eligibility = $condition === 'spend' ? 'after spending ₱' . number_format((float)$threshold, 2)
                     : ($condition === 'products' ? 'after buying ' . (int)$threshold . ' products' : 'without an order threshold');
