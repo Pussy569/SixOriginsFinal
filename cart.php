@@ -598,9 +598,10 @@ if (isset($_POST['order_btn'])) {
         if (!$stmt) {
             throw new Exception('Database prepare failed.');
         }
+        $order_item_count = array_sum(array_map(static fn(array $item): int => (int)$item['quantity'], $order_items));
         $stmt->bind_param(
             "ssssssssddids",
-            $cart_user_key, $name, $number, $email, $method, $address, $total_products, $special_instructions_combined, $final_total, $order_cart_total, array_sum(array_map(static fn(array $item): int => (int)$item['quantity'], $order_items)), $code_discount_amount, $placed_on
+            $cart_user_key, $name, $number, $email, $method, $address, $total_products, $special_instructions_combined, $final_total, $order_cart_total, $order_item_count, $code_discount_amount, $placed_on
         );
         if (!$stmt->execute()) {
             throw new Exception('Order insertion failed.');
