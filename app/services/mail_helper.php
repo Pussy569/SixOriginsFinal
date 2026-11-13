@@ -29,6 +29,7 @@ function six_origins_email_layout($title, $bodyHtml, ?string $footerText = null)
    $surface = preg_match('/^#[0-9A-Fa-f]{6}$/', (string)($settings['surface_color'] ?? '')) ? $settings['surface_color'] : '#FFFFFF';
    $text = preg_match('/^#[0-9A-Fa-f]{6}$/', (string)($settings['text_color'] ?? '')) ? $settings['text_color'] : $secondary;
    $muted = preg_match('/^#[0-9A-Fa-f]{6}$/', (string)($settings['accent_color'] ?? '')) ? $settings['accent_color'] : '#664C47';
+   $navbarText = preg_match('/^#[0-9A-Fa-f]{6}$/', (string)($settings['navbar_text'] ?? '')) ? $settings['navbar_text'] : '#FFFFFF';
    $brandName = htmlspecialchars((string)($settings['brand_name'] ?? 'Six Origins'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
    $footer = htmlspecialchars(
       $footerText ?? 'This is an automated message from ' . (string)($settings['brand_name'] ?? 'Six Origins') . '. Please do not reply to this email.',
@@ -38,7 +39,7 @@ function six_origins_email_layout($title, $bodyHtml, ?string $footerText = null)
    return '
    <div style="background:' . $pageBackground . ';padding:30px 12px;font-family:Arial,Helvetica,sans-serif;">
      <div style="max-width:560px;margin:0 auto;background:' . $surface . ';border-radius:16px;overflow:hidden;border:1px solid ' . $muted . ';">
-       <div style="background:' . $primary . ';color:#ffffff;padding:22px 28px;">
+       <div style="background:' . $primary . ';color:' . $navbarText . ';padding:22px 28px;">
          <h1 style="margin:0;font-size:22px;">' . $brandName . '</h1>
        </div>
        <div style="padding:28px;color:' . $text . ';font-size:15px;line-height:1.6;">

@@ -601,52 +601,6 @@ $customizationPages = [
                                 <?php endforeach; ?>
                             </fieldset>
                         <?php endforeach; ?>
-                        <?php
-                        $emailPreviewColors = [
-                            ['Outer background', 'page_background'],
-                            ['Header and heading', 'primary_color'],
-                            ['Email card', 'surface_color'],
-                            ['Message text', 'text_color'],
-                            ['Footer text', 'accent_color'],
-                        ];
-                        $emailPreviewTitle = site_customization_text($settings, 'verification_signup_email_title');
-                        $emailPreviewGreeting = str_replace(
-                            '{name}',
-                            'Maymay',
-                            site_customization_text($settings, 'verification_signup_email_greeting')
-                        );
-                        $emailPreviewInstruction = site_customization_text($settings, 'verification_signup_email_instruction');
-                        $emailPreviewFooter = site_customization_text($settings, 'verification_email_footer');
-                        ?>
-                        <section class="verification-email-preview" aria-label="Verification email color preview">
-                            <h3>Verification email appearance</h3>
-                            <p class="customization-help">This preview shows how your current system colors are applied to verification emails. Change them in System Colors above.</p>
-                            <div class="verification-email-preview-outer" style="background:<?php echo escapeOutput($settings['page_background']); ?>">
-                                <div class="verification-email-preview-card" style="background:<?php echo escapeOutput($settings['surface_color']); ?>">
-                                    <div class="verification-email-preview-header" style="background:<?php echo escapeOutput($settings['primary_color']); ?>;color:<?php echo escapeOutput($settings['navbar_text']); ?>">
-                                        <?php echo escapeOutput($settings['brand_name']); ?>
-                                    </div>
-                                    <div class="verification-email-preview-body" style="color:<?php echo escapeOutput($settings['text_color']); ?>">
-                                        <h4 style="color:<?php echo escapeOutput($settings['primary_color']); ?>"><?php echo escapeOutput($emailPreviewTitle); ?></h4>
-                                        <p><?php echo escapeOutput($emailPreviewGreeting); ?></p>
-                                        <p><?php echo escapeOutput($emailPreviewInstruction); ?></p>
-                                        <strong style="color:<?php echo escapeOutput($settings['secondary_color']); ?>">431920</strong>
-                                    </div>
-                                    <div class="verification-email-preview-footer" style="background:<?php echo escapeOutput($settings['page_background']); ?>;color:<?php echo escapeOutput($settings['accent_color']); ?>">
-                                        <?php echo escapeOutput($emailPreviewFooter); ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="verification-email-color-key">
-                                <?php foreach ($emailPreviewColors as [$colorLabel, $colorKey]): ?>
-                                    <div>
-                                        <span class="verification-email-color-swatch" style="background:<?php echo escapeOutput($settings[$colorKey]); ?>"></span>
-                                        <span><?php echo escapeOutput($colorLabel); ?></span>
-                                        <code><?php echo escapeOutput(strtoupper($settings[$colorKey])); ?></code>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </section>
                     <?php else: ?>
                         <fieldset class="customization-team-member customization-field-group">
                             <legend><?php echo escapeOutput($page['title']); ?> text</legend>
@@ -989,21 +943,6 @@ $customizationPages = [
 .customization-field-group legend{grid-column:1/-1}
 .customization-verification-group{grid-column:1/-1;align-items:start}
 .customization-verification-group>.customization-help{grid-column:1/-1;margin:0}
-.verification-email-preview{grid-column:1/-1;padding:20px;border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;background:color-mix(in srgb,var(--site-page-bg) 35%,var(--site-surface))}
-.verification-email-preview h3{margin:0 0 6px;color:var(--dark-brown);font-size:1.05rem}
-.verification-email-preview>.customization-help{margin:0 0 14px}
-.verification-email-preview-outer{padding:18px;border-radius:12px}
-.verification-email-preview-card{max-width:560px;margin:0 auto;overflow:hidden;border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:12px;box-shadow:0 8px 24px rgba(30,20,16,.08)}
-.verification-email-preview-header{padding:16px 20px;font-size:1.1rem;font-weight:800}
-.verification-email-preview-body{padding:20px;font-size:.92rem;line-height:1.55}
-.verification-email-preview-body h4{margin:0 0 14px;font-size:1.25rem}
-.verification-email-preview-body p{margin:8px 0}
-.verification-email-preview-body strong{display:block;margin:16px 0 4px;font-size:1.7rem;letter-spacing:.3em}
-.verification-email-preview-footer{padding:12px 20px;font-size:.76rem;text-align:center}
-.verification-email-color-key{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
-.verification-email-color-key>div{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:4px 8px;min-width:0;font-size:.75rem}
-.verification-email-color-swatch{width:26px;height:26px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,transparent);border-radius:7px}
-.verification-email-color-key code{grid-column:2;color:var(--gray-brown);font-size:.72rem}
 #brand-identity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start}
 #brand-identity h2,#brand-identity>p{grid-column:1/-1}
 #brand-identity>label:not(.customization-check){align-content:start}
@@ -1029,9 +968,7 @@ $customizationPages = [
 @media(max-width:1050px){#system-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){#brand-identity{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.customization-about-team .customization-image-setting{grid-template-columns:1fr}.customization-about-team .customization-image-setting>label:first-child,.customization-about-team .customization-image-setting .customization-check{grid-column:auto}.customization-page-background-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:820px){.verification-email-color-key{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}.customization-page-background-grid{grid-template-columns:1fr}.customization-field-group{grid-template-columns:1fr}}
-@media(max-width:560px){.verification-email-preview{padding:14px}.verification-email-preview-outer{padding:10px}.verification-email-color-key{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
