@@ -58,11 +58,7 @@ mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migra
 
 Fresh databases initialized from the current `database/schema.sql` already include these fields. The saved system palette is also applied to customer order history, contact, shop/catalog, checkout, profile, and inventory screens.
 
-The Head Admin can also customize customer sign-up and sign-in email-verification copy and the background image used on both code-entry screens. Verification emails use the current system colors and have editable subjects, headings, instructions, and notes. Code expiry, attempt limits, and other security behavior remain enforced by the application. Existing databases must apply `database/migrations/20261113_email_verification_customization.sql`; fresh databases initialized from the current schema already include its background-image setting. Verification background uploads use the existing `images/site_customization` directory and the 5 MB image limit.
-
-```sh
-mysql --host="$DB_HOST" --user="$DB_USER" --password "$DB_NAME" < database/migrations/20261113_email_verification_customization.sql
-```
+The Head Admin can customize customer sign-up and sign-in verification screens, their related code emails, and new-device approval emails. Each flow has its own labeled section in Site Customization. Verification screens and emails use the existing system color palette: email backgrounds, cards, headers, headings, message text, and footers follow the configured colors. No verification background image or database migration is needed. Code expiry, attempt limits, and other security behavior remain enforced by the application.
 
 The order-card header text color can be customized independently from the general system text and navbar colors; it applies to both customer order history and admin order management. Back up existing databases, then apply `database/migrations/20261109_site_customization_order_header_text.sql` after the site customization table exists:
 

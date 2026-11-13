@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .notice.error{background:#fff0ee;color:#8a1f19}
     </style>
     <?php echo site_customization_css($settings); ?>
-    <?php echo site_customization_verification_background_css($settings); ?>
+    <?php echo site_customization_verification_css($settings); ?>
 </head>
 <body class="email-verification-page">
     <main class="verify-card">

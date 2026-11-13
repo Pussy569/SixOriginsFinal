@@ -290,7 +290,6 @@ function site_customization_defaults(): array
         'login_image_path' => 'images/logback.jpeg',
         'register_image_path' => 'images/logback.jpeg',
         'admin_register_image_path' => 'images/logback.jpeg',
-        'email_verification_background_image_path' => null,
         'loading_style' => 'rings',
         'showcase_image_path' => 'images/coffee-splash.png',
         'showcase_background' => '#5E1F13',
@@ -338,7 +337,7 @@ function get_site_customization(mysqli $conn): array
     }
 
     $settings = site_customization_defaults();
-    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, email_verification_background_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
+    $result = $conn->query('SELECT brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type FROM site_customization WHERE id = 1');
     $saved = $result->fetch_assoc();
     $result->free();
     if ($saved) {
@@ -399,11 +398,6 @@ function get_site_customization(mysqli $conn): array
         if ($imagePath !== null && (!is_string($imagePath) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $imagePath))) {
             $settings[$imageKey] = null;
         }
-    }
-    $verificationBackground = $settings['email_verification_background_image_path'] ?? null;
-    if ($verificationBackground !== null
-        && (!is_string($verificationBackground) || !preg_match('#^site-customization/[a-f0-9]{32}\.(?:jpg|jpeg|png|webp)$#', $verificationBackground))) {
-        $settings['email_verification_background_image_path'] = null;
     }
     $teamMembers = is_string($settings['team_members']) ? json_decode($settings['team_members'], true) : $settings['team_members'];
     $defaultTeamMembers = site_customization_default_team_members();
@@ -851,8 +845,8 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
     }
     $stmt = $conn->prepare(
         'INSERT INTO site_customization
-            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, email_verification_background_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
-         VALUES (1, ' . implode(', ', array_fill(0, 52, '?')) . ')
+            (id, brand_name, brand_tagline, logo_path, about_hero_image_path, about_cafe_image_path, about_product_image_path, about_impact_1_image_path, about_impact_2_image_path, about_impact_3_image_path, about_why_image_path, home_about_slide_1_image_path, home_about_slide_2_image_path, home_about_slide_3_image_path, home_about_slide_4_image_path, shop_background_image_path, contact_background_image_path, orders_background_image_path, search_background_image_path, cart_background_image_path, profile_background_image_path, topup_background_image_path, team_members, content_texts, login_image_path, register_image_path, admin_register_image_path, loading_style, showcase_image_path, showcase_background, showcase_heading_color, showcase_text_color, chatbot_image_path, chatbot_primary_color, chatbot_panel_color, chatbot_text_color, chatbot_header_text_color, primary_color, secondary_color, accent_color, page_background, surface_color, text_color, navbar_background, navbar_text, navbar_hover_color, navbar_hover_text_color, navbar_hover_border_color, order_header_text_color, hero_media_path, hero_media_type, updated_by)
+         VALUES (1, ' . implode(', ', array_fill(0, 51, '?')) . ')
          ON DUPLICATE KEY UPDATE
             brand_name = VALUES(brand_name), brand_tagline = VALUES(brand_tagline), logo_path = VALUES(logo_path),
             about_hero_image_path = VALUES(about_hero_image_path), about_cafe_image_path = VALUES(about_cafe_image_path),
@@ -871,8 +865,7 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             topup_background_image_path = VALUES(topup_background_image_path), team_members = VALUES(team_members),
             content_texts = VALUES(content_texts),
             login_image_path = VALUES(login_image_path), register_image_path = VALUES(register_image_path),
-            admin_register_image_path = VALUES(admin_register_image_path),
-            email_verification_background_image_path = VALUES(email_verification_background_image_path), loading_style = VALUES(loading_style),
+            admin_register_image_path = VALUES(admin_register_image_path), loading_style = VALUES(loading_style),
             showcase_image_path = VALUES(showcase_image_path), showcase_background = VALUES(showcase_background),
             showcase_heading_color = VALUES(showcase_heading_color), showcase_text_color = VALUES(showcase_text_color),
             chatbot_image_path = VALUES(chatbot_image_path), chatbot_primary_color = VALUES(chatbot_primary_color),
@@ -888,7 +881,7 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
             hero_media_path = VALUES(hero_media_path), hero_media_type = VALUES(hero_media_type), updated_by = VALUES(updated_by)'
     );
     $stmt->bind_param(
-        str_repeat('s', 51) . 'i',
+        str_repeat('s', 50) . 'i',
         $settings['brand_name'],
         $settings['brand_tagline'],
         $settings['logo_path'],
@@ -915,7 +908,6 @@ function save_site_customization(mysqli $conn, array $settings, int $adminId): v
         $settings['login_image_path'],
         $settings['register_image_path'],
         $settings['admin_register_image_path'],
-        $settings['email_verification_background_image_path'],
         $settings['loading_style'],
         $settings['showcase_image_path'],
         $settings['showcase_background'],
@@ -1002,14 +994,9 @@ function site_customization_auth_image_url(?string $path, string $default): stri
         : $default;
 }
 
-function site_customization_verification_background_css(array $settings): string
+function site_customization_verification_css(array $settings): string
 {
-    $imageUrl = site_customization_auth_image_url($settings['email_verification_background_image_path'] ?? null, '');
-    $imageUrl = escapeOutput($imageUrl);
-    $imageRule = $imageUrl === ''
-        ? ''
-        : 'background-image:linear-gradient(135deg,rgba(20,14,12,.48),rgba(20,14,12,.20)),url("' . $imageUrl . '")!important;background-position:center;background-size:cover;background-attachment:fixed;';
-    return '<style id="site-customization-verification-background">body.email-verification-page{' . $imageRule . '}body.email-verification-page .verify-card,body.email-verification-page .panel,body.email-verification-page .form-card{background:var(--site-surface)!important;color:var(--site-text)!important;border-color:color-mix(in srgb,var(--gray-brown) 25%,transparent)!important}body.email-verification-page .input{background:var(--site-page-bg)!important;border-color:color-mix(in srgb,var(--gray-brown) 25%,transparent)!important}body.email-verification-page .input input{color:var(--site-text)!important}body.email-verification-page .btn:not(.ghost),body.email-verification-page button:not(.resend){background:linear-gradient(135deg,var(--primary-red),var(--dark-brown))!important;color:var(--site-navbar-text)!important}body.email-verification-page .btn.ghost{background:var(--site-page-bg)!important;color:var(--dark-brown)!important;border-color:color-mix(in srgb,var(--gray-brown) 28%,transparent)!important}body.email-verification-page .info-section{background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface))!important}</style>';
+    return '<style id="site-customization-verification-colors">body.email-verification-page{background:var(--site-page-bg)!important;color:var(--site-text)!important}body.email-verification-page .verify-card,body.email-verification-page .panel,body.email-verification-page .form-card{background:var(--site-surface)!important;color:var(--site-text)!important;border-color:color-mix(in srgb,var(--gray-brown) 25%,transparent)!important}body.email-verification-page h1,body.email-verification-page h2,body.email-verification-page .title{color:var(--primary-red)!important}body.email-verification-page p,body.email-verification-page label,body.email-verification-page .brand p{color:var(--site-text)!important}body.email-verification-page .input,body.email-verification-page input{background:var(--site-page-bg)!important;border-color:color-mix(in srgb,var(--gray-brown) 25%,transparent)!important;color:var(--site-text)!important}body.email-verification-page .verify-icon{background:var(--primary-red)!important;color:var(--site-navbar-text)!important}body.email-verification-page .btn:not(.ghost),body.email-verification-page button:not(.resend){background:linear-gradient(135deg,var(--primary-red),var(--dark-brown))!important;color:var(--site-navbar-text)!important}body.email-verification-page .btn.ghost,body.email-verification-page .resend{background:var(--site-page-bg)!important;color:var(--dark-brown)!important;border-color:color-mix(in srgb,var(--gray-brown) 28%,transparent)!important}body.email-verification-page .info-section{background:color-mix(in srgb,var(--primary-red) 8%,var(--site-surface))!important;border-color:var(--primary-red)!important}body.email-verification-page .info-section strong{color:var(--dark-brown)!important}body.email-verification-page .info-section p,body.email-verification-page .subtitle{color:var(--gray-brown)!important}</style>';
 }
 
 function site_customization_chatbot_css(array $settings): string

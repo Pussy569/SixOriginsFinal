@@ -687,7 +687,7 @@ label {
 }
 </style>
 <?php echo site_customization_css($site_customization); ?>
-<?php echo site_customization_verification_background_css($site_customization); ?>
+<?php echo site_customization_verification_css($site_customization); ?>
 </head>
 <body class="email-verification-page">
 

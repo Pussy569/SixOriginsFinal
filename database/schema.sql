@@ -409,7 +409,6 @@ CREATE TABLE `site_customization` (
   `login_image_path` varchar(255) NOT NULL DEFAULT 'images/logback.jpeg',
   `register_image_path` varchar(255) NOT NULL DEFAULT 'images/logback.jpeg',
   `admin_register_image_path` varchar(255) NOT NULL DEFAULT 'images/logback.jpeg',
-  `email_verification_background_image_path` varchar(255) DEFAULT NULL,
   `loading_style` enum('rings','spinner','dots','progress','coffee','none') NOT NULL DEFAULT 'rings',
   `showcase_image_path` varchar(255) NOT NULL DEFAULT 'images/coffee-splash.png',
   `showcase_background` char(7) NOT NULL DEFAULT '#5E1F13',

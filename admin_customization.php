@@ -147,15 +147,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $oldVerificationBackground = $settings['email_verification_background_image_path'];
-        $uploadedVerificationBackground = save_site_customization_upload($_FILES['email_verification_background'] ?? [], 'image', __DIR__);
-        if ($uploadedVerificationBackground !== null) {
-            $newUploads[] = $uploadedVerificationBackground;
-            $newSettings['email_verification_background_image_path'] = $uploadedVerificationBackground;
-        } elseif (!empty($_POST['reset_email_verification_background'])) {
-            $newSettings['email_verification_background_image_path'] = null;
-        }
-
         $oldTeamMembers = $settings['team_members'];
         $postedNames = $_POST['team_name'] ?? [];
         $postedRoles = $_POST['team_role'] ?? [];
@@ -244,9 +235,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($oldPageBackground !== $newSettings[$settingKey]) {
                 delete_site_customization_upload($oldPageBackground, __DIR__);
             }
-        }
-        if ($oldVerificationBackground !== $newSettings['email_verification_background_image_path']) {
-            delete_site_customization_upload($oldVerificationBackground, __DIR__);
         }
         foreach ($oldTeamMembers as $oldMember) {
             $imageIsRetained = false;
@@ -350,6 +338,38 @@ foreach ($contentFieldGroups as $contentFields) {
                     continue 3;
                 }
             }
+            $verificationFieldSections = [
+                [
+                    'title' => '1. Customer sign-up — verification screen',
+                    'description' => 'Text shown on the page where a newly registered customer enters the email code. The {email} placeholder is replaced with the customer email address.',
+                    'fields' => ['verification_signup_heading', 'verification_signup_description', 'verification_signup_code_label', 'verification_signup_button', 'verification_signup_resend_button'],
+                ],
+                [
+                    'title' => '2. Customer sign-up — verification email',
+                    'description' => 'Subject and copy inside the email sent after a customer creates an account. Use {name} in the greeting to insert the customer name.',
+                    'fields' => ['verification_signup_email_subject', 'verification_signup_email_title', 'verification_signup_email_greeting', 'verification_signup_email_instruction', 'verification_signup_email_note'],
+                ],
+                [
+                    'title' => '3. Customer sign-in — verification screen',
+                    'description' => 'Text shown when a customer signs in and must enter a one-time email code.',
+                    'fields' => ['verification_login_heading', 'verification_login_description', 'verification_login_why_heading', 'verification_login_why_description', 'verification_login_resend_heading', 'verification_login_resend_description', 'verification_login_code_label', 'verification_login_expires_label', 'verification_login_attempts_label', 'verification_login_button', 'verification_login_resend_button', 'verification_login_cancel_button'],
+                ],
+                [
+                    'title' => '4. Customer sign-in — verification email',
+                    'description' => 'Subject and copy inside the one-time code email sent during sign-in.',
+                    'fields' => ['verification_login_email_subject', 'verification_login_email_title', 'verification_login_email_greeting', 'verification_login_email_instruction', 'verification_login_email_note'],
+                ],
+                [
+                    'title' => '5. New-device sign-in — approval email',
+                    'description' => 'Subject and copy for the approval code sent when sign-in from another device needs confirmation. Use {name} in the greeting to insert the account name.',
+                    'fields' => ['verification_session_email_subject', 'verification_session_email_title', 'verification_session_email_greeting', 'verification_session_email_instruction', 'verification_session_email_note'],
+                ],
+                [
+                    'title' => '6. Shared verification email footer',
+                    'description' => 'Footer text shared by the sign-up, sign-in, and new-device verification emails.',
+                    'fields' => ['verification_email_footer'],
+                ],
+            ];
         }
     }
 }
@@ -402,7 +422,7 @@ $customizationPages = [
     'topup' => ['id' => 'topup-customization', 'title' => 'Wallet top-up', 'icon' => 'fa-wallet', 'description' => 'Customize the wallet top-up banner, payment instructions, and related text.', 'banner' => 'topup_background_image_path'],
     'footer' => ['id' => 'footer-customization', 'title' => 'Footer', 'icon' => 'fa-link', 'description' => 'Customize the footer description and contact details. Quick links remain connected to their existing pages.', 'banner' => null],
     'account' => ['id' => 'account-customization', 'title' => 'Login, register, and logout', 'icon' => 'fa-right-to-bracket', 'description' => 'Customize the account screens and their welcome images. Authentication behavior and links remain unchanged.', 'banner' => null],
-    'verification' => ['id' => 'email-verification-customization', 'title' => 'Email verification', 'icon' => 'fa-envelope-circle-check', 'description' => 'Customize sign-up and sign-in verification copy, email messages, and the verification screen background. Code expiry, security, and delivery behavior stay unchanged.', 'banner' => null],
+    'verification' => ['id' => 'email-verification-customization', 'title' => 'Email verification', 'icon' => 'fa-envelope-circle-check', 'description' => 'Each section is labeled by the verification flow it changes. Verification screens and emails use the current system colors automatically; code expiry, security, and delivery behavior stay unchanged.', 'banner' => null],
 ];
 ?>
 <?php include 'admin_header.php'; ?>
@@ -559,20 +579,90 @@ $customizationPages = [
                 <h2><i class="fa-solid <?php echo escapeOutput($page['icon']); ?>"></i> <?php echo escapeOutput($page['title']); ?></h2>
                 <p class="customization-help"><?php echo escapeOutput($page['description']); ?></p>
                 <?php if ($contentFieldsByPage[$pageKey] !== []): ?>
-                    <fieldset class="customization-team-member customization-field-group">
-                        <legend><?php echo escapeOutput($page['title']); ?> text</legend>
-                        <?php foreach ($contentFieldsByPage[$pageKey] as $key => $field):
-                            $fieldValue = $settings['content_texts'][$key] ?? $field[1];
-                        ?>
-                            <label><?php echo escapeOutput($field[0]); ?>
-                                <?php if (strlen($field[1]) > 90): ?>
-                                    <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
-                                <?php else: ?>
-                                    <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
-                                <?php endif; ?>
-                            </label>
+                    <?php if ($pageKey === 'verification'): ?>
+                        <?php foreach ($verificationFieldSections as $verificationSection): ?>
+                            <fieldset class="customization-team-member customization-field-group customization-verification-group">
+                                <legend><?php echo escapeOutput($verificationSection['title']); ?></legend>
+                                <p class="customization-help"><?php echo escapeOutput($verificationSection['description']); ?></p>
+                                <?php foreach ($verificationSection['fields'] as $key):
+                                    $field = $contentFieldsByPage['verification'][$key] ?? null;
+                                    if ($field === null) {
+                                        continue;
+                                    }
+                                    $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                                ?>
+                                    <label><?php echo escapeOutput($field[0]); ?>
+                                        <?php if (strlen($field[1]) > 90): ?>
+                                            <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
+                                        <?php else: ?>
+                                            <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                                        <?php endif; ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </fieldset>
                         <?php endforeach; ?>
-                    </fieldset>
+                        <?php
+                        $emailPreviewColors = [
+                            ['Outer background', 'page_background'],
+                            ['Header and heading', 'primary_color'],
+                            ['Email card', 'surface_color'],
+                            ['Message text', 'text_color'],
+                            ['Footer text', 'accent_color'],
+                        ];
+                        $emailPreviewTitle = site_customization_text($settings, 'verification_signup_email_title');
+                        $emailPreviewGreeting = str_replace(
+                            '{name}',
+                            'Maymay',
+                            site_customization_text($settings, 'verification_signup_email_greeting')
+                        );
+                        $emailPreviewInstruction = site_customization_text($settings, 'verification_signup_email_instruction');
+                        $emailPreviewFooter = site_customization_text($settings, 'verification_email_footer');
+                        ?>
+                        <section class="verification-email-preview" aria-label="Verification email color preview">
+                            <h3>Verification email appearance</h3>
+                            <p class="customization-help">This preview shows how your current system colors are applied to verification emails. Change them in System Colors above.</p>
+                            <div class="verification-email-preview-outer" style="background:<?php echo escapeOutput($settings['page_background']); ?>">
+                                <div class="verification-email-preview-card" style="background:<?php echo escapeOutput($settings['surface_color']); ?>">
+                                    <div class="verification-email-preview-header" style="background:<?php echo escapeOutput($settings['primary_color']); ?>;color:<?php echo escapeOutput($settings['navbar_text']); ?>">
+                                        <?php echo escapeOutput($settings['brand_name']); ?>
+                                    </div>
+                                    <div class="verification-email-preview-body" style="color:<?php echo escapeOutput($settings['text_color']); ?>">
+                                        <h4 style="color:<?php echo escapeOutput($settings['primary_color']); ?>"><?php echo escapeOutput($emailPreviewTitle); ?></h4>
+                                        <p><?php echo escapeOutput($emailPreviewGreeting); ?></p>
+                                        <p><?php echo escapeOutput($emailPreviewInstruction); ?></p>
+                                        <strong style="color:<?php echo escapeOutput($settings['secondary_color']); ?>">431920</strong>
+                                    </div>
+                                    <div class="verification-email-preview-footer" style="background:<?php echo escapeOutput($settings['page_background']); ?>;color:<?php echo escapeOutput($settings['accent_color']); ?>">
+                                        <?php echo escapeOutput($emailPreviewFooter); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="verification-email-color-key">
+                                <?php foreach ($emailPreviewColors as [$colorLabel, $colorKey]): ?>
+                                    <div>
+                                        <span class="verification-email-color-swatch" style="background:<?php echo escapeOutput($settings[$colorKey]); ?>"></span>
+                                        <span><?php echo escapeOutput($colorLabel); ?></span>
+                                        <code><?php echo escapeOutput(strtoupper($settings[$colorKey])); ?></code>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
+                    <?php else: ?>
+                        <fieldset class="customization-team-member customization-field-group">
+                            <legend><?php echo escapeOutput($page['title']); ?> text</legend>
+                            <?php foreach ($contentFieldsByPage[$pageKey] as $key => $field):
+                                $fieldValue = $settings['content_texts'][$key] ?? $field[1];
+                            ?>
+                                <label><?php echo escapeOutput($field[0]); ?>
+                                    <?php if (strlen($field[1]) > 90): ?>
+                                        <textarea name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" rows="3"><?php echo escapeOutput($fieldValue); ?></textarea>
+                                    <?php else: ?>
+                                        <input type="text" name="content_texts[<?php echo escapeOutput($key); ?>]" maxlength="1000" value="<?php echo escapeOutput($fieldValue); ?>">
+                                    <?php endif; ?>
+                                </label>
+                            <?php endforeach; ?>
+                        </fieldset>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <?php if ($page['banner'] !== null):
@@ -591,29 +681,6 @@ $customizationPages = [
                             <?php endif; ?>
                         </div>
                         <label class="customization-check"><input type="checkbox" name="reset_<?php echo escapeOutput($imageConfig['input']); ?>" value="1"> Restore default banner</label>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($pageKey === 'verification'):
-                    $verificationBackgroundUrl = site_customization_auth_image_url(
-                        $settings['email_verification_background_image_path'],
-                        ''
-                    );
-                ?>
-                    <div class="customization-page-background-setting">
-                        <label>Verification screen background image
-                            <input type="file" name="email_verification_background" accept="image/jpeg,image/png,image/webp">
-                        </label>
-                        <div class="customization-page-background-preview">
-                            <?php if ($verificationBackgroundUrl !== ''): ?>
-                                <img src="<?php echo escapeOutput($verificationBackgroundUrl); ?>" alt="Verification background preview">
-                                <span>Current background image</span>
-                            <?php else: ?>
-                                <div class="customization-page-background-empty"><i class="fa-regular fa-image"></i><span>Using your system background color</span></div>
-                            <?php endif; ?>
-                        </div>
-                        <label class="customization-check"><input type="checkbox" name="reset_email_verification_background" value="1"> Restore system background color</label>
-                        <small>JPG, PNG, or WebP; maximum 5 MB. This image appears behind the sign-up and sign-in code screens.</small>
                     </div>
                 <?php endif; ?>
 
@@ -913,12 +980,30 @@ $customizationPages = [
 #topup-customization{order:12}
 #footer-customization{order:13}
 #account-customization{order:14}
-#chatbot-settings{order:15}
+#email-verification-customization{order:15}
+#chatbot-settings{order:16}
 .customization-page-card{grid-column:1/-1}
 .customization-save-bar{order:99}
 .customization-page-card h3{margin:8px 0 -4px;color:var(--dark-brown);font-size:1rem}
 .customization-field-group{grid-template-columns:repeat(2,minmax(0,1fr))}
 .customization-field-group legend{grid-column:1/-1}
+.customization-verification-group{grid-column:1/-1;align-items:start}
+.customization-verification-group>.customization-help{grid-column:1/-1;margin:0}
+.verification-email-preview{grid-column:1/-1;padding:20px;border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:16px;background:color-mix(in srgb,var(--site-page-bg) 35%,var(--site-surface))}
+.verification-email-preview h3{margin:0 0 6px;color:var(--dark-brown);font-size:1.05rem}
+.verification-email-preview>.customization-help{margin:0 0 14px}
+.verification-email-preview-outer{padding:18px;border-radius:12px}
+.verification-email-preview-card{max-width:560px;margin:0 auto;overflow:hidden;border:1px solid color-mix(in srgb,var(--gray-brown) 18%,transparent);border-radius:12px;box-shadow:0 8px 24px rgba(30,20,16,.08)}
+.verification-email-preview-header{padding:16px 20px;font-size:1.1rem;font-weight:800}
+.verification-email-preview-body{padding:20px;font-size:.92rem;line-height:1.55}
+.verification-email-preview-body h4{margin:0 0 14px;font-size:1.25rem}
+.verification-email-preview-body p{margin:8px 0}
+.verification-email-preview-body strong{display:block;margin:16px 0 4px;font-size:1.7rem;letter-spacing:.3em}
+.verification-email-preview-footer{padding:12px 20px;font-size:.76rem;text-align:center}
+.verification-email-color-key{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.verification-email-color-key>div{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:4px 8px;min-width:0;font-size:.75rem}
+.verification-email-color-swatch{width:26px;height:26px;border:1px solid color-mix(in srgb,var(--gray-brown) 25%,transparent);border-radius:7px}
+.verification-email-color-key code{grid-column:2;color:var(--gray-brown);font-size:.72rem}
 #brand-identity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start}
 #brand-identity h2,#brand-identity>p{grid-column:1/-1}
 #brand-identity>label:not(.customization-check){align-content:start}
@@ -944,7 +1029,9 @@ $customizationPages = [
 @media(max-width:1050px){#system-colors{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){#brand-identity{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.customization-about-team .customization-image-setting{grid-template-columns:1fr}.customization-about-team .customization-image-setting>label:first-child,.customization-about-team .customization-image-setting .customization-check{grid-column:auto}.customization-page-background-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:820px){.verification-email-color-key{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.customization-intro{gap:12px;padding:18px}.customization-intro-icon{width:46px;height:46px}.customization-intro p{font-size:.9rem}.customization-jump-nav{margin-right:-2px;margin-left:-2px}.customization-jump-nav a{min-height:36px;padding:7px 10px;font-size:.78rem}.customization-save-bar{bottom:8px;align-items:stretch;flex-direction:column;padding:12px}.customization-save-bar>span{font-size:.8rem}.customization-save{width:100%;min-width:0}#brand-identity,#system-colors{grid-template-columns:1fr}#brand-identity h2,#brand-identity>p,#system-colors h2,#system-colors .customization-colors-intro{grid-column:auto}.customization-about-team>.customization-auth-image-grid{grid-template-columns:1fr}.customization-about-team .customization-auth-preview{height:190px}.customization-page-background-grid{grid-template-columns:1fr}.customization-field-group{grid-template-columns:1fr}}
+@media(max-width:560px){.verification-email-preview{padding:14px}.verification-email-preview-outer{padding:10px}.verification-email-color-key{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1050px){.customization-form{grid-template-columns:1fr}.customization-auth-images{grid-column:auto}.customization-save{grid-column:auto}}
 @media(max-width:1050px){.customization-about-team{grid-column:auto}.customization-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:820px){.customization-media-row{grid-template-columns:1fr}.customization-media-row .customization-card{height:auto}}
